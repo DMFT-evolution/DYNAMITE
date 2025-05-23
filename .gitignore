@@ -1,0 +1,21 @@
+# Ignore old codes
+Old Codes/
+
+# Ignore results
+Results/
+
+# Ignore compiled library files
+*.so
+*.dylib
+*.dll
+
+# Ignore all pickle data files
+*.p
+
+# Ignore DS_Store file
+
+.DS_Store
+
+# Ignore Windows .ini file
+*.ini
+
