@@ -32,11 +32,11 @@ double delta_old;
 int loop;
 double specRad;
 double delta_t;
-int len;
+size_t len;
 int ord;
 
 vector<double> theta, phi1, phi2, posA1y, posA2y, posB2y, weightsA1y, weightsA2y, weightsB2y, posB1xOld, posB2xOld, integ;
-vector<int> indsA1y, indsA2y, indsB2y;
+vector<size_t> indsA1y, indsA2y, indsB2y;
 
 vector<double> t1grid, delta_t_ratio;
 
@@ -124,8 +124,8 @@ vector<double> importVectorFromFile(const string& filename) {
     return data;
 }
 
-vector<int> importIntVectorFromFile(const string& filename) {
-    vector<int> data;
+vector<size_t> importIntVectorFromFile(const string& filename) {
+    vector<size_t> data;
     ifstream file(filename);
 
     if (!file.is_open()) {
@@ -133,7 +133,7 @@ vector<int> importIntVectorFromFile(const string& filename) {
         return data;
     }
 
-    int value;
+    size_t value;
     while (file >> value) {
         data.push_back(value);
         // Skip tabs or newlines automatically handled by `>>`
@@ -159,7 +159,7 @@ void import()
     weightsB2y = importVectorFromFile("Grid_data/weightsB2y.dat");
     integ = importVectorFromFile("Grid_data/int.dat");
     len = theta.size();
-    ord = weightsB2y.size() / pow(len, 2) - 2;
+    ord = weightsB2y.size() / (len * len) - 2;
 }
 
 double flambda(const double q)
@@ -182,39 +182,39 @@ double DDDflambda(const double q)
     return lambda * p * (p - 1) * (p - 2) * pow(q, p - 3) + (1 - lambda) * p2 * (p2 - 1) * (p2 - 2) * pow(q, p2 - 3);
 }
 
-vector<double> indexVecLN3(const int num, const vector<double>& weights, const vector<int>& inds)
+vector<double> indexVecLN3(const int num, const vector<double>& weights, const vector<size_t>& inds)
 {
-    int prod = inds.size();
-    int length = QKv.size() - len;
-    int depth = weights.size() / prod;
+    size_t prod = inds.size();
+    size_t length = QKv.size() - len;
+    size_t depth = weights.size() / prod;
     vector<double> result(len * len, 0.0);
 
     switch (num)
     {
     case 1:
 #pragma omp parallel for
-        for (long int j = 0; j < prod; j++)
+        for (size_t j = 0; j < prod; j++)
         {
             result[j] = inner_product(weights.begin() + depth * j, weights.begin() + depth * (j + 1), QKv.begin() + length + inds[j], 0.0);
         }
         break;
     case 2:
 #pragma omp parallel for
-        for (long int j = 0; j < prod; j++)
+        for (size_t j = 0; j < prod; j++)
         {
             result[j] = inner_product(weights.begin() + depth * j, weights.begin() + depth * (j + 1), QRv.begin() + length + inds[j], 0.0);
         }
         break;
     case 3:
 #pragma omp parallel for
-        for (long int j = 0; j < prod; j++)
+        for (size_t j = 0; j < prod; j++)
         {
             result[j] = inner_product(weights.begin() + depth * j, weights.begin() + depth * (j + 1), dQKv.begin() + length + inds[j], 0.0);
         }
         break;
     case 4:
 #pragma omp parallel for
-        for (long int j = 0; j < prod; j++)
+        for (size_t j = 0; j < prod; j++)
         {
             result[j] = inner_product(weights.begin() + depth * j, weights.begin() + depth * (j + 1), dQRv.begin() + length + inds[j], 0.0);
         }
@@ -224,30 +224,30 @@ vector<double> indexVecLN3(const int num, const vector<double>& weights, const v
     return result;
 }
 
-vector<double> indexVecN(const int num, const int length, const vector<double>& weights, const vector<int>& inds, const vector<double>& dtratio)
+vector<double> indexVecN(const int num, const size_t length, const vector<double>& weights, const vector<size_t>& inds, const vector<double>& dtratio)
 {
-    int dims[] = { len,len };
-    int t1len = dtratio.size();
+    size_t dims[] = { len,len };
+    size_t t1len = dtratio.size();
     vector<double> result(len * len, 0.0);
 
     switch (num)
     {
     case 1:
 #pragma omp parallel for
-        for (long int i = 0; i < dims[0]; i++)
+        for (size_t i = 0; i < dims[0]; i++)
         {
             double in3 = weights[i] * weights[i];
             double in4 = in3 * weights[i];
             if (inds[i] < t1len - 1)
             {
-                for (long int j = 0; j < dims[1]; j++)
+                for (size_t j = 0; j < dims[1]; j++)
                 {
                     result[j + dims[1] * i] = (1 - 3 * in3 - 2 * in4) * QKv[(inds[i] - 1) * dims[1] + j] + (3 * in3 + 2 * in4) * QKv[inds[i] * dims[1] + j] - (weights[i] + 2 * in3 + in4) * dQKv[inds[i] * dims[1] + j] - (in3 + in4) * dQKv[(inds[i] + 1) * dims[1] + j] / dtratio[inds[i] + 1];
                 }
             }
             else
             {
-                for (long int j = 0; j < dims[1]; j++)
+                for (size_t j = 0; j < dims[1]; j++)
                 {
                     result[j + dims[1] * i] = (1 - in3) * QKv[(inds[i] - 1) * dims[1] + j] - (weights[i] + in3) * dQKv[inds[i] * dims[1] + j] + in3 * QKv[inds[i] * dims[1] + j];
                 }
@@ -257,20 +257,20 @@ vector<double> indexVecN(const int num, const int length, const vector<double>& 
 
     case 2:
 #pragma omp parallel for
-        for (long int i = 0; i < dims[0]; i++)
+        for (size_t i = 0; i < dims[0]; i++)
         {
             double in3 = weights[i] * weights[i];
             double in4 = in3 * weights[i];
             if (inds[i] < t1len - 1)
             {
-                for (long int j = 0; j < dims[1]; j++)
+                for (size_t j = 0; j < dims[1]; j++)
                 {
                     result[j + dims[1] * i] = (1 - 3 * in3 - 2 * in4) * QRv[(inds[i] - 1) * dims[1] + j] + (3 * in3 + 2 * in4) * QRv[inds[i] * dims[1] + j] - (weights[i] + 2 * in3 + in4) * dQRv[inds[i] * dims[1] + j] - (in3 + in4) * dQRv[(inds[i] + 1) * dims[1] + j] / dtratio[inds[i] + 1];
                 }
             }
             else
             {
-                for (long int j = 0; j < dims[1]; j++)
+                for (size_t j = 0; j < dims[1]; j++)
                 {
                     result[j + dims[1] * i] = (1 - in3) * QRv[(inds[i] - 1) * dims[1] + j] - (weights[i] + in3) * dQRv[inds[i] * dims[1] + j] + in3 * QRv[inds[i] * dims[1] + j];
                 }
@@ -282,14 +282,14 @@ vector<double> indexVecN(const int num, const int length, const vector<double>& 
     return result;
 }
 
-vector<double> indexVecR2(const vector<double>& in1, const vector<double>& in2, const vector<double>& in3, const vector<int>& inds, const vector<double>& dtratio)
+vector<double> indexVecR2(const vector<double>& in1, const vector<double>& in2, const vector<double>& in3, const vector<size_t>& inds, const vector<double>& dtratio)
 {
-    int dims = inds.size();
-    int t1len = dtratio.size();
+    size_t dims = inds.size();
+    size_t t1len = dtratio.size();
     vector<double> result(len, 0.0);
 
 #pragma omp parallel for
-    for (long int i = 0; i < dims; i++)
+    for (size_t i = 0; i < dims; i++)
     {
         if (inds[i] < t1len - 1)
         {
@@ -304,21 +304,21 @@ vector<double> indexVecR2(const vector<double>& in1, const vector<double>& in2, 
     return result;
 }
 
-vector<double> indexMatAll(const int n, const vector<double>& posx, const vector<int>& indsy, const vector<double>& weightsy, const vector<double>& dtratio)
+vector<double> indexMatAll(const int n, const vector<double>& posx, const vector<size_t>& indsy, const vector<double>& weightsy, const vector<double>& dtratio)
 {
-    int prod = indsy.size();
-    int dims2 = weightsy.size();
-    int depth = dims2 / prod;
-    int t1len = dtratio.size();
+    size_t prod = indsy.size();
+    size_t dims2 = weightsy.size();
+    size_t depth = dims2 / prod;
+    size_t t1len = dtratio.size();
     vector<double> result(len * len, 0.0);
 
     double inx, inx2, inx3;
-    int inds, indsx;
+    size_t inds, indsx;
 
 #pragma omp parallel for private(inx, inx2, inx3, indsx, inds)
-    for (long int j = 0; j < prod; j++)
+    for (size_t j = 0; j < prod; j++)
     {
-        indsx = max(min((int)posx[j], (int)(posx[prod - 1] - 0.5)), 1);
+        indsx = max(min((size_t)posx[j], (size_t)(posx[prod - 1] - 0.5)), (size_t)1);
         inx = posx[j] - indsx;
         inx2 = inx * inx;
         inx3 = inx2 * inx;
@@ -414,14 +414,14 @@ vector<double> SigmaR01(const vector<double>& qk, const vector<double>& qr)
 
 vector<double> ConvA(const vector<double>& f, const vector<double>& g, const double t)
 {
-    int length = integ.size();
-    int depth = f.size() / length;
+    size_t length = integ.size();
+    size_t depth = f.size() / length;
     vector<double> out(1, 0.0);
     if (depth == 1)
     {
         double temp = 0.0;
-        #pragma omp parallel for reduction(+:temp)
-        for (long int j = 0; j < length; j++)
+#pragma omp parallel for reduction(+:temp)
+        for (size_t j = 0; j < length; j++)
         {
             temp += t * integ[j] * f[j] * g[j];
         }
@@ -430,10 +430,10 @@ vector<double> ConvA(const vector<double>& f, const vector<double>& g, const dou
     else
     {
         out.resize(length, 0.0);
-        #pragma omp parallel for
-        for (long int j = 0; j < length; j++)
+#pragma omp parallel for
+        for (size_t j = 0; j < length; j++)
         {
-            for (long int i = 0; i < depth; i++)
+            for (size_t i = 0; i < depth; i++)
             {
                 out[j] += integ[i] * f[j * length + i] * g[j * length + i];
             }
@@ -445,13 +445,13 @@ vector<double> ConvA(const vector<double>& f, const vector<double>& g, const dou
 
 vector<double> ConvR(const vector<double>& f, const vector<double>& g, const double t)
 {
-    int length = integ.size();
-    int depth = f.size() / length;
+    size_t length = integ.size();
+    size_t depth = f.size() / length;
     vector<double> out(length, 0.0);
-    #pragma omp parallel for
-    for (long int j = 0; j < length; j++)
+#pragma omp parallel for
+    for (size_t j = 0; j < length; j++)
     {
-        for (long int i = 0; i < depth; i++)
+        for (size_t i = 0; i < depth; i++)
         {
             out[j] += integ[i] * f[j * length + i] * g[j * length + i];
         }
@@ -525,43 +525,49 @@ double drstep2(const vector<double>& qK, const vector<double>& qR, const vector<
     return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
 }
 
-void appendAll(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double dr, const double t)
+void appendAll(const vector<double>& qK,
+    const vector<double>& qR,
+    const vector<double>& dqK,
+    const vector<double>& dqR,
+    const double dr,
+    const double t)
 {
-    // Append the new values to the existing vectors
-    long int length = qK.size();
+    size_t length = qK.size();
     if (length != qR.size() || length != dqK.size() || length != dqR.size()) {
         throw invalid_argument("All input vectors must have the same size.");
     }
-    {
-        t1grid.push_back(t);
-        double tdiff = (t1grid[t1grid.size() - 1] - t1grid[t1grid.size() - 2]);
 
-        if (t1grid.size()>2){
-            delta_t_ratio.push_back(tdiff / 
-            (t1grid[t1grid.size() - 2] - t1grid[t1grid.size() - 3]));
-        }
-        else{
-            delta_t_ratio.push_back(0.0);
-        }
-
-        for (long int i=0;i<length;i++)
-        {
-            QKv.push_back(qK[i]);
-            QRv.push_back(qR[i]);
-            dQKv.push_back(tdiff*dqK[i]);
-            dQRv.push_back(tdiff*dqR[i]);
-        }
-
-        drvec.push_back(tdiff*dr);
-        rvec.push_back(rstep());
+    // 1) update t1grid and delta_t_ratio
+    t1grid.push_back(t);
+    size_t idx = t1grid.size() - 1;
+    double tdiff = t1grid[idx] - t1grid[idx - 1];
+    if (idx > 1) {
+        double prev = t1grid[idx - 1] - t1grid[idx - 2];
+        delta_t_ratio.push_back(tdiff / prev);
     }
+    else {
+        delta_t_ratio.push_back(0.0);
+    }
+
+    for (long int i = 0; i < dims[0]; i++)
+    {
+        QKv.push_back(QK[i]);
+        QRv.push_back(QR[i]);
+        dQKv.push_back(dQK[i]);
+        dQRv.push_back(dQR[i]);
+    }
+
+    // 4) finally update drvec and rvec
+    drvec.push_back(tdiff * dr);
+    rvec.push_back(rstep());
 }
+
 
 void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double dr, const double t)
 {
     // Replace the existing values in the vectors with the new values
-    long int replaceLength = qK.size();
-    long int length = QKv.size() - replaceLength;
+    size_t replaceLength = qK.size();
+    size_t length = QKv.size() - replaceLength;
     if (replaceLength != qR.size() || replaceLength != dqK.size() || replaceLength != dqR.size()) {
         throw invalid_argument("All input vectors must have the same size.");
     }
@@ -578,7 +584,7 @@ void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector
         }
 
         #pragma omp parallel for
-        for (long int i = 0; i < replaceLength; i++)
+        for (size_t i = 0; i < replaceLength; i++)
         {
             QKv[length + i] = qK[i];
             QRv[length + i] = qR[i];
@@ -604,10 +610,10 @@ vector<double> bsearchPosSorted(const vector<double>& list, const vector<double>
         Lm = 0.0;
 
         // Binary search
-        if (list[m-1] < El) {
+        if (list[m - 1] < El) {
             while (n0 <= n1) {
                 m = (n0 + n1) / 2; // Compute midpoint
-                Lm = list[m-1];
+                Lm = list[m - 1];
                 if (Lm == El) {
                     n0 = m;
                     break;
@@ -652,7 +658,7 @@ vector<double> isearchPosSortedInit(const vector<double>& list, const vector<dou
     double temp = len;
 
     // Iterate over `elem` in reverse order
-    for (int l = elem.size() - 1; l >= 0; --l) {
+    for (size_t l = 512; l-- > 0;) {
         El = list.back() * elem[l];
         n1 = min(static_cast<size_t>(ceil(temp)), len);
         n0 = static_cast<size_t>(floor(inits[l]));
@@ -660,7 +666,7 @@ vector<double> isearchPosSortedInit(const vector<double>& list, const vector<dou
         even = true;
 
         if ((Lm = list[m - 1]) > El) {
-            n1 = max(static_cast<int>(m) - 2, 1);
+            n1 = max(static_cast<size_t>(m) - 2, (size_t)1);
         }
 
         // Perform the search
@@ -712,7 +718,6 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
     const bool same = false)
 {
     // Compute posB1x
-    // auto start = high_resolution_clock::now();
     vector<double> posB1x = !posB1xIn.empty() ?
         (same ? posB1xIn : isearchPosSortedInit(t1grid, theta, posB1xIn)) :
         bsearchPosSorted(t1grid, scaleVec(theta, t1grid.back()));
@@ -758,15 +763,15 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
             maxPosB1x = posB1x[i];
         }
     }
-    int maxCeil = static_cast<int>(ceil(maxPosB1x)) - 1;
+    size_t maxCeil = static_cast<size_t>(ceil(maxPosB1x)) - 1;
     if (maxCeil < 1) {
         maxCeil = 1;
     }
 
     // Compute FLOOR vector
-    vector<int> Floor(posB1x.size());
+    vector<size_t> Floor(posB1x.size());
     for (size_t i = 0; i < posB1x.size(); ++i) {
-        int flooredValue = static_cast<int>(floor(posB1x[i]));
+        size_t flooredValue = static_cast<size_t>(floor(posB1x[i]));
         if (flooredValue < 1) {
             flooredValue = 1;
         }
@@ -814,7 +819,7 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
 
 double SSPRK104()
 {
-    const int stages = 10;
+    const size_t stages = 10;
     const double amat[stages][stages] = {
         {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
         {1.0 / 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
@@ -851,7 +856,7 @@ double SSPRK104()
     double dr = 0.0;
 
     // Loop over stages
-    for (int n = 0; n < stages; ++n) {
+    for (size_t n = 0; n < stages; ++n) {
         // Interpolation
         if (QKv.size() == len || n != 0) {
             interpolate(
@@ -896,7 +901,7 @@ double SSPRK104()
             gKvec[n + 1] = gKvec[0];
             gRvec[n + 1] = gRvec[0];
             gtvec[n + 1] = gtvec[0];
-            for (int j = 0; j < stages; ++j) {
+            for (size_t j = 0; j < stages; ++j) {
                 gKvec[n + 1] = Sum(gKvec[n + 1], scaleVec(hKvec[j], delta_t * bvec[j]));
                 gRvec[n + 1] = Sum(gRvec[n + 1], scaleVec(hRvec[j], delta_t * bvec[j]));
                 gtvec[n + 1] += delta_t * bvec[j] * htvec[j];
@@ -907,7 +912,7 @@ double SSPRK104()
             gKvec[n + 1] = gKvec[0];
             gRvec[n + 1] = gRvec[0];
             gtvec[n + 1] = gtvec[0];
-            for (int j = 0; j < n + 1; ++j) {
+            for (size_t j = 0; j < n + 1; ++j) {
                 gKvec[n + 1] = Sum(gKvec[n + 1], scaleVec(hKvec[j], delta_t * amat[n + 1][j]));
                 gRvec[n + 1] = Sum(gRvec[n + 1], scaleVec(hRvec[j], delta_t * amat[n + 1][j]));
                 gtvec[n + 1] += delta_t * amat[n + 1][j] * htvec[j];
@@ -923,7 +928,7 @@ double SSPRK104()
     gKe = gKvec[0];
     gRe = gRvec[0];
     gte = gtvec[0];
-    for (int j = 0; j < stages; ++j) {
+    for (size_t j = 0; j < stages; ++j) {
         gKe = Sum(gKe, scaleVec(hKvec[j], delta_t * b2vec[j]));
         gRe = Sum(gRe, scaleVec(hRvec[j], delta_t * b2vec[j]));
         gte += delta_t * b2vec[j] * htvec[j];
@@ -1036,7 +1041,7 @@ int main() {
 
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "Time taken by function: " << duration.count()/1000 << " milliseconds" << endl;
+    cout << "Time taken by function: " << duration.count() / 1000 << " milliseconds" << endl;
 
     // 3) Print the final results
     std::cout << "final delta_t: " << delta_t << std::endl;
