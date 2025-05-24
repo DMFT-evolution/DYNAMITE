@@ -52,7 +52,7 @@ vector<double> Product(const vector<double>& vec1, const vector<double>& vec2) {
     }
 
     vector<double> result(vec1.size());
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] * vec2[i];
     }
@@ -66,7 +66,7 @@ vector<double> Sum(const vector<double>& vec1, const vector<double>& vec2) {
     }
 
     vector<double> result(vec1.size());
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] + vec2[i];
     }
@@ -80,7 +80,7 @@ vector<double> Subtract(const vector<double>& vec1, const vector<double>& vec2) 
     }
 
     vector<double> result(vec1.size());
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] - vec2[i];
     }
@@ -90,7 +90,7 @@ vector<double> Subtract(const vector<double>& vec1, const vector<double>& vec2) 
 
 vector<double> scaleVec(const vector<double>& vec1, double real) {
     vector<double> result(vec1.size());
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] * real;
     }
@@ -465,13 +465,13 @@ vector<double> QKstep()
     vector<double> temp(len, 0.0);
     vector<double> qK = getLastLenEntries(QKv, len);
     vector<double> qR = getLastLenEntries(QRv, len);
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < QKB1int.size(); i += len) {
         temp[i / len] = QKB1int[i];
     }
     temp = scaleVec(temp, Dflambda(QKv[QKv.size() - len]) / T0);
     vector<double> d1qK = Sum(temp, Sum(scaleVec(qK, -rInt.back()), Sum(ConvR(SigmaRA2int, QKB2int, t1grid.back()), Sum(ConvA(SigmaRA1int, QKB1int, t1grid.back()), ConvA(SigmaKA1int, QRB1int, t1grid.back())))));
-    #pragma omp parallel for
+#pragma omp parallel for
     for (size_t i = 0; i < QKB1int.size(); i += len) {
         temp[i / len] = Dflambda(QKB1int[i]);
     }
@@ -549,12 +549,12 @@ void appendAll(const vector<double>& qK,
         delta_t_ratio.push_back(0.0);
     }
 
-    for (long int i = 0; i < dims[0]; i++)
+    for (size_t i = 0; i < length; i++)
     {
-        QKv.push_back(QK[i]);
-        QRv.push_back(QR[i]);
-        dQKv.push_back(dQK[i]);
-        dQRv.push_back(dQR[i]);
+        QKv.push_back(qK[i]);
+        QRv.push_back(qR[i]);
+        dQKv.push_back(tdiff * dqK[i]);
+        dQRv.push_back(tdiff * dqR[i]);
     }
 
     // 4) finally update drvec and rvec
@@ -583,7 +583,7 @@ void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector
             delta_t_ratio.back() = 0.0;
         }
 
-        #pragma omp parallel for
+#pragma omp parallel for
         for (size_t i = 0; i < replaceLength; i++)
         {
             QKv[length + i] = qK[i];
