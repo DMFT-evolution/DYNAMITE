@@ -9,23 +9,35 @@
 #include <iomanip>
 #include <vector>
 #include <chrono>
+#include <algorithm>
+
 
 using namespace std;
 using namespace std::chrono;
 
-int p = 3;
-int p2 = 4;
-double lambda = 0.5;
-double TMCT = 0.805166;
-double T0 = 1.001 * TMCT;
-// double T0=1e50;
-double Gamma = 0.0;
-int maxLoop = 100;
+template <int P>
+constexpr double pow_const(double q) {
+    return q * pow_const<P - 1>(q);
+}
 
-double tmax = 1e6; //time to evolve to
-double delta_t_min = 1e-5; //initial and minimal time step
-double delta_max = 1e-11; //maximal error per step
-double rmax = 13; // stability range of SSPRK(10,4)
+template <>
+constexpr double pow_const<0>(double) {
+    return 1.0;
+}
+
+constexpr int p = 3;
+constexpr int p2 = 4;
+constexpr double lambda = 0.5;
+constexpr double TMCT = 0.805166;
+constexpr double T0 = 1.001 * TMCT;
+// double T0=1e50;
+constexpr double Gamma = 0.0;
+constexpr int maxLoop = 100;
+
+constexpr double tmax = 1e6; //time to evolve to
+constexpr double delta_t_min = 1e-5; //initial and minimal time step
+constexpr double delta_max = 1e-11; //maximal error per step
+constexpr double rmax = 13; // stability range of SSPRK(10,4)
 
 double delta;
 double delta_old;
@@ -45,57 +57,100 @@ vector<double> QKv, QRv, dQKv, dQRv, rInt, drInt, rvec, drvec;
 vector<double> SigmaKA1int, SigmaRA1int, SigmaKB1int, SigmaRB1int, SigmaKA2int, SigmaRA2int, SigmaKB2int, SigmaRB2int;
 vector<double> QKA1int, QRA1int, QKB1int, QRB1int, QKA2int, QRA2int, QKB2int, QRB2int;
 
+// Overload the + operator for std::vector<double>
+vector<double> operator+(const vector<double>& vec1, const vector<double>& vec2) {
+    if (vec1.size() != vec2.size()) {
+        throw invalid_argument("Vectors must have the same size for addition.");
+    }
 
-vector<double> Product(const vector<double>& vec1, const vector<double>& vec2) {
+    vector<double> result(vec1.size());
+
+    // Use std::transform to perform element-wise addition
+    std::transform(vec1.begin(), vec1.end(), vec2.begin(), result.begin(), std::plus<>());
+
+    return result;
+}
+
+vector<double> operator-(const vector<double>& vec1, const vector<double>& vec2) {
+    if (vec1.size() != vec2.size()) {
+        throw invalid_argument("Vectors must have the same size for addition.");
+    }
+
+    vector<double> result(vec1.size());
+
+    // Use std::transform to perform element-wise addition
+    std::transform(vec1.begin(), vec1.end(), vec2.begin(), result.begin(), std::minus<>());
+
+    return result;
+}
+
+// Overload the * operator for the element-wise product of two vectors
+vector<double> operator*(const vector<double>& vec1, const vector<double>& vec2) {
+    if (vec1.size() != vec2.size()) {
+        throw invalid_argument("Vectors must have the same size for element-wise multiplication.");
+    }
+
+    vector<double> result(vec1.size());
+
+    // Use std::transform to perform element-wise multiplication
+    std::transform(vec1.begin(), vec1.end(), vec2.begin(), result.begin(), std::multiplies<>());
+
+    return result;
+}
+
+// Overload the * operator for the product of a vector and a scalar
+vector<double> operator*(const vector<double>& vec, double scalar) {
+    vector<double> result(vec.size());
+
+    // Use std::transform to multiply each element by the scalar
+    std::transform(vec.begin(), vec.end(), result.begin(), [scalar](double val) { return val * scalar; });
+
+    return result;
+}
+
+// Overload the * operator for the product of a scalar and a vector (commutative)
+vector<double> operator*(double scalar, const vector<double>& vec) {
+    return vec * scalar; // Reuse the previous operator
+}
+
+void Product(const vector<double>& vec1, const vector<double>& vec2, vector<double>& result) {
     if (vec1.size() != vec2.size()) {
         throw invalid_argument("Vectors must have the same size for component-wise multiplication.");
     }
 
-    vector<double> result(vec1.size());
 #pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] * vec2[i];
     }
-
-    return result;
 }
 
-vector<double> Sum(const vector<double>& vec1, const vector<double>& vec2) {
+void Sum(const vector<double>& vec1, const vector<double>& vec2, vector<double>& result) {
     if (vec1.size() != vec2.size()) {
         throw invalid_argument("Vectors must have the same size for component-wise multiplication.");
     }
 
-    vector<double> result(vec1.size());
 #pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] + vec2[i];
     }
-
-    return result;
 }
 
-vector<double> Subtract(const vector<double>& vec1, const vector<double>& vec2) {
+void Subtract(const vector<double>& vec1, const vector<double>& vec2, vector<double>& result) {
     if (vec1.size() != vec2.size()) {
         throw invalid_argument("Vectors must have the same size for component-wise multiplication.");
     }
 
-    vector<double> result(vec1.size());
 #pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] - vec2[i];
     }
-
-    return result;
 }
 
-vector<double> scaleVec(const vector<double>& vec1, double real) {
-    vector<double> result(vec1.size());
+void scaleVec(const vector<double>& vec1, double real, vector<double>& result) {
 #pragma omp parallel for
     for (size_t i = 0; i < vec1.size(); ++i) {
         result[i] = vec1[i] * real;
     }
-
-    return result;
 }
 
 vector<double> getLastLenEntries(const vector<double>& vec, size_t len) {
@@ -164,22 +219,22 @@ void import()
 
 double flambda(const double q)
 {
-    return lambda * pow(q, p) + (1 - lambda) * pow(q, p2);
+    return lambda * pow_const<p>(q) + (1 - lambda) * pow_const<p2>(q);
 }
 
 double Dflambda(const double q)
 {
-    return lambda * p * pow(q, p - 1) + (1 - lambda) * p2 * pow(q, p2 - 1);
+    return lambda * p * pow_const<p - 1>(q) + (1 - lambda) * p2 * pow_const<p2 - 1>(q);
 }
 
 double DDflambda(const double q)
 {
-    return lambda * p * (p - 1) * pow(q, p - 2) + (1 - lambda) * p2 * (p2 - 1) * pow(q, p2 - 2);
+    return lambda * p * (p - 1) * pow_const<p - 2>(q) + (1 - lambda) * p2 * (p2 - 1) * pow_const<p2 - 2>(q);
 }
 
 double DDDflambda(const double q)
 {
-    return lambda * p * (p - 1) * (p - 2) * pow(q, p - 3) + (1 - lambda) * p2 * (p2 - 1) * (p2 - 2) * pow(q, p2 - 3);
+    return lambda * p * (p - 1) * (p - 2) * pow_const<p - 3>(q) + (1 - lambda) * p2 * (p2 - 1) * (p2 - 2) * pow_const<p2 - 3>(q);
 }
 
 vector<double> indexVecLN3(const int num, const vector<double>& weights, const vector<size_t>& inds)
@@ -293,11 +348,11 @@ vector<double> indexVecR2(const vector<double>& in1, const vector<double>& in2, 
     {
         if (inds[i] < t1len - 1)
         {
-            result[i] = (1 - 3 * pow(in3[i], 2) - 2 * pow(in3[i], 3)) * in1[inds[i] - 1] + (3 * pow(in3[i], 2) + 2 * pow(in3[i], 3)) * in1[inds[i]] - (in3[i] + 2 * pow(in3[i], 2) + pow(in3[i], 3)) * in2[inds[i]] - (pow(in3[i], 2) + pow(in3[i], 3)) * in2[inds[i] + 1] / dtratio[inds[i] + 1];
+            result[i] = (1 - 3 * pow_const<2>(in3[i]) - 2 * pow_const<3>(in3[i])) * in1[inds[i] - 1] + (3 * pow_const<2>(in3[i]) + 2 * pow_const<3>(in3[i])) * in1[inds[i]] - (in3[i] + 2 * pow_const<2>(in3[i]) + pow_const<3>(in3[i])) * in2[inds[i]] - (pow_const<2>(in3[i]) + pow_const<3>(in3[i])) * in2[inds[i] + 1] / dtratio[inds[i] + 1];
         }
         else
         {
-            result[i] = (1 - pow(in3[i], 2)) * in1[inds[i] - 1] + pow(in3[i], 2) * in1[inds[i]] - (in3[i] + pow(in3[i], 2)) * in2[inds[i]];
+            result[i] = (1 - pow_const<2>(in3[i])) * in1[inds[i] - 1] + pow_const<2>(in3[i]) * in1[inds[i]] - (in3[i] + pow_const<2>(in3[i])) * in2[inds[i]];
         }
     }
 
@@ -352,24 +407,20 @@ vector<double> indexMatAll(const int n, const vector<double>& posx, const vector
     return result;
 }
 
-vector<double> SigmaK(const vector<double>& qk)
+void SigmaK(const vector<double>& qk, vector<double>& result)
 {
-    vector<double> result(qk.size());
 #pragma omp parallel for
     for (size_t i = 0; i < qk.size(); ++i) {
         result[i] = Dflambda(qk[i]);
     }
-    return result;
 }
 
-vector<double> SigmaR(const vector<double>& qk, const vector<double>& qr)
+void SigmaR(const vector<double>& qk, const vector<double>& qr, vector<double>& result)
 {
-    vector<double> result(qk.size());
 #pragma omp parallel for
     for (size_t i = 0; i < qk.size(); ++i) {
         result[i] = DDflambda(qk[i]) * qr[i];
     }
-    return result;
 }
 
 vector<double> SigmaK10(const vector<double>& qk)
@@ -469,59 +520,56 @@ vector<double> QKstep()
     for (size_t i = 0; i < QKB1int.size(); i += len) {
         temp[i / len] = QKB1int[i];
     }
-    temp = scaleVec(temp, Dflambda(QKv[QKv.size() - len]) / T0);
-    vector<double> d1qK = Sum(temp, Sum(scaleVec(qK, -rInt.back()), Sum(ConvR(SigmaRA2int, QKB2int, t1grid.back()), Sum(ConvA(SigmaRA1int, QKB1int, t1grid.back()), ConvA(SigmaKA1int, QRB1int, t1grid.back())))));
+    vector<double> d1qK = (temp* (Dflambda(QKv[QKv.size() - len]) / T0)) + (qK * (-rInt.back())) + ConvR(SigmaRA2int, QKB2int, t1grid.back()) + ConvA(SigmaRA1int, QKB1int, t1grid.back()) + ConvA(SigmaKA1int, QRB1int, t1grid.back());
 #pragma omp parallel for
     for (size_t i = 0; i < QKB1int.size(); i += len) {
         temp[i / len] = Dflambda(QKB1int[i]);
     }
-    temp = scaleVec(temp, QKv[QKv.size() - len] / T0);
-    vector<double> d2qK = Subtract(Sum(temp, Sum(scaleVec(qR, 2 * Gamma), Sum(ConvR(QRA2int, SigmaKB2int, t1grid.back()), Sum(ConvA(QRA1int, SigmaKB1int, t1grid.back()), ConvA(QKA1int, SigmaRB1int, t1grid.back()))))), Product(qK, rInt));
-    return Sum(d1qK, Product(d2qK, theta));
+    vector<double> d2qK = (temp * (QKv[QKv.size() - len] / T0)) + (qR*  (2 * Gamma)) + ConvR(QRA2int, SigmaKB2int, t1grid.back()) + ConvA(QRA1int, SigmaKB1int, t1grid.back()) + ConvA(QKA1int, SigmaRB1int, t1grid.back()) - (qK * rInt);
+    return d1qK + (d2qK * theta);
 }
 
 vector<double> QRstep()
 {
     vector<double> qR = getLastLenEntries(QRv, len);
-    vector<double> d1qR = Sum(scaleVec(qR, -rInt.back()), ConvR(SigmaRA2int, QRB2int, t1grid.back()));
-    vector<double> d2qR = Subtract(Product(qR, rInt), ConvR(QRA2int, SigmaRB2int, t1grid.back()));
-    vector<double> temp = Sum(d1qR, Product(d2qR, theta));
-    return Sum(d1qR, Product(d2qR, theta));
+    vector<double> d1qR = (qR * (-rInt.back())) + ConvR(SigmaRA2int, QRB2int, t1grid.back());
+    vector<double> d2qR = (qR * rInt) - ConvR(QRA2int, SigmaRB2int, t1grid.back());
+    return d1qR + (d2qR * theta);
 }
 
 double rstep()
 {
-    vector<double> sigmaK, sigmaR;
+    vector<double> sigmaK(len, 0.0), sigmaR(len, 0.0);
     vector<double> qK = getLastLenEntries(QKv, len);
     vector<double> qR = getLastLenEntries(QRv, len);
     const double t = t1grid.back();
-    sigmaK = SigmaK(qK);
-    sigmaR = SigmaR(qK, qR);
+    SigmaK(qK, sigmaK);
+    SigmaR(qK, qR, sigmaR);
     return Gamma + ConvA(sigmaR, qK, t).front() + ConvA(sigmaK, qR, t).front() + sigmaK.front() * qK.front() / T0;
 }
 
 double drstep()
 {
-    vector<double> sigmaK, sigmaR, dsigmaK, dsigmaR;
+    vector<double> sigmaK(len, 0.0), sigmaR(len, 0.0), dsigmaK(len, 0.0), dsigmaR(len, 0.0);
     vector<double> qK = getLastLenEntries(QKv, len);
     vector<double> qR = getLastLenEntries(QRv, len);
     vector<double> dqK = getLastLenEntries(dQKv, len);
     vector<double> dqR = getLastLenEntries(dQRv, len);
     const double t = t1grid.back();
-    sigmaK = SigmaK(qK);
-    sigmaR = SigmaR(qK, qR);
-    dsigmaK = Sum(Product(SigmaK10(qK), dqK), Product(SigmaK01(qK), dqR));
-    dsigmaR = Sum(Product(SigmaR10(qK, qR), dqK), Product(SigmaR01(qK, qR), dqR));
+    SigmaK(qK, sigmaK);
+    SigmaR(qK, qR, sigmaR);
+    dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
+    dsigmaR = (SigmaR10(qK, qR) * dqK) + (SigmaR01(qK, qR) * dqR);
     return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
 }
 
 double drstep2(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double t)
 {
-    vector<double> sigmaK, sigmaR, dsigmaK, dsigmaR;
-    sigmaK = SigmaK(qK);
-    sigmaR = SigmaR(qK, qR);
-    dsigmaK = Sum(Product(SigmaK10(qK), dqK), Product(SigmaK01(qK), dqR));
-    dsigmaR = Sum(Product(SigmaR10(qK, qR), dqK), Product(SigmaR01(qK, qR), dqR));
+    vector<double> sigmaK(qK.size(), 0.0), sigmaR(qK.size(), 0.0), dsigmaK(qK.size(), 0.0), dsigmaR(qK.size(), 0.0);
+    SigmaK(qK, sigmaK);
+    SigmaR(qK, qR, sigmaR);
+    dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
+    dsigmaR = (SigmaR10(qK, qR)* dqK) + (SigmaR01(qK, qR) * dqR);
     return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
 }
 
@@ -720,12 +768,12 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
     // Compute posB1x
     vector<double> posB1x = !posB1xIn.empty() ?
         (same ? posB1xIn : isearchPosSortedInit(t1grid, theta, posB1xIn)) :
-        bsearchPosSorted(t1grid, scaleVec(theta, t1grid.back()));
+        bsearchPosSorted(t1grid, theta * t1grid.back());
 
     // Compute posB2x
     vector<double> posB2x = !posB2xIn.empty() ?
         (same ? posB2xIn : isearchPosSortedInit(t1grid, phi2, posB2xIn)) :
-        bsearchPosSorted(t1grid, scaleVec(phi2, t1grid.back()));
+        bsearchPosSorted(t1grid, phi2 * t1grid.back());
 
     // Update old positions
     posB1xOld = posB1x;
@@ -740,8 +788,8 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
         QKA1int.assign(len * len, QKv[0]);
         QRA1int.assign(len * len, QRv[0]);
     }
-    SigmaKA1int = SigmaK(QKA1int);
-    SigmaRA1int = SigmaR(QKA1int, QRA1int);
+    SigmaK(QKA1int, SigmaKA1int);
+    SigmaR(QKA1int, QRA1int, SigmaRA1int);
 
     // Interpolate QKA2int and QRA2int
     if (t1grid.back() > 0) {
@@ -752,7 +800,7 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
         QKA2int.assign(len * len, QKv[0]);
         QRA2int.assign(len * len, QRv[0]);
     }
-    SigmaRA2int = SigmaR(QKA2int, QRA2int);
+    SigmaR(QKA2int, QRA2int, SigmaRA2int);
 
 
     // Interpolate QKB1int and QRB1int
@@ -784,7 +832,7 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
 
     // Compute `diff` vector
     vector<double> diff(posB1x.size());
-    diff = Subtract(vector<double>(Floor.begin(), Floor.end()), posB1x);
+    Subtract(vector<double>(Floor.begin(), Floor.end()), posB1x, diff);
     if (t1grid.back() > 0) {
         QKB1int = indexVecN(1, len, diff, Floor, delta_t_ratio);
         QRB1int = indexVecN(2, len, diff, Floor, delta_t_ratio);
@@ -793,8 +841,8 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
         QKB1int.assign(len * len, QKv[0]);
         QRB1int.assign(len * len, QRv[0]);
     }
-    SigmaKB1int = SigmaK(QKB1int);
-    SigmaRB1int = SigmaR(QKB1int, QRB1int);
+    SigmaK(QKB1int, SigmaKB1int);
+    SigmaR(QKB1int, QRB1int, SigmaRB1int);
 
     // Interpolate QKB2int and QRB2int
     if (t1grid.back() > 0) {
@@ -805,8 +853,8 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
         QKB2int.assign(len * len, QKv[0]);
         QRB2int.assign(len * len, QRv[0]);
     }
-    SigmaKB2int = SigmaK(QKB2int);
-    SigmaRB2int = SigmaR(QKB2int, QRB2int);
+    SigmaK(QKB2int, SigmaKB2int);
+    SigmaR(QKB2int, QRB2int, SigmaRB2int);
 
     // Interpolate rInt
     if (t1grid.back() > 0) {
@@ -891,8 +939,8 @@ double SSPRK104()
             vector<double> lastQKv = getLastLenEntries(QKv, len);
             vector<double> lastQRv = getLastLenEntries(QRv, len);
             dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], t1grid.back());
-            gKvec[n + 1] = Sum(gKvec[0], scaleVec(hKvec[0], delta_t * amat[1][0]));
-            gRvec[n + 1] = Sum(gRvec[0], scaleVec(hRvec[0], delta_t * amat[1][0]));
+            Sum(gKvec[0], hKvec[0] * (delta_t * amat[1][0]), gKvec[n + 1]);
+            Sum(gRvec[0], hRvec[0] * (delta_t * amat[1][0]), gRvec[n + 1]);
             gtvec[n + 1] = gtvec[0] + delta_t * amat[1][0] * htvec[0];
             appendAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); //Append Update
 
@@ -902,8 +950,8 @@ double SSPRK104()
             gRvec[n + 1] = gRvec[0];
             gtvec[n + 1] = gtvec[0];
             for (size_t j = 0; j < stages; ++j) {
-                gKvec[n + 1] = Sum(gKvec[n + 1], scaleVec(hKvec[j], delta_t * bvec[j]));
-                gRvec[n + 1] = Sum(gRvec[n + 1], scaleVec(hRvec[j], delta_t * bvec[j]));
+                Sum(gKvec[n + 1], hKvec[j] * (delta_t * bvec[j]), gKvec[n + 1]);
+                Sum(gRvec[n + 1], hRvec[j] * (delta_t * bvec[j]), gRvec[n + 1]);
                 gtvec[n + 1] += delta_t * bvec[j] * htvec[j];
             }
             replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
@@ -913,8 +961,8 @@ double SSPRK104()
             gRvec[n + 1] = gRvec[0];
             gtvec[n + 1] = gtvec[0];
             for (size_t j = 0; j < n + 1; ++j) {
-                gKvec[n + 1] = Sum(gKvec[n + 1], scaleVec(hKvec[j], delta_t * amat[n + 1][j]));
-                gRvec[n + 1] = Sum(gRvec[n + 1], scaleVec(hRvec[j], delta_t * amat[n + 1][j]));
+                Sum(gKvec[n + 1], hKvec[j] * (delta_t * amat[n + 1][j]), gKvec[n + 1]);
+                Sum(gRvec[n + 1], hRvec[j] * (delta_t * amat[n + 1][j]), gRvec[n + 1]);
                 gtvec[n + 1] += delta_t * amat[n + 1][j] * htvec[j];
             }
             replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
@@ -929,8 +977,8 @@ double SSPRK104()
     gRe = gRvec[0];
     gte = gtvec[0];
     for (size_t j = 0; j < stages; ++j) {
-        gKe = Sum(gKe, scaleVec(hKvec[j], delta_t * b2vec[j]));
-        gRe = Sum(gRe, scaleVec(hRvec[j], delta_t * b2vec[j]));
+        Sum(gKe, hKvec[j] * (delta_t * b2vec[j]), gKe);
+        Sum(gRe, hRvec[j] * (delta_t * b2vec[j]), gRe);
         gte += delta_t * b2vec[j] * htvec[j];
     }
 
