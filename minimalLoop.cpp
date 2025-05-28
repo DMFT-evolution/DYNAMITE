@@ -1,5 +1,3 @@
-// Minimal C++ program to test if Visual Studio Code is set up correctly
-
 #include <iostream>
 #include <fstream>
 #include <omp.h>
@@ -871,8 +869,8 @@ double SSPRK104()
             vector<double> lastQKv = getLastLenEntries(QKv, len);
             vector<double> lastQRv = getLastLenEntries(QRv, len);
             dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], t1grid.back());
-            gKvec[n + 1] = gKvec[0], hKvec[0] * (delta_t * amat[1][0]);
-            gRvec[n + 1] = gRvec[0], hRvec[0] * (delta_t * amat[1][0]);
+            gKvec[n + 1] = gKvec[0] + hKvec[0] * (delta_t * amat[1][0]);
+            gRvec[n + 1] = gRvec[0] + hRvec[0] * (delta_t * amat[1][0]);
             gtvec[n + 1] = gtvec[0] + delta_t * amat[1][0] * htvec[0];
             appendAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); //Append Update
 
