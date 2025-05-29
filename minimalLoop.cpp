@@ -26,12 +26,12 @@ constexpr int p = 3;
 constexpr int p2 = 4;
 constexpr double lambda = 0.5;
 constexpr double TMCT = 0.805166;
-constexpr double T0 = 1.001 * TMCT;
+constexpr double T0 = 1.001*TMCT;
 // double T0=1e50;
 constexpr double Gamma = 0.0;
 constexpr int maxLoop = 10000;
 
-constexpr double tmax = 1e6; //time to evolve to
+constexpr double tmax = 10; //time to evolve to
 constexpr double delta_t_min = 1e-5; //initial and minimal time step
 constexpr double delta_max = 1e-11; //maximal error per step
 constexpr double rmax = 13; // stability range of SSPRK(10,4)
@@ -260,7 +260,7 @@ void indexVecLN3(const vector<double>& __restrict weights, const vector<size_t>&
     }
 }
 
-void indexVecN(const size_t length, const vector<double>& weights, const vector<size_t>& inds, const vector<double>& dtratio, vector<double>& qK_result, vector<double>& qR_result)
+void indexVecN(const size_t __restrict length, const vector<double>& __restrict weights, const vector<size_t>& __restrict inds, const vector<double>& __restrict dtratio, vector<double>& __restrict qK_result, vector<double>& __restrict qR_result)
 {
     size_t dims[] = { len,len };
     size_t t1len = dtratio.size();
@@ -289,7 +289,7 @@ void indexVecN(const size_t length, const vector<double>& weights, const vector<
     }
 }
 
-void indexVecR2(const vector<double>& in1, const vector<double>& in2, const vector<double>& in3, const vector<size_t>& inds, const vector<double>& dtratio, vector<double>& result)
+void indexVecR2(const vector<double>& __restrict in1, const vector<double>& __restrict in2, const vector<double>& __restrict in3, const vector<size_t>& __restrict inds, const vector<double>& __restrict dtratio, vector<double>& __restrict result)
 {
     size_t dims = inds.size();
     size_t t1len = dtratio.size();
@@ -496,7 +496,7 @@ double drstep()
     SigmaR(qK, qR, sigmaR);
     dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
     dsigmaR = (SigmaR10(qK, qR) * dqK) + (SigmaR01(qK, qR) * dqR);
-    return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
+    return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(dsigmaK, qR, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
 }
 
 double drstep2(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double t)
@@ -506,7 +506,7 @@ double drstep2(const vector<double>& qK, const vector<double>& qR, const vector<
     SigmaR(qK, qR, sigmaR);
     dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
     dsigmaR = (SigmaR10(qK, qR)* dqK) + (SigmaR01(qK, qR) * dqR);
-    return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
+    return ConvA(sigmaR, qK, 1).front() + ConvA(sigmaK, qR, 1).front() + ConvA(dsigmaR, qK, t).front() + ConvA(dsigmaK, qR, t).front() + ConvA(sigmaR, dqK, t).front() + ConvA(sigmaK, dqR, t).front() + (dsigmaK.front() * qK.front() + sigmaK.front() * dqK.front()) / T0;
 }
 
 void appendAll(const vector<double>& qK,
@@ -585,7 +585,7 @@ vector<double> bsearchPosSorted(const vector<double>& list, const vector<double>
     vector<double> result(elem.size());
     size_t n0, n1, m;
     double Lm, El;
-
+    #pragma omp parallel for
     for (size_t l = 0; l < elem.size(); ++l) {
         El = elem[l];
         n0 = 1; // Start index (Mathematica uses 1-based indexing, C++ uses 0-based)
@@ -634,66 +634,71 @@ vector<double> bsearchPosSorted(const vector<double>& list, const vector<double>
 }
 
 vector<double> isearchPosSortedInit(const vector<double>& list, const vector<double>& elem, const vector<double>& inits) {
-    size_t len = list.size();
-    vector<double> result(elem.size(), len); // Initialize output vector
-    double l0, l1, Lm, El;
-    size_t n0, n1, m;
-    bool even;
-    double temp = len;
+    vector<double> result(elem.size(), 0.0); // Initialize output vector
 
     // Iterate over `elem` in reverse order
-    for (size_t l = 512; l-- > 0;) {
-        El = list.back() * elem[l];
-        n1 = min(static_cast<size_t>(ceil(temp)), len);
-        n0 = static_cast<size_t>(floor(inits[l]));
-        m = min(n0 + 1, len);
-        even = true;
-
-        if ((Lm = list[m - 1]) > El) {
-            n1 = max(static_cast<size_t>(m) - 2, (size_t)1);
-        }
-
-        // Perform the search
-        while ((l0 = list[n0 - 1]) <= El && El <= (l1 = list[n1 - 1]) && n0 < n1) {
-            even = !even;
-            if (even) {
-                m = n0 + round((El - l0) / (l1 - l0) * (n1 - n0));
+#pragma omp parallel for
+    for (size_t k = 0; k < inits.size()/len; ++k)
+    { 
+        size_t length = list.size();
+        double l0, l1, Lm, El;
+        size_t n0, n1, m;
+        bool even;
+        double temp=length;
+        for (size_t l = len; l-- > 0;) 
+        {
+            El = list.back() * elem[k*len+l];
+            n1 = min(static_cast<size_t>(ceil(temp)), length);
+            n0 = static_cast<size_t>(floor(inits[k*len+l]));
+            m = min(n0 + 1, length);
+            even = true;
+    
+            if ((Lm = list[m - 1]) > El) {
+                n1 = max(static_cast<size_t>(m) - 2, (size_t)1);
+            }
+    
+            // Perform the search
+            while ((l0 = list[n0 - 1]) <= El && El <= (l1 = list[n1 - 1]) && n0 < n1) {
+                even = !even;
+                if (even) {
+                    m = n0 + round((El - l0) / (l1 - l0) * (n1 - n0));
+                }
+                else {
+                    m = (n0 + n1) / 2;
+                }
+                Lm = list[m - 1];
+                if (Lm == El) {
+                    n0 = m;
+                    n1 = m - 1;
+                }
+                else if (Lm < El) {
+                    n0 = m + 1;
+                }
+                else {
+                    n1 = m - 1;
+                }
+            }
+    
+            // Compute the output value
+            if (Lm <= El) {
+                if (m == length) {
+                    temp = m;
+                }
+                else {
+                    temp = m + (El - Lm) / (list[m] - Lm);
+                }
             }
             else {
-                m = (n0 + n1) / 2;
+                if (m > 1) {
+                    temp = m - (El - Lm) / (list[m - 2] - Lm);
+                }
+                else {
+                    temp = m;
+                }
             }
-            Lm = list[m - 1];
-            if (Lm == El) {
-                n0 = m;
-                n1 = m - 1;
-            }
-            else if (Lm < El) {
-                n0 = m + 1;
-            }
-            else {
-                n1 = m - 1;
-            }
+            result[k*len+l] = temp;
         }
-
-        // Compute the output value
-        if (Lm <= El) {
-            if (m == len) {
-                temp = m;
-            }
-            else {
-                temp = m + (El - Lm) / (list[m] - Lm);
-            }
-        }
-        else {
-            if (m > 1) {
-                temp = m - (El - Lm) / (list[m - 2] - Lm);
-            }
-            else {
-                temp = m;
-            }
-        }
-        result[l] = temp;
-    }
+    } 
 
     return result;
 }
@@ -974,13 +979,13 @@ void init()
 int main() {
     omp_set_num_threads(16); // Adjust as needed
 
-    #pragma omp parallel
+    #pragma omp parallel 
     {
         cpu_set_t cpuset;
         CPU_ZERO(&cpuset);
         CPU_SET(omp_get_thread_num(), &cpuset);
         pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-    }
+    } 
 
     // 0) Initialize
     init();
@@ -1006,7 +1011,7 @@ int main() {
 
         // primitive time-step adaptation
         if (delta < delta_max && loop > 5 &&
-            (delta < 1.1 * delta_old || delta_old == 0) && false &&
+            (delta < 1.1 * delta_old || delta_old == 0) &&
             rmax / specRad > delta_t && delta_t_ratio.back() == 1)
         {
             delta_t *= 1.01;
@@ -1018,6 +1023,7 @@ int main() {
         // display a video
         std::cout << "loop: " << loop
             << " time: " << t1grid.back()
+            << " time step: " << delta_t
             << " delta: " << delta
             << " specRad: " << specRad
             << std::endl;
@@ -1030,7 +1036,7 @@ int main() {
 
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    cout << "Time taken by all time-steps: " << duration.count() / 1000 << " milliseconds" << endl;
+    std::cout << "Time taken by binary search: " << duration.count() / 1000 << " milliseconds" << endl;
 
 
     // 3) Print the final results
