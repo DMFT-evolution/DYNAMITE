@@ -22,17 +22,22 @@ constexpr double pow_const<0>(double) {
     return 1.0;
 }
 
-constexpr int p = 3;
-constexpr int p2 = 4;
-constexpr double lambda = 0.5;
+template <>
+constexpr double pow_const<-1>(double) {
+    return 0.0;
+}
+
+constexpr int p = 2;
+constexpr int p2 = 10;
+constexpr double lambda = 0.6;
 constexpr double TMCT = 0.805166;
-constexpr double T0 = 1.001*TMCT;
+constexpr double T0 = 1e50;
 // double T0=1e50;
 constexpr double Gamma = 0.0;
-constexpr int maxLoop = 10000;
+constexpr int maxLoop = 100;
 
-constexpr double tmax = 10; //time to evolve to
-constexpr double delta_t_min = 1e-5; //initial and minimal time step
+constexpr double tmax = 1e7; //time to evolve to
+constexpr double delta_t_min = 1e-2; //initial and minimal time step
 constexpr double delta_max = 1e-11; //maximal error per step
 constexpr double rmax = 13; // stability range of SSPRK(10,4)
 
@@ -41,7 +46,7 @@ double delta_old;
 int loop;
 double specRad;
 double delta_t;
-size_t len;
+size_t len = 1024;
 int ord;
 
 vector<double> theta, phi1, phi2, posA1y, posA2y, posB2y, weightsA1y, weightsA2y, weightsB2y, posB1xOld, posB2xOld, integ;
@@ -207,20 +212,24 @@ vector<size_t> importIntVectorFromFile(const string& filename) {
 
 void import()
 {
-    theta = importVectorFromFile("Grid_data/theta.dat");
-    phi1 = importVectorFromFile("Grid_data/phi1.dat");
-    phi2 = importVectorFromFile("Grid_data/phi2.dat");
-    posA1y = importVectorFromFile("Grid_data/posA1y.dat");
-    posA2y = importVectorFromFile("Grid_data/posA2y.dat");
-    posB2y = importVectorFromFile("Grid_data/posB2y.dat");
-    indsA1y = importIntVectorFromFile("Grid_data/indsA1y.dat");
-    indsA2y = importIntVectorFromFile("Grid_data/indsA2y.dat");
-    indsB2y = importIntVectorFromFile("Grid_data/indsB2y.dat");
-    weightsA1y = importVectorFromFile("Grid_data/weightsA1y.dat");
-    weightsA2y = importVectorFromFile("Grid_data/weightsA2y.dat");
-    weightsB2y = importVectorFromFile("Grid_data/weightsB2y.dat");
-    integ = importVectorFromFile("Grid_data/int.dat");
-    len = theta.size();
+
+    std::ostringstream basePath;
+    basePath << "Grid_data/" << len << "/";
+    std::string prefix = basePath.str();
+    theta       = importVectorFromFile(prefix + "theta.dat");
+    phi1        = importVectorFromFile(prefix + "phi1.dat");
+    phi2        = importVectorFromFile(prefix + "phi2.dat");
+    posA1y      = importVectorFromFile(prefix + "posA1y.dat");
+    posA2y      = importVectorFromFile(prefix + "posA2y.dat");
+    posB2y      = importVectorFromFile(prefix + "posB2y.dat");
+    indsA1y     = importIntVectorFromFile(prefix + "indsA1y.dat");
+    indsA2y     = importIntVectorFromFile(prefix + "indsA2y.dat");
+    indsB2y     = importIntVectorFromFile(prefix + "indsB2y.dat");
+    weightsA1y  = importVectorFromFile(prefix + "weightsA1y.dat");
+    weightsA2y  = importVectorFromFile(prefix + "weightsA2y.dat");
+    weightsB2y  = importVectorFromFile(prefix + "weightsB2y.dat");
+    integ       = importVectorFromFile(prefix + "int.dat");
+    
     ord = weightsB2y.size() / (len * len) - 2;
 }
 
@@ -260,7 +269,7 @@ void indexVecLN3(const vector<double>& __restrict weights, const vector<size_t>&
     }
 }
 
-void indexVecN(const size_t __restrict length, const vector<double>& __restrict weights, const vector<size_t>& __restrict inds, const vector<double>& __restrict dtratio, vector<double>& __restrict qK_result, vector<double>& __restrict qR_result)
+void indexVecN(const size_t length, const vector<double>& __restrict weights, const vector<size_t>& __restrict inds, const vector<double>& __restrict dtratio, vector<double>& __restrict qK_result, vector<double>& __restrict qR_result)
 {
     size_t dims[] = { len,len };
     size_t t1len = dtratio.size();
@@ -998,7 +1007,7 @@ int main() {
         std::cerr << "Error: Unable to open correlation.txt" << std::endl;
         return 1;
     }
-    corr << std::fixed << std::setprecision(9);
+    corr << std::fixed << std::setprecision(14);
 
     auto start = high_resolution_clock::now();
 
@@ -1010,7 +1019,7 @@ int main() {
         loop++;
 
         // primitive time-step adaptation
-        if (delta < delta_max && loop > 5 &&
+        if (false && delta < delta_max && loop > 5 &&
             (delta < 1.1 * delta_old || delta_old == 0) &&
             rmax / specRad > delta_t && delta_t_ratio.back() == 1)
         {
@@ -1031,12 +1040,15 @@ int main() {
         // record QK(t,0) to file
         double t = t1grid.back();
         double qk0 = QKv[(t1grid.size() - 1) * len + 0];
-        corr << t << "\t" << qk0 << "\n";
+        vector<double> temp(len,0.0);
+        SigmaK(getLastLenEntries(QKv, len),temp);
+        double energy = -(ConvA(temp,getLastLenEntries(QRv, len),t)[0] + Dflambda(qk0)/T0); 
+        corr << t << "\t" << energy << "\t" << qk0 << "\n";
     }
 
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Time taken by binary search: " << duration.count() / 1000 << " milliseconds" << endl;
+    std::cout << "Time taken by time evolution: " << duration.count() / 1000 << " milliseconds" << endl;
 
 
     // 3) Print the final results
