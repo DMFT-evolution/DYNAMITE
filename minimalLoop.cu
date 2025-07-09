@@ -14,6 +14,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/transform.h>
 #include <thrust/reduce.h>
+#include <thrust/sequence.h>
 #include <thrust/functional.h>
 #include <thrust/binary_search.h>
 #include <thrust/iterator/counting_iterator.h>
@@ -38,17 +39,17 @@ constexpr double pow_const<-1>(double) {
 
 // Device-compatible version of pow_const
 template <int P>
-__device__ double pow_const_device(double q) {
+__device__ __forceinline__ double pow_const_device(double q) {
     return q * pow_const_device<P - 1>(q);
 }
 
 template <>
-__device__ double pow_const_device<0>(double) {
+__device__ __forceinline__ double pow_const_device<0>(double) {
     return 1.0;
 }
 
 template <>
-__device__ double pow_const_device<-1>(double) {
+__device__ __forceinline__ double pow_const_device<-1>(double) {
     return 0.0;
 }
 
@@ -185,11 +186,11 @@ constexpr double TMCT = 0.805166;
 constexpr double T0 = 1.001*TMCT;
 // double T0=1e50;
 constexpr double Gamma = 0.0;
-constexpr int maxLoop = 10;
+constexpr int maxLoop = 10000;
 
 constexpr double tmax = 1e7; //time to evolve to
 constexpr double delta_t_min = 1e-2; //initial and minimal time step
-constexpr double delta_max = 1e-11; //maximal error per step
+constexpr double delta_max = 1e-8; //maximal error per step
 constexpr double rmax = 13; // stability range of SSPRK(10,4)
 
 double delta;
@@ -197,8 +198,9 @@ double delta_old;
 int loop;
 double specRad;
 double delta_t;
-size_t len = 1024;
+size_t len = 512;
 int ord;
+bool gpu = true; // Use GPU if true, CPU if false
 
 vector<double> theta, phi1, phi2, posA1y, posA2y, posB2y, weightsA1y, weightsA2y, weightsB2y, posB1xOld, posB2xOld, integ;
 vector<size_t> indsA1y, indsA2y, indsB2y;
@@ -468,6 +470,29 @@ thrust::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double
     return result;
 }
 
+
+void printVectorDifference(const std::vector<double>& a, const std::vector<double>& b) {
+    if (a.size() != b.size()) {
+        std::cerr << "Error: Vectors must be of the same length.\n";
+        std::cerr << "Size of vector a: " << a.size() << ", Size of vector b: " << b.size() << "\n";
+        return;
+    }
+
+    double diff = 0.0;
+    std::cout << "Differences between vectors:\n";
+    for (size_t i = 0; i < a.size(); ++i) {
+        diff = std::abs(a[i] - b[i]);
+        std::cout << "Index " << i << ": |" << a[i] << " - " << b[i] << "| = " << diff << "\n";
+    }
+
+    diff=0.0;
+    std::cout << "Total Differences between vectors: ";
+    for (size_t i = 0; i < a.size(); ++i) {
+        diff += std::abs(a[i] - b[i]);
+    }
+    std::cout << diff << "\n";
+}
+
 __global__ void FusedUpdateKernel(
     const double* __restrict__ a,
     const double* __restrict__ b,
@@ -495,8 +520,8 @@ __global__ void FusedUpdateKernel(
 }
 
 void FusedUpdate(
-    const thrust::device_vector<double>& a,
-    const thrust::device_vector<double>& b,
+    const thrust::device_ptr<double>& a,
+    const thrust::device_ptr<double>& b,
     const thrust::device_vector<double>& out,
     double alpha,
     double beta,
@@ -504,26 +529,21 @@ void FusedUpdate(
     const thrust::device_vector<double>* extra1 = nullptr,
     const thrust::device_vector<double>* extra2 = nullptr,
     const thrust::device_vector<double>* extra3 = nullptr,
-    const thrust::device_vector<double>* subtract = nullptr
+    const thrust::device_ptr<double>& subtract = nullptr
 ) {
-    size_t N = a.size();
-    assert(b.size() == N && out.size() == N);
-    if (extra1) assert(extra1->size() == N);
-    if (extra2) assert(extra2->size() == N);
-    if (extra3) assert(extra3->size() == N);
-    if (subtract) assert(subtract->size() == N);
+    size_t N = out.size();
 
     int threads = 256;
     int blocks = (N + threads - 1) / threads;
 
     FusedUpdateKernel<<<blocks, threads>>>(
-        thrust::raw_pointer_cast(a.data()),
-        thrust::raw_pointer_cast(b.data()),
+        thrust::raw_pointer_cast(a),
+        thrust::raw_pointer_cast(b),
         extra1 ? thrust::raw_pointer_cast(extra1->data()) : nullptr,
         extra2 ? thrust::raw_pointer_cast(extra2->data()) : nullptr,
         extra3 ? thrust::raw_pointer_cast(extra3->data()) : nullptr,
         delta ? thrust::raw_pointer_cast(delta->data()) : nullptr,
-        subtract ? thrust::raw_pointer_cast(subtract->data()) : nullptr,
+        subtract ? thrust::raw_pointer_cast(subtract) : nullptr,
         thrust::raw_pointer_cast(const_cast<thrust::device_vector<double>&>(out).data()),
         alpha, beta, N
     );
@@ -943,41 +963,6 @@ void indexVecLN3(const vector<double>& __restrict weights, const vector<size_t>&
     }
 }
 
-void indexVecLN3GPU(const thrust::device_vector<double>& weights, 
-                    const thrust::device_vector<size_t>& inds, 
-                    thrust::device_vector<double>& qk_result, 
-                    thrust::device_vector<double>& qr_result) {
-    size_t prod = inds.size();
-    size_t length = d_QKv.size() - len;
-    size_t depth = weights.size() / prod;
-
-    const double* QK_start = thrust::raw_pointer_cast(d_QKv.data()) + length;
-    const double* QR_start = thrust::raw_pointer_cast(d_QRv.data()) + length;
-    const double* weights_start = thrust::raw_pointer_cast(weights.data());
-    const size_t* inds_start = thrust::raw_pointer_cast(inds.data());
-    double* qk_result_start = thrust::raw_pointer_cast(qk_result.data());
-    double* qr_result_start = thrust::raw_pointer_cast(qr_result.data());
-
-    // Kernel for parallel computation
-    auto kernel = [=] __device__(size_t j) {
-        const double* weights_ptr = weights_start + depth * j;
-        size_t index = inds_start[j];
-        double qk_sum = 0.0;
-        double qr_sum = 0.0;
-
-        for (size_t d = 0; d < depth; ++d) {
-            qk_sum += weights_ptr[d] * QK_start[index + d];
-            qr_sum += weights_ptr[d] * QR_start[index + d];
-        }
-
-        qk_result_start[j] = qk_sum;
-        qr_result_start[j] = qr_sum;
-    };
-
-    // Launch parallel computation using thrust::for_each
-    thrust::for_each_n(thrust::device, thrust::make_counting_iterator<size_t>(0), prod, kernel);
-}
-
 template <int DEPTH>
 __global__ void indexVecLN3_kernel(const double* __restrict__ weights,
                                    const size_t* __restrict__ inds,
@@ -1030,6 +1015,61 @@ void indexVecLN3GPU_fast(const thrust::device_vector<double>& weights,
     );
 
     cudaDeviceSynchronize(); // Optional if used synchronously
+}
+
+void indexVecLN3GPU(
+    const thrust::device_vector<double>& weights,
+    const thrust::device_vector<size_t>& inds,
+    thrust::device_vector<double>& qk_result,
+    thrust::device_vector<double>& qr_result
+) {
+    size_t prod = inds.size();
+    size_t length = d_QKv.size() - len;
+    size_t depth = weights.size() / prod;
+
+    const double* __restrict__ QK_start = thrust::raw_pointer_cast(d_QKv.data()) + length;
+    const double* __restrict__ QR_start = thrust::raw_pointer_cast(d_QRv.data()) + length;
+    const double* __restrict__ weights_start = thrust::raw_pointer_cast(weights.data());
+    const size_t* __restrict__ inds_start = thrust::raw_pointer_cast(inds.data());
+    double* __restrict__ qk_result_start = thrust::raw_pointer_cast(qk_result.data());
+    double* __restrict__ qr_result_start = thrust::raw_pointer_cast(qr_result.data());
+
+    auto kernel = [=] __device__ (size_t j) {
+        size_t index = inds_start[j];
+        const double* w = weights_start + j * depth;
+
+        double qk = 0.0, qr = 0.0;
+
+        // Stack-allocated weights for better register usage
+        double w_local[32];  // works for depth ≤ 32
+
+        // Preload weights into local registers
+        #pragma unroll 32
+        for (int d = 0; d < 32; ++d) {
+            w_local[d] = (d < depth) ? w[d] : 0.0;
+        }
+
+        // Now accumulate QK/QR
+        #pragma unroll 32
+        for (int d = 0; d < 32; ++d) {
+            if (d < depth) {
+                double wk = QK_start[index + d];
+                double wr = QR_start[index + d];
+                double wj = w_local[d];
+                qk += wj * wk;
+                qr += wj * wr;
+            }
+        }
+
+        qk_result_start[j] = qk;
+        qr_result_start[j] = qr;
+    };
+
+    thrust::for_each_n(thrust::device,
+        thrust::make_counting_iterator<size_t>(0),
+        prod,
+        kernel
+    );
 }
 
 void indexVecN(const size_t length, const vector<double>& __restrict weights, const vector<size_t>& __restrict inds, const vector<double>& __restrict dtratio, vector<double>& __restrict qK_result, vector<double>& __restrict qR_result)
@@ -1284,19 +1324,93 @@ void indexMatAllGPU_slow(const thrust::device_vector<double>& posx,
         });
 }
 
-void indexMatAllGPU(
-    const thrust::device_vector<double>& posx, 
-    const thrust::device_vector<size_t>& indsy, 
-    const thrust::device_vector<double>& weightsy, 
-    const thrust::device_vector<double>& dtratio, 
-    thrust::device_vector<double>& qK_result, 
-    thrust::device_vector<double>& qR_result,
-    const thrust::device_vector<double>& QKv, 
-    const thrust::device_vector<double>& QRv, 
-    const thrust::device_vector<double>& dQKv, 
-    const thrust::device_vector<double>& dQRv, 
-    size_t len)
-{
+__global__ void indexMatAllKernel(const double* __restrict__ posx,
+                                          const size_t* __restrict__ indsy,
+                                          const double* __restrict__ weightsy,
+                                          const double* __restrict__ dtratio,
+                                          double* __restrict__ qK_result,
+                                          double* __restrict__ qR_result,
+                                          const double* __restrict__ QKv,
+                                          const double* __restrict__ QRv,
+                                          const double* __restrict__ dQKv,
+                                          const double* __restrict__ dQRv,
+                                          size_t len,
+                                          size_t depth,
+                                          size_t t1len,
+                                          size_t prod) {
+    size_t j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j >= prod) return;
+
+    // Clamp index to avoid overflow
+    size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
+    size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
+
+    double inx = posx[j] - indsx;
+    double inx2 = inx * inx;
+    double inx3 = inx2 * inx;
+    size_t inds = (indsx - 1) * len + indsy[j];
+
+    // Load weights into registers
+    const double* weights = weightsy + j * depth;
+
+    // Prepare accumulators
+    double qK0 = 0.0, qK1 = 0.0, dqK1 = 0.0, dqK2 = 0.0;
+    double qR0 = 0.0, qR1 = 0.0, dqR1 = 0.0, dqR2 = 0.0;
+
+    for (size_t d = 0; d < depth; ++d) {
+        size_t offset = inds + d;
+        size_t offset1 = len + offset;
+        size_t offset2 = 2 * len + offset;
+
+        double w = weights[d];
+
+        qK0  += w * QKv[offset];
+        qK1  += w * QKv[offset1];
+        dqK1 += w * dQKv[offset1];
+
+        qR0  += w * QRv[offset];
+        qR1  += w * QRv[offset1];
+        dqR1 += w * dQRv[offset1];
+
+        if (indsx >= t1len - 1) continue; // Skip if indsx is out of bounds
+        dqK2 += w * dQKv[offset2];
+        dqR2 += w * dQRv[offset2];
+    }
+
+    if (indsx < t1len - 1) {
+        double denom = dtratio[indsx + 1];
+
+        qK_result[j] = (1 - 3 * inx2 + 2 * inx3) * qK0 +
+                       (inx - 2 * inx2 + inx3) * dqK1 +
+                       (3 * inx2 - 2 * inx3) * qK1 +
+                       (-inx2 + inx3) * dqK2 / denom;
+
+        qR_result[j] = (1 - 3 * inx2 + 2 * inx3) * qR0 +
+                       (inx - 2 * inx2 + inx3) * dqR1 +
+                       (3 * inx2 - 2 * inx3) * qR1 +
+                       (-inx2 + inx3) * dqR2 / denom;
+    } else {
+        qK_result[j] = (1 - inx2) * qK0 +
+                       inx2 * qK1 +
+                       (inx - inx2) * dqK1;
+
+        qR_result[j] = (1 - inx2) * qR0 +
+                       inx2 * qR1 +
+                       (inx - inx2) * dqR1;
+    }
+}
+
+void indexMatAllGPU(const thrust::device_vector<double>& posx,
+                         const thrust::device_vector<size_t>& indsy,
+                         const thrust::device_vector<double>& weightsy,
+                         const thrust::device_vector<double>& dtratio,
+                         thrust::device_vector<double>& qK_result,
+                         thrust::device_vector<double>& qR_result,
+                         const thrust::device_vector<double>& QKv,
+                         const thrust::device_vector<double>& QRv,
+                         const thrust::device_vector<double>& dQKv,
+                         const thrust::device_vector<double>& dQRv,
+                         size_t len) {
     size_t prod = indsy.size();
     size_t dims2 = weightsy.size();
     size_t depth = dims2 / prod;
@@ -1313,62 +1427,17 @@ void indexMatAllGPU(
     double* qK_result_ptr = thrust::raw_pointer_cast(qK_result.data());
     double* qR_result_ptr = thrust::raw_pointer_cast(qR_result.data());
 
-    thrust::for_each_n(
-        thrust::device,
-        thrust::make_counting_iterator<size_t>(0),
-        prod,
-        [=] __device__ (size_t j) {
-            size_t indsx = max(min((size_t)posx_ptr[j], (size_t)(posx_ptr[prod - 1] - 0.5)), (size_t)1);
-            double inx = posx_ptr[j] - indsx;
-            double inx2 = inx * inx;
-            double inx3 = inx2 * inx;
+    int threads = 256;
+    int blocks = (prod + threads - 1) / threads;
 
-            size_t inds_base = (indsx - 1) * len + indsy_ptr[j];
-            const double* w = weightsy_ptr + depth * j;
+    indexMatAllKernel<<<blocks, threads>>>(
+        posx_ptr, indsy_ptr, weightsy_ptr, dtratio_ptr,
+        qK_result_ptr, qR_result_ptr,
+        QKv_ptr, QRv_ptr, dQKv_ptr, dQRv_ptr,
+        len, depth, t1len, prod
+    );
 
-            double qK0 = 0.0, qK1 = 0.0, qK2 = 0.0, qK3 = 0.0;
-            double qR0 = 0.0, qR1 = 0.0, qR2 = 0.0, qR3 = 0.0;
-
-            #pragma unroll
-            for (size_t d = 0; d < 32; ++d) {
-                if (d < depth) {
-                    size_t offset = inds_base + d;
-                    double weight = w[d];
-
-                    qK0 += weight * QKv_ptr[offset];
-                    qK1 += weight * QKv_ptr[len + offset];
-                    qK2 += weight * dQKv_ptr[len + offset];
-                    qK3 += weight * dQKv_ptr[2 * len + offset];
-
-                    qR0 += weight * QRv_ptr[offset];
-                    qR1 += weight * QRv_ptr[len + offset];
-                    qR2 += weight * dQRv_ptr[len + offset];
-                    qR3 += weight * dQRv_ptr[2 * len + offset];
-                }
-            }
-
-            if (indsx < t1len - 1) {
-                double dtr = dtratio_ptr[indsx + 1];
-
-                qK_result_ptr[j] = (1 - 3 * inx2 + 2 * inx3) * qK0 +
-                                   (inx - 2 * inx2 + inx3) * qK2 +
-                                   (3 * inx2 - 2 * inx3) * qK1 +
-                                   (-inx2 + inx3) * qK3 / dtr;
-
-                qR_result_ptr[j] = (1 - 3 * inx2 + 2 * inx3) * qR0 +
-                                   (inx - 2 * inx2 + inx3) * qR2 +
-                                   (3 * inx2 - 2 * inx3) * qR1 +
-                                   (-inx2 + inx3) * qR3 / dtr;
-            } else {
-                qK_result_ptr[j] = (1 - inx2) * qK0 +
-                                   inx2 * qK1 +
-                                   (inx - inx2) * qK2;
-
-                qR_result_ptr[j] = (1 - inx2) * qR0 +
-                                   inx2 * qR1 +
-                                   (inx - inx2) * qR2;
-            }
-        });
+    cudaDeviceSynchronize();
 }
 
 void SigmaK(const vector<double>& qk, vector<double>& result)
@@ -1597,7 +1666,7 @@ thrust::device_vector<double> ConvAGPU(const thrust::device_vector<double>& f,
     const double* theta_ptr = (theta.size() == depth) ? thrust::raw_pointer_cast(theta.data()) : nullptr;
     double* out_ptr = thrust::raw_pointer_cast(out.data());
 
-    int threads = 256;
+    int threads = 128;
     size_t shmem = threads * sizeof(double);
 
     ConvAGPUKernel<<<depth, threads, shmem>>>(
@@ -1663,31 +1732,46 @@ __global__ void ConvRKernel(const double* __restrict__ f,
                             double t,
                             size_t length,
                             size_t depth) {
-    extern __shared__ double sdata[];
+    extern __shared__ double shared[];
+    double* integ_shared = shared;
+    double* reduction_shared = &shared[length];  // For thread reduction
 
-    int j = blockIdx.x;       // each block computes one out[j]
+    int j = blockIdx.x;   // each block handles one output row
     int tid = threadIdx.x;
     int nthreads = blockDim.x;
 
-    double sum = 0.0;
+    // Load integ into shared memory once
     for (int i = tid; i < length; i += nthreads) {
-        sum += f[j * length + i] * g[j * length + i] * integ[i];
+        integ_shared[i] = integ[i];
     }
-
-    sdata[tid] = sum;
     __syncthreads();
 
-    // Shared memory reduction
+    // Compute thread-local partial sum
+    double sum = 0.0;
+    const size_t base = j * length;
+
+    for (size_t i = tid; i < length; i += nthreads) {
+        double fval = f[base + i];
+        double gval = g[base + i];
+        sum += fval * gval * integ_shared[i];
+    }
+
+    // Store thread-local result in shared memory
+    reduction_shared[tid] = sum;
+    __syncthreads();
+
+    // Block-level reduction
     for (int stride = nthreads / 2; stride > 0; stride >>= 1) {
         if (tid < stride) {
-            sdata[tid] += sdata[tid + stride];
+            reduction_shared[tid] += reduction_shared[tid + stride];
         }
         __syncthreads();
     }
 
+    // Final scaling and write
     if (tid == 0) {
         double scale = t * (1.0 - theta[j]);
-        out[j] = scale * sdata[0];
+        out[j] = scale * reduction_shared[0];
     }
 }
 
@@ -1697,7 +1781,7 @@ thrust::device_vector<double> ConvRGPU(const thrust::device_vector<double>& f,
                                        const thrust::device_vector<double>& integ,
                                        const thrust::device_vector<double>& theta) {
     size_t length = integ.size();              // rows
-    size_t depth = f.size() / length;         // columns (outputs)
+    size_t depth = f.size() / length;          // output entries
 
     thrust::device_vector<double> out(depth, 0.0);
 
@@ -1707,8 +1791,8 @@ thrust::device_vector<double> ConvRGPU(const thrust::device_vector<double>& f,
     const double* theta_ptr = thrust::raw_pointer_cast(theta.data());
     double* out_ptr = thrust::raw_pointer_cast(out.data());
 
-    int threads = 256;
-    size_t shmem = threads * sizeof(double);
+    int threads = 128;
+    size_t shmem = length * sizeof(double) + threads * sizeof(double);
 
     ConvRKernel<<<depth, threads, shmem>>>(
         f_ptr, g_ptr, integ_ptr, theta_ptr, out_ptr, t, length, depth
@@ -1760,15 +1844,11 @@ thrust::device_vector<double> QKstepGPU(
     double Gamma) {
     
     size_t len = d_theta.size();
-    thrust::device_vector<double> d_qK(len);
-    thrust::device_vector<double> d_qR(len);
+    thrust::device_ptr<double> d_qK = get_slice_ptr(d_QKv,d_t1grid.size()-1,len);
+    thrust::device_ptr<double> d_qR = get_slice_ptr(d_QRv,d_t1grid.size()-1,len);
     thrust::device_vector<double> d_temp(len);
     thrust::counting_iterator<size_t> idx_first(0);
     thrust::counting_iterator<size_t> idx_last = idx_first + len;
-
-    // Extract the last `len` entries of d_QKv and d_QRv
-    thrust::copy(d_QKv.end() - len, d_QKv.end(), d_qK.begin());
-    thrust::copy(d_QRv.end() - len, d_QRv.end(), d_qR.begin());
 
     double scale = Dflambda(d_QKv[d_QKv.size() - len]) / T0;
 
@@ -1789,7 +1869,7 @@ thrust::device_vector<double> QKstepGPU(
     thrust::device_vector<double> d_d2qK(len);
 
     // Step 3: Fuse everything
-    FusedUpdate(d_temp, d_qK, d_d1qK, scale, -d_rInt.back(), nullptr, &convR, &convA1, &convA2, nullptr);
+    FusedUpdate(thrust::device_pointer_cast(d_temp.data()), d_qK, d_d1qK, scale, -d_rInt.back(), nullptr, &convR, &convA1, &convA2, nullptr);
 
     // // Compute d1qK
     // thrust::device_vector<double> d_d1qK = SumGPU(
@@ -1819,7 +1899,7 @@ thrust::device_vector<double> QKstepGPU(
     convA2 = ConvAGPU(d_QKA1int, d_SigmaRB1int, d_t1grid.back(), d_integ, d_theta);
 
     // Compute d2qK
-    FusedUpdate(d_temp, d_qR, d_d2qK, d_QKv[d_QKv.size() - len] / T0, 2.0 * Gamma, &d_rInt, &convR, &convA1, &convA2, &d_qK);
+    FusedUpdate(thrust::device_pointer_cast(d_temp.data()), d_qR, d_d2qK, d_QKv[d_QKv.size() - len] / T0, 2.0 * Gamma, &d_rInt, &convR, &convA1, &convA2, d_qK);
 
     // // Compute d2qK
     // thrust::device_vector<double> d_d2qK = SumGPU(scalarMultiply(d_temp, d_QKv[d_QKv.size() - len] / T0),
@@ -2132,6 +2212,38 @@ double drstep2GPU(
                     convA_sigmaR_dqK.front() +
                     convA_sigmaK_dqR.front() +
                     (d_dsigmaK.front() * d_QKv.front() + d_sigmaK.front() * d_dQKv.front()) / T0;
+
+    return result;
+}
+
+double energyGPU(
+    const thrust::device_vector<double>& d_QKv,
+    const thrust::device_vector<double>& d_QRv,
+    const thrust::device_vector<double>& d_t1grid,
+    const thrust::device_vector<double>& d_integ,
+    const thrust::device_vector<double>& d_theta,
+    double T0) {
+    
+    size_t len = d_theta.size();
+    thrust::device_vector<double> d_sigmaK(len, 0.0);
+
+    thrust::device_vector<double> d_qK = getLastLenEntriesGPU(d_QKv, len);
+    thrust::device_vector<double> d_qR = getLastLenEntriesGPU(d_QRv, len);
+
+    // Compute sigmaK
+    thrust::transform(
+        d_qK.begin(), d_qK.end(),
+        d_sigmaK.begin(),
+        [] __device__ (double qk) { return DflambdaGPU(qk); }
+    );
+
+    // Compute convolution results
+    thrust::device_vector<double> convA_sigmaK_qR = ConvAGPU(d_sigmaK, d_qR, d_t1grid.back(), d_integ, d_theta);
+
+    // Compute final result
+    double result = - (convA_sigmaK_qR.front() + Dflambda(d_qK.front()) / T0);
+
+    
 
     return result;
 }
@@ -2962,23 +3074,50 @@ void interpolate(const vector<double>& posB1xIn = {}, const vector<double>& posB
     }
 }
 
+void diffNfloor(
+    const thrust::device_vector<double>& posB1x,
+    thrust::device_vector<size_t>& Floor,
+    thrust::device_vector<double>& diff) {
+    double maxPosB1x = *thrust::max_element(posB1x.begin(), posB1x.end());
+    size_t maxCeil = std::max(static_cast<size_t>(ceil(maxPosB1x)) - 1, size_t(1));
+
+
+    thrust::transform(
+        posB1x.begin(), posB1x.end(),
+        Floor.begin(),
+        [maxCeil] __device__ (double pos) {
+            size_t floored = static_cast<size_t>(floor(pos));
+            if (floored < 1) return size_t(1);
+            if (floored > maxCeil) return maxCeil;
+            return floored;
+        }
+    );
+
+    thrust::transform(
+        thrust::device,
+        Floor.begin(), Floor.end(),
+        posB1x.begin(),
+        diff.begin(),
+        [] __device__ (size_t floor_val, double pos_val) {
+            return static_cast<double>(floor_val) - pos_val;
+        }
+    );
+}
+
 void interpolateGPU(
-    const thrust::device_vector<double>& posB1xIn = {},
-    const thrust::device_vector<double>& posB2xIn = {},
+    const double* posB1xIn = nullptr,
+    const double* posB2xIn = nullptr,
     const bool same = false) {
+
     // Compute d_posB1x
-    thrust::device_vector<double> d_posB1x = !posB1xIn.empty() ?
-        (same ? posB1xIn : isearchPosSortedInitGPU(d_t1grid, d_theta, posB1xIn)) :
-        bsearchPosSortedGPU(d_t1grid, d_theta);
+    d_posB1xOld = (posB1xIn ?
+        (same ? thrust::device_vector<double>(posB1xIn,posB1xIn+len) : bsearchPosSortedGPU(d_t1grid, d_theta)) :
+        bsearchPosSortedGPU(d_t1grid, d_theta));
 
     // Compute d_posB2x
-    thrust::device_vector<double> d_posB2x = !posB2xIn.empty() ?
-        (same ? posB2xIn : isearchPosSortedInitGPU(d_t1grid, d_phi2, posB2xIn)) :
-        bsearchPosSortedGPU(d_t1grid, d_phi2);
-
-    // Update old positions
-    d_posB1xOld = d_posB1x;
-    d_posB2xOld = d_posB2x;
+    d_posB2xOld = (posB2xIn ?
+        (same ? thrust::device_vector<double>(posB2xIn,posB2xIn+len*len) : bsearchPosSortedGPU(d_t1grid, d_phi2)) :
+        bsearchPosSortedGPU(d_t1grid, d_phi2));
 
     // Interpolate QKA1int and QRA1int
     if (d_t1grid.back() > 0) {
@@ -3000,34 +3139,10 @@ void interpolateGPU(
     SigmaRGPU(d_QKA2int, d_QRA2int, d_SigmaRA2int);
 
     // Interpolate QKB1int and QRB1int
-
-    double maxPosB1x = *thrust::max_element(d_posB1x.begin(), d_posB1x.end());
-    size_t maxCeil = std::max(static_cast<size_t>(ceil(maxPosB1x)) - 1, size_t(1));
-
-    thrust::device_vector<size_t> Floor(d_posB1x.size());
-
-    thrust::transform(
-        d_posB1x.begin(), d_posB1x.end(),
-        Floor.begin(),
-        [maxCeil] __device__ (double pos) {
-            size_t floored = static_cast<size_t>(floor(pos));
-            if (floored < 1) return size_t(1);
-            if (floored > maxCeil) return maxCeil;
-            return floored;
-        }
-    );
-
+    thrust::device_vector<size_t> Floor(d_posB1xOld.size());
     thrust::device_vector<double> diff(Floor.size());
 
-    thrust::transform(
-        thrust::device,
-        Floor.begin(), Floor.end(),
-        d_posB1x.begin(),
-        diff.begin(),
-        [] __device__ (size_t floor_val, double pos_val) {
-            return static_cast<double>(floor_val) - pos_val;
-        }
-    );
+    diffNfloor(d_posB1xOld, Floor, diff);
 
     // double sum = thrust::reduce(d_dQKv.begin(), d_dQKv.end(), 0.0, thrust::plus<double>());
     // cout << "Sum of d_dQKv: " << sum << endl;
@@ -3050,7 +3165,7 @@ void interpolateGPU(
 
     // Interpolate QKB2int and QRB2int
     if (d_t1grid.back() > 0) {
-        indexMatAllGPU(d_posB2x, d_indsB2y, d_weightsB2y, d_delta_t_ratio, d_QKB2int, d_QRB2int, d_QKv, d_QRv, d_dQKv, d_dQRv, len);
+        indexMatAllGPU(d_posB2xOld, d_indsB2y, d_weightsB2y, d_delta_t_ratio, d_QKB2int, d_QRB2int, d_QKv, d_QRv, d_dQKv, d_dQRv, len);
     } else {
         d_QKB2int.assign(len * len, d_QKv[0]);
         d_QRB2int.assign(len * len, d_QRv[0]);
@@ -3064,6 +3179,281 @@ void interpolateGPU(
     } else {
         d_rInt.assign(len, d_rvec[0]);
     }
+}
+
+auto gather = [](const std::vector<double>& v,
+                 const std::vector<size_t>& idxs,
+                 size_t len,
+                 const std::vector<double>& scale = {}) {
+    std::vector<double> out(idxs.size() * len);
+    for (size_t i = 0; i < idxs.size(); ++i) {
+        size_t offset = idxs[i] * len;
+        double factor = (scale.empty() ? 1.0 : scale[i]);
+        for (size_t j = 0; j < len; ++j) {
+            out[i * len + j] = factor * v[offset + j];
+        }
+    }
+    return out;
+};
+
+void sparsifyNscale(double threshold) {
+    bool erased = false;
+    int loop = 0;
+    std::vector<size_t> inds = {0};
+    inds.reserve(t1grid.size());
+
+    for (size_t i = 2; i + 1 < t1grid.size(); ++i) {
+        double tleft = t1grid[i - 2];
+        double tmid  = t1grid[i];
+        double tdiff1 = t1grid[i - 1] - tleft;
+        double tdiff2 = tmid - tleft;
+        double tdiff3 = t1grid[i + 1] - tmid;
+
+        double val = 0.0;
+        for (int j = 0; j < len; ++j) {
+            double df_term1 = dQKv[(i - 1) * len + j];
+            double df_term2 = dQKv[(i + 1) * len + j];
+            double f_term1 = QKv[i * len + j] - QKv[(i - 2) * len + j];
+            val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
+        }
+
+        for (int j = 0; j < len; ++j) {
+            double df_term1 = dQRv[(i - 1) * len + j];
+            double df_term2 = dQRv[(i + 1) * len + j];
+            double f_term1 = QRv[i * len + j] - QRv[(i - 2) * len + j];
+            val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
+        }
+
+        if (val < threshold && !erased) {
+            erased = true;
+            ++loop;
+        } else {
+            erased = false;
+            ++loop;
+            inds.push_back(loop);
+        }
+    }
+
+    inds.push_back(t1grid.size() - 2);
+    inds.push_back(t1grid.size() - 1);
+
+    // Calculate rotated and modded indices
+    std::vector<size_t> indsD(inds.size());
+    indsD[0] = 0; // First index remains the same
+    for (size_t i = 0; i < inds.size() - 1; ++i) {
+        indsD[i + 1] = inds[i] + 1;
+    }
+
+    // Compute tfac
+    std::vector<double> tfac(inds.size());
+    tfac[0] = 1.0;
+    for (size_t i = 1; i < inds.size(); ++i) {
+        tfac[i] = (t1grid[inds[i]] - t1grid[inds[i - 1]]) / (t1grid[indsD[i]] - t1grid[indsD[i] - 1]);
+    }
+
+    // printVectorDifference(gather(rvec, inds, 1),rvec);
+
+    QKv   = gather(QKv, inds, len);
+    QRv   = gather(QRv, inds, len);
+    dQKv  = gather(dQKv, indsD, len, tfac);
+    dQRv  = gather(dQRv, indsD, len, tfac);
+    rvec = gather(rvec, inds, 1);
+    drvec = gather(drvec, indsD, 1, tfac);
+    t1grid = gather(t1grid, inds, 1);
+
+    // Δt ratio
+    std::vector<double> dgrid(inds.size());
+    for (size_t i = 1; i < t1grid.size(); ++i)
+        dgrid[i] = t1grid[i] - t1grid[i - 1];
+    for (size_t i = 2; i < t1grid.size(); ++i)
+        delta_t_ratio[i] = dgrid[i] / dgrid[i - 1];
+
+    // QKv.resize(inds.size()*len);  
+    // QRv.resize(inds.size()*len);
+    // dQKv.resize(inds.size()*len);
+    // dQRv.resize(inds.size()*len);
+    // rvec.resize(inds.size());
+    // drvec.resize(inds.size());
+    // t1grid.resize(inds.size());
+    delta_t_ratio.resize(inds.size());    
+
+    // for (int i = 0; i < tfac.size(); ++i) {
+    //     std::cerr << "tfac at index " << i << ": " << tfac[i] << std::endl;
+    // }
+
+    // for (int i = 0; i < drvec.size(); ++i) {
+    //     std::cerr << "drvec at index " << i << ": " << drvec[i] << std::endl;
+    // }
+
+    // for (int i = 0; i < t1grid.size(); ++i) {
+    //      std::cerr << "dQRv at index " << i << ": " << dQRv[i*len] << std::endl;
+    // }
+
+    // for (int i = 0; i < tfac.size(); ++i) {
+    //     std::cerr << "tfac at index " << i << ": " << indsD[i] << std::endl;
+    // }
+
+    // for (int i = 0; i < inds.size(); ++i) {
+    //     std::cerr << "inds at index " << i << ": " << inds[i] << std::endl;
+    // }
+
+    // std::cerr << "Size of dQKv: " << dQKv.size() << std::endl;
+
+    interpolate();
+}
+
+// GPU gather kernel
+__global__ void gatherKernel(const double* __restrict__ d_v,
+                            const size_t* __restrict__ d_idxs,
+                            const double* __restrict__ d_scale,
+                            double* __restrict__ d_out,
+                            size_t len, size_t n_chunks, bool use_scale) {
+    size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= n_chunks * len) return;
+
+    size_t chunk = i / len;
+    size_t j = i % len;
+
+    size_t offset = d_idxs[chunk] * len;
+    double factor = use_scale ? d_scale[chunk] : 1.0;
+    d_out[i] = factor * d_v[offset + j];
+}
+
+thrust::device_vector<double> gatherGPU(const thrust::device_vector<double>& d_v,
+                                        const thrust::device_vector<size_t>& d_idxs,
+                                        size_t len,
+                                        const thrust::device_vector<double>& d_scale = {}) {
+    size_t n_chunks = d_idxs.size();
+    thrust::device_vector<double> d_out(n_chunks * len);
+
+    size_t threads = 256;
+    size_t blocks = (n_chunks * len + threads - 1) / threads;
+
+    bool use_scale = !d_scale.empty();
+    gatherKernel<<<blocks, threads>>>(
+        thrust::raw_pointer_cast(d_v.data()),
+        thrust::raw_pointer_cast(d_idxs.data()),
+        use_scale ? thrust::raw_pointer_cast(d_scale.data()) : nullptr,
+        thrust::raw_pointer_cast(d_out.data()),
+        len, n_chunks, use_scale);
+
+    return d_out;
+}
+
+__global__ void computeSparsifyFlags(const double* __restrict__ d_t1grid,
+                                     const double* __restrict__ d_QKv,
+                                     const double* __restrict__ d_QRv,
+                                     const double* __restrict__ d_dQKv,
+                                     const double* __restrict__ d_dQRv,
+                                     bool* __restrict__ d_flags,
+                                     double threshold, size_t len, size_t n) {
+    size_t i = blockIdx.x * blockDim.x + threadIdx.x + 2;
+    if (i + 1 >= n) return;
+    if (i/2 * 2 != i) return; // Ensure i is even
+
+    double tleft = d_t1grid[i - 2];
+    double tmid = d_t1grid[i];
+    double tdiff1 = d_t1grid[i - 1] - tleft;
+    double tdiff2 = tmid - tleft;
+    double tdiff3 = d_t1grid[i + 1] - tmid;
+    double scale = tdiff2 / 12.0;
+
+    double val = 0.0;
+    for (size_t j = 0; j < len; ++j) {
+        size_t idx_im2 = (i - 2) * len + j;
+        size_t idx_im1 = (i - 1) * len + j;
+        size_t idx_i   = i * len + j;
+        size_t idx_ip1 = (i + 1) * len + j;
+
+        double df1_qk = d_dQKv[idx_im1];
+        double df2_qk = d_dQKv[idx_ip1];
+        double f_qk = d_QKv[idx_i] - d_QKv[idx_im2];
+
+        double df1_qr = d_dQRv[idx_im1];
+        double df2_qr = d_dQRv[idx_ip1];
+        double f_qr = d_QRv[idx_i] - d_QRv[idx_im2];
+
+        val += fabs(scale * (2.0 * f_qk - tdiff2 * (df1_qk / tdiff1 + df2_qk / tdiff3)));
+        val += fabs(scale * (2.0 * f_qr - tdiff2 * (df1_qr / tdiff1 + df2_qr / tdiff3)));
+    }
+    d_flags[i] = (val >= threshold);
+}
+
+void sparsifyNscaleGPU(double threshold) {
+
+    size_t t1len = d_t1grid.size();
+    thrust::device_vector<bool> d_flags(t1len, true);
+
+    size_t threads = 256;
+    size_t blocks = (t1len - 2 + threads - 1) / threads;
+    computeSparsifyFlags<<<blocks, threads>>>(
+        thrust::raw_pointer_cast(d_t1grid.data()),
+        thrust::raw_pointer_cast(d_QKv.data()),
+        thrust::raw_pointer_cast(d_QRv.data()),
+        thrust::raw_pointer_cast(d_dQKv.data()),
+        thrust::raw_pointer_cast(d_dQRv.data()),
+        thrust::raw_pointer_cast(d_flags.data()),
+        threshold, len, t1len);
+
+    thrust::device_vector<size_t> d_inds(t1len);
+    thrust::sequence(d_inds.begin(), d_inds.end());
+
+    size_t n = d_inds.size();
+    thrust::device_vector<size_t> d_filtered(t1len); // max possible size
+    auto end_it = thrust::copy_if(
+        d_inds.begin(), d_inds.end(), 
+        d_flags.begin(), 
+        d_filtered.begin(), 
+        thrust::identity<bool>()
+    );
+    d_filtered.resize(end_it - d_filtered.begin()); // shrink to actual size
+
+    // Construct d_indsD and tfac
+    thrust::device_vector<size_t> d_indsD(d_filtered.size(),0);
+    thrust::transform(d_filtered.begin(), d_filtered.end() - 1, d_indsD.begin() + 1, d_indsD.begin() + 1, thrust::placeholders::_1 + 1);
+
+    thrust::device_vector<double> d_tfac(d_filtered.size(), 1.0);
+    const double* t1_ptr = thrust::raw_pointer_cast(d_t1grid.data());
+
+    d_tfac[0]= 1.0;
+    thrust::transform(
+        thrust::make_zip_iterator(thrust::make_tuple(
+            d_filtered.begin() + 1,       // inds[i]
+            d_filtered.begin(),           // inds[i-1]
+            d_indsD.begin() + 1      // indsD[i]
+        )),
+        thrust::make_zip_iterator(thrust::make_tuple(
+            d_filtered.end(),             // one past last valid index
+            d_filtered.end() - 1,
+            d_indsD.end()
+        )),
+        d_tfac.begin() + 1,
+        [t1_ptr] __device__ (thrust::tuple<size_t, size_t, size_t> tup) {
+            size_t inds_i    = thrust::get<0>(tup);
+            size_t inds_im1  = thrust::get<1>(tup);
+            size_t indsD_i   = thrust::get<2>(tup);
+            return (t1_ptr[inds_i] - t1_ptr[inds_im1]) /
+                (t1_ptr[indsD_i] - t1_ptr[indsD_i - 1]);
+        });
+
+    d_QKv = gatherGPU(d_QKv, d_filtered, len);
+    d_QRv = gatherGPU(d_QRv, d_filtered, len);
+    d_dQKv = gatherGPU(d_dQKv, d_indsD, len, d_tfac);
+    d_dQRv = gatherGPU(d_dQRv, d_indsD, len, d_tfac);
+    d_rvec = gatherGPU(d_rvec, d_filtered, 1);
+    d_drvec = gatherGPU(d_drvec, d_indsD, 1, d_tfac);
+    d_t1grid = gatherGPU(d_t1grid, d_filtered, 1);
+
+    size_t new_n = d_t1grid.size();
+    d_delta_t_ratio.resize(new_n);
+    thrust::device_vector<double> d_dgrid(new_n);
+    thrust::transform(d_t1grid.begin() + 1, d_t1grid.end(), d_t1grid.begin(), d_dgrid.begin() + 1, thrust::minus<>());
+    thrust::transform(d_dgrid.begin() + 2, d_dgrid.end(), d_dgrid.begin() + 1, d_delta_t_ratio.begin() + 2, thrust::divides<>());
+
+    vector<double> gpu_result(d_tfac.size());
+    thrust::copy(d_tfac.begin(), d_tfac.end(), gpu_result.begin());
+
+    interpolateGPU();
 }
 
 double SSPRK104()
@@ -3233,6 +3623,7 @@ double SSPRK104GPU() {
         {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0, 0.0},
         {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0}
     };
+    const double avec[stages] = {1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6};
     const double bvec[stages] = {1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10};
     const double b2vec[stages] = {0., 2.0 / 9, 0, 0, 5.0 / 18, 1.0 / 3, 0., 0., 0., 1.0 / 6};
 
@@ -3260,10 +3651,11 @@ double SSPRK104GPU() {
         // Interpolation
         if (d_QKv.size() == len || n != 0) {
             interpolateGPU(
-                (n == 0 ? thrust::device_vector<double>{} : (n == 5 ? get_slice(posB1xvec, 0, len) : (n == 6 ? get_slice(posB1xvec, 1, len) : (n == 7 ? get_slice(posB1xvec, 2, len) : d_posB1xOld)))),
-                (n == 0 ? thrust::device_vector<double>{} : (n == 5 ? get_slice(posB2xvec, 0, len*len) : (n == 6 ? get_slice(posB2xvec, 1, len*len) : (n == 7 ? get_slice(posB2xvec, 2, len*len) : d_posB2xOld)))),
+                (n == 0 ? nullptr : (n == 5 ? get_slice_ptr(posB1xvec, 0, len).get() : (n == 6 ? get_slice_ptr(posB1xvec, 1, len).get() : (n == 7 ? get_slice_ptr(posB1xvec, 2, len).get() : thrust::raw_pointer_cast(d_posB1xOld.data()))))),
+                (n == 0 ? nullptr : (n == 5 ? get_slice_ptr(posB2xvec, 0, len*len).get() : (n == 6 ? get_slice_ptr(posB2xvec, 1, len*len).get() : (n == 7 ? get_slice_ptr(posB2xvec, 2, len*len).get() : thrust::raw_pointer_cast(d_posB2xOld.data()))))),
                 (n == 5 || n == 6 || n == 7)
             );
+            // interpolateGPU(thrust::raw_pointer_cast(d_posB1xOld.data()),thrust::raw_pointer_cast(d_posB2xOld.data()),true);
         }
 
         // Update position vectors
@@ -3324,7 +3716,7 @@ double SSPRK104GPU() {
                 gtvec[n + 1] += delta_t * bvec[j] * htvec[j];
             }
             replaceAllGPU_ptr(get_slice_ptr(gKvec,n + 1,len), get_slice_ptr(gRvec,n + 1,len), get_slice_ptr(hKvec,0,len), get_slice_ptr(hRvec,0,len), htvec[0] * dr, gtvec[n + 1], len); // Replace Update
-        } else {
+        } else if (n==4) {
             set_slice_ptr(gKvec,n + 1,get_slice_ptr(gKvec, 0, len),len);
             set_slice_ptr(gRvec,n + 1,get_slice_ptr(gRvec, 0, len),len);
             gtvec[n + 1] = gtvec[0];
@@ -3333,6 +3725,11 @@ double SSPRK104GPU() {
                 set_slice(gRvec,n + 1, MAGPU(get_slice_ptr(gRvec,n + 1,len), get_slice_ptr(hRvec,j,len), delta_t * amat[n + 1][j], len));
                 gtvec[n + 1] += delta_t * amat[n + 1][j] * htvec[j];
             }
+            replaceAllGPU_ptr(get_slice_ptr(gKvec,n + 1,len), get_slice_ptr(gRvec,n + 1,len), get_slice_ptr(hKvec,0,len), get_slice_ptr(hRvec,0,len), htvec[0] * dr, gtvec[n + 1], len); // Replace Update
+        } else {
+            set_slice(gKvec,n + 1, MAGPU(get_slice_ptr(gKvec,n ,len), get_slice_ptr(hKvec,n,len), delta_t * avec[n], len));
+            set_slice(gRvec,n + 1, MAGPU(get_slice_ptr(gRvec,n ,len), get_slice_ptr(hRvec,n,len), delta_t * avec[n], len));
+            gtvec[n + 1] = gtvec[n] + delta_t * avec[n] * htvec[n];
             replaceAllGPU_ptr(get_slice_ptr(gKvec,n + 1,len), get_slice_ptr(gRvec,n + 1,len), get_slice_ptr(hKvec,0,len), get_slice_ptr(hRvec,0,len), htvec[0] * dr, gtvec[n + 1], len); // Replace Update
         }
         // double sum = thrust::reduce(d_QKv.begin(), d_QKv.end(), 0.0, thrust::plus<double>());
@@ -3343,7 +3740,7 @@ double SSPRK104GPU() {
     }
 
     // Final interpolation
-    interpolateGPU(d_posB1xOld, d_posB2xOld);
+    interpolateGPU(thrust::raw_pointer_cast(d_posB1xOld.data()), thrust::raw_pointer_cast(d_posB2xOld.data()));
 
     // Compute ge
     gKe = get_slice(gKvec,0,len);
@@ -3427,28 +3824,6 @@ void init()
     copyVectorsToGPU();
 }
 
-void printVectorDifference(const std::vector<double>& a, const std::vector<double>& b) {
-    if (a.size() != b.size()) {
-        std::cerr << "Error: Vectors must be of the same length.\n";
-        std::cerr << "Size of vector a: " << a.size() << ", Size of vector b: " << b.size() << "\n";
-        return;
-    }
-
-    double diff = 0.0;
-    std::cout << "Differences between vectors:\n";
-    for (size_t i = 0; i < a.size(); ++i) {
-        diff = std::abs(a[i] - b[i]);
-        std::cout << "Index " << i << ": |" << a[i] << " - " << b[i] << "| = " << diff << "\n";
-    }
-
-    diff=0.0;
-    std::cout << "Total Differences between vectors: ";
-    for (size_t i = 0; i < a.size(); ++i) {
-        diff += std::abs(a[i] - b[i]);
-    }
-    std::cout << diff << "\n";
-}
-
 int main() {
 
     // 0) Initialize
@@ -3470,16 +3845,20 @@ int main() {
     while (t1grid.back() < tmax && loop < maxLoop) {
 
         delta_old = delta;
-        delta = SSPRK104GPU();
+        delta = (gpu ? SSPRK104GPU() : SSPRK104());
         // cout << "delta CPU: " << delta << endl;
         // delta = SSPRK104GPU();
         // cout << "delta GPU: " << delta << endl;
         loop++;
 
+        if (loop % 100000 == 0) {
+            (gpu ? sparsifyNscaleGPU(delta_max) : sparsifyNscale(delta_max));
+        }
+
         // primitive time-step adaptation
         if (false && delta < delta_max && loop > 5 &&
             (delta < 1.1 * delta_old || delta_old == 0) &&
-            rmax / specRad > delta_t && delta_t_ratio.back() == 1)
+            rmax / specRad > delta_t && (gpu ? d_delta_t_ratio.back() : delta_t_ratio.back()))
         {
             delta_t *= 1.01;
         }
@@ -3489,32 +3868,40 @@ int main() {
 
         // display a video
         std::cout << "loop: " << loop
-            << " time: " << t1grid.back()
+            << " time: " << (gpu ? d_t1grid.back() : t1grid.back())
             << " time step: " << delta_t
             << " delta: " << delta
             << " specRad: " << specRad
             << std::endl;
 
         // record QK(t,0) to file
-        double t = t1grid.back();
-        double qk0 = QKv[(t1grid.size() - 1) * len + 0];
-        vector<double> temp(len,0.0);
-        SigmaK(getLastLenEntries(QKv, len),temp);
-        double energy = -(ConvA(temp,getLastLenEntries(QRv, len),t)[0] + Dflambda(qk0)/T0); 
-        corr << t << "\t" << energy << "\t" << qk0 << "\n";
+        if( gpu ) {
+            double t = d_t1grid.back();
+            double qk0 = d_QKv[(t1grid.size() - 1) * len + 0];
+            double energy = energyGPU(d_QKv, d_QRv, d_t1grid, d_integ, d_theta, T0); 
+            corr << t << "\t" << energy << "\t" << qk0 << "\n";
+        } else {
+            double t = t1grid.back();
+            double qk0 = QKv[(t1grid.size() - 1) * len + 0];
+            vector<double> temp(len,0.0);
+            SigmaK(getLastLenEntries(QKv, len),temp);
+            double energy = -(ConvA(temp,getLastLenEntries(QRv, len),t)[0] + Dflambda(qk0)/T0); 
+            corr << t << "\t" << energy << "\t" << qk0 << "\n";
+        }
     }
 
-    copyVectorsToCPU();
+    (gpu ? copyVectorsToCPU() : copyVectorsToGPU());
 
     auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 100; ++i) {
+    for (int i = 0; i < 1000; ++i) {
     //    set_slice(d_QKv,1,get_slice(d_QKv,0,len));
-        SSPRK104GPU();
+    //    appendAllGPU_ptr(get_slice_ptr(d_QKv,1,len), get_slice_ptr(d_QRv,1,len), get_slice_ptr(d_dQKv,1,len), get_slice_ptr(d_dQRv,1,len), 0.1, 0.1, len); // Append Update
+        indexVecLN3GPU(d_weightsA2y, d_indsA2y, d_QKA2int, d_QRA2int);
     }
     auto end = std::chrono::high_resolution_clock::now();
 
     std::chrono::duration<double, std::milli> total = end - start;
-    double avg_ms = total.count() / 100;
+    double avg_ms = total.count() / 1000;
 
     std::cout << "Average time: " << avg_ms << " ms" << std::endl;
 
