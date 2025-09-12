@@ -1,0 +1,4 @@
+/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/DFME-core.dir
+/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/RG-Evo.dir
+/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/edit_cache.dir
+/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/rebuild_cache.dir
