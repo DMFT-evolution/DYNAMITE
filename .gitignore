@@ -4,6 +4,9 @@ Old Codes/
 # Ignore results
 Results/
 
+# Ignore build directory
+build/
+
 # Ignore .git
 .git/
 

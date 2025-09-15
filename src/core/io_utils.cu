@@ -799,8 +799,8 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "peak memory usage = " << formatMemory(peak_memory_kb) << std::endl;
     params << "peak memory (kb) = " << peak_memory_kb << std::endl;
     if (config.gpu) {
-        params << "peak config.gpu memory (mb) = " << peak_gpu_memory_mb << std::endl;
-        params << "current config.gpu memory (mb) = " << getGPUMemoryUsage() << std::endl;
+        params << "peak gpu memory (mb) = " << peak_gpu_memory_mb << std::endl;
+        params << "current gpu memory (mb) = " << getGPUMemoryUsage() << std::endl;
     }
     params << "loops per second = " << std::fixed << std::setprecision(2) << (runtime_seconds > 0 ? config.loop / runtime_seconds : 0.0) << std::endl;
     params << std::setprecision(16) << std::defaultfloat;  // Reset again
