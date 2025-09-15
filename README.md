@@ -1,6 +1,12 @@
 # DMFE
 
-CUDA / C++ project.
+DMFE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; arXiv:2504.06849), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
+
+Key features:
+- GPU‑accelerated kernels with a CPU fallback
+- Non‑equilibrium quench dynamics with automatic checkpoint/resume
+- Parameter‑organized outputs (HDF5 or binary) and lightweight text logs
+- Ready‑to‑use interpolation grids under `Grid_data/<L>/`
 
 ## Build
 
