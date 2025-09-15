@@ -1,1 +1,0 @@
-/usr/bin/clang++-14 -O3 -DNDEBUG -ldl "CMakeFiles/RG-Evo.dir/main.cu.o" CMakeFiles/RG-Evo.dir/cmake_device_link.o -o /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo   -L/usr/lib/x86_64-linux-gnu/stubs  libDFME-core.a -lcudadevrt -lcudart_static -lrt -lpthread -ldl 

@@ -1,5 +1,0 @@
-/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/DFME-core.dir
-/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/RG-Evo.dir
-/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/RG-Evo-shared.dir
-/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/edit_cache.dir
-/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/rebuild_cache.dir
