@@ -31,7 +31,8 @@ extern RKData* rk;
 std::chrono::high_resolution_clock::time_point program_start_time;
 
 int runSimulation() {
-    StreamPool* pool = new StreamPool(20);
+    // Only create CUDA streams if we're actually using the GPU
+    StreamPool* pool = config.gpu ? new StreamPool(20) : nullptr;
 
     std::cout << "Starting simulation..." << std::endl;
 
@@ -80,7 +81,7 @@ int runSimulation() {
                 if (config.gpu) {
                     if (rk->init == 1) {
                         init_SSPRK104GPU();
-                    } else {
+                    } else if (config.use_serk2) {
                         init_SERK2(2 * (rk->init - 1));
                     }
                 } else {
@@ -185,7 +186,9 @@ int runSimulation() {
         corr.close();
     }
 
-    clearAllDeviceVectors(*sim);
+    if (config.gpu) {
+        clearAllDeviceVectors(*sim);
+    }
 
     delete sim;
     delete rk;

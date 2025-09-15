@@ -39,7 +39,7 @@ void init()
     
     if (!loaded) {
         // Start new simulation with default values
-        std::cout << "Starting new simulation..." << std::endl;
+        std::cout << "New simulation..." << std::endl;
         
         sim->h_t1grid.resize(1, 0.0);
         sim->h_delta_t_ratio.resize(1, 0.0);

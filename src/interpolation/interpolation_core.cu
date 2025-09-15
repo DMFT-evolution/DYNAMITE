@@ -27,9 +27,12 @@ void interpolate(const vector<double>& posB1xIn, const vector<double>& posB2xIn,
         (same ? posB1xIn : isearchPosSortedInit(sim->h_t1grid, sim->h_theta, posB1xIn)) :
         bsearchPosSorted(sim->h_t1grid, sim->h_theta * sim->h_t1grid.back());
 
+    vector<double> isearch = isearchPosSortedInit(sim->h_t1grid, sim->h_theta, posB1xIn);
+    vector<double> bsearch = bsearchPosSorted(sim->h_t1grid, sim->h_theta * sim->h_t1grid.back());
+
     // Compute posB2x
     vector<double> posB2x = !posB2xIn.empty() ?
-        (same ? posB2xIn : isearchPosSortedInit(sim->h_t1grid, sim->h_theta, posB2xIn)) :
+        (same ? posB2xIn : isearchPosSortedInit(sim->h_t1grid, sim->h_phi2, posB2xIn)) :
     bsearchPosSorted(sim->h_t1grid, sim->h_phi2 * sim->h_t1grid.back());
 
     // Update old positions

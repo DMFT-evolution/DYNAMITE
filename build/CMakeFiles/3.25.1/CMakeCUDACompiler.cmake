@@ -1,5 +1,5 @@
 set(CMAKE_CUDA_COMPILER "/usr/bin/nvcc")
-set(CMAKE_CUDA_HOST_COMPILER "/usr/bin/clang++-14")
+set(CMAKE_CUDA_HOST_COMPILER "clang++-14")
 set(CMAKE_CUDA_HOST_LINK_LAUNCHER "/usr/bin/clang++-14")
 set(CMAKE_CUDA_COMPILER_ID "NVIDIA")
 set(CMAKE_CUDA_COMPILER_VERSION "11.8.89")
@@ -71,5 +71,5 @@ set(CMAKE_CUDA_IMPLICIT_LINK_FRAMEWORK_DIRECTORIES "")
 set(CMAKE_CUDA_RUNTIME_LIBRARY_DEFAULT "STATIC")
 
 set(CMAKE_LINKER "/usr/bin/ld")
-set(CMAKE_AR "/usr/bin/ar")
+set(CMAKE_AR "/usr/bin/llvm-ar-14")
 set(CMAKE_MT "")

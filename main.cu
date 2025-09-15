@@ -1,5 +1,12 @@
-//Compile on the cluster with nvcc --extended-lambda --use_fast_math -gencode arch=compute_90,code=sm_90 -O3 -Xcompiler "-O3 -march=native -ffast-math" -DUSE_HDF5 -o RG-Evo main.cu -lhdf5 -lhdf5_cpp
-// Compile locally with nvcc -ccbin clang++ --extended-lambda --use_fast_math -O3 -Xcompiler "-O3 -march=native -ffast-math" -o RG-Evo main.cu
+// Example builds (prefer CMake for portability)
+// - NVCC + GCC/Clang host: keep -ffast-math in -Xcompiler
+//   nvcc --extended-lambda --use_fast_math -gencode arch=compute_90,code=sm_90 -O3 \
+//        -Xcompiler "-O3 -march=native -ffast-math" -o RG-Evo main.cu
+// - NVCC + NVHPC (nvc++) host: DO NOT use -ffast-math; use -fast bundle instead
+//   nvcc --extended-lambda --use_fast_math -gencode arch=compute_90,code=sm_90 -O3 \
+//        -ccbin nvc++ -Xcompiler "-fast" -o RG-Evo main.cu
+// - With HDF5 (static link mode): add -DUSE_HDF5 and host link libs as needed
+//   ... -DUSE_HDF5 -lhdf5 -lhdf5_cpp
 
 #include <iostream>
 #include <chrono>

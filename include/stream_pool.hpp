@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "config.hpp"
 #include <cuda_runtime.h>
 
 class StreamPool {

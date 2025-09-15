@@ -231,7 +231,7 @@ double RK54()
     // Loop over stages
     for (size_t n = 0; n < stages; ++n) {
         // Interpolation
-    if (sim->h_QKv.size() == config.len || n != 0) {
+        if (sim->h_QKv.size() == config.len || n != 0) {
             interpolate(
                 (n == 0 ? vector<double>{} : sim->h_posB1xOld),
                 (n == 0 ? vector<double>{} : sim->h_posB2xOld),

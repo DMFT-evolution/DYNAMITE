@@ -7,35 +7,10 @@
 #include <iostream>
 #include <string>
 #include <unistd.h>
+#include <getopt.h>
 
 // External declarations for global config object (defined in main executable)
 extern SimulationConfig config;
-
-int p = 3;
-int p2 = 12;
-double lambda = 0.3;
-double TMCT = 0.805166;
-double T0 = 1e50;
-double Gamma = 0.0;
-int maxLoop = 10000;
-std::string resultsDir = "Results/";
-std::string outputDir = "/nobackups/jlang/Results/";
-bool debug = true;
-bool save_output = true;
-
-double tmax = 1e7;
-double delta_t_min = 1e-5;
-double delta_max = 1e-10;
-double rmax[11] = {3, 13, 20, 80, 180, 320, 500, 720, 980, 1280, 1620};
-
-double delta = 0.0;
-double delta_old = 0.0;
-int loop = 0;
-double specRad = 0.0;
-double delta_t = 0.0;
-size_t len = 512;
-int ord = 0;
-bool gpu = false;
 
 // Pointers are owned/defined in the main executable (main.cu)
 extern SimulationData* sim;
@@ -44,7 +19,19 @@ extern RKData* rk;
 // Parse command line arguments and update simulation parameters
 bool parseCommandLineArguments(int argc, char **argv) {
     int opt;
-    while ((opt = getopt(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:hvc:")) != -1) {
+    int long_index = 0;
+    static struct option long_opts[] = {
+        {"lambda", required_argument, 0, 'l'},
+        {"T0", required_argument, 0, 'T'},
+        {"Gamma", required_argument, 0, 'G'},
+        {"error", required_argument, 0, 'e'},
+        {"check", required_argument, 0, 'c'},
+        {"help", no_argument, 0, 'h'},
+        {"serk2", required_argument, 0, 'S'},
+        {0, 0, 0, 0}
+    };
+    // Include 'S:' to accept -S true|false
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:hvc:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = std::stoi(optarg);
@@ -85,6 +72,9 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 break;
             case 's':
                 config.save_output = (std::string(optarg) != "false");
+                break;
+            case 'S':
+                config.use_serk2 = (std::string(optarg) != "false");
                 break;
             case 'v':
                 std::cout << g_version_info.toString() << std::endl;
@@ -131,21 +121,22 @@ bool parseCommandLineArguments(int argc, char **argv) {
             case 'h':
                 std::cout << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
-                          << "  -p INT     Set p parameter (default: " << config.p << ")\n"
-                          << "  -q INT     Set p2 parameter (default: " << config.p2 << ")\n"
-                          << "  -l FLOAT   Set lambda parameter (default: " << config.lambda << ")\n"
-                          << "  -T FLOAT   Set T0 parameter (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
-                          << "  -G FLOAT   Set Gamma parameter (default: " << config.Gamma << ")\n"
-                          << "  -m INT     Set maximum number of loops (default: " << config.maxLoop << ")\n"
-                          << "  -L INT     Set maximum number of loops (default: " << config.len << ")\n"
-                          << "  -t FLOAT   Set maximum simulation time (default: " << config.tmax << ")\n"
-                          << "  -d FLOAT   Set minimum time step (default: " << config.delta_t_min << ")\n"
-                          << "  -e FLOAT   Set maximum error per step (default: " << config.delta_max << ")\n"
-                          << "  -s BOOL    Enable output saving (correlation file, simulation state, compressed data)\n"
-                          << "  -D BOOL    Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
-                          << "  -v         Display version information and exit\n"
-                          << "  -c FILE    Check version compatibility of parameter file and exit\n"
-                          << "  -h         Display this help message and exit\n";
+                          << "  -p INT            Set p parameter (default: " << config.p << ")\n"
+                          << "  -q INT            Set p2 parameter (default: " << config.p2 << ")\n"
+                          << "  -l, --lambda F    Set lambda parameter (default: " << config.lambda << ")\n"
+                          << "  -T, --T0 F        Set T0 parameter (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
+                          << "  -G, --Gamma F     Set Gamma parameter (default: " << config.Gamma << ")\n"
+                          << "  -m INT            Set maximum number of loops (default: " << config.maxLoop << ")\n"
+                          << "  -L INT            Set grid length N (default: " << config.len << ")\n"
+                          << "  -t FLOAT          Set maximum simulation time (default: " << config.tmax << ")\n"
+                          << "  -d FLOAT          Set minimum time step (default: " << config.delta_t_min << ")\n"
+                          << "  -e, --error F     Set maximum error per step (default: " << config.delta_max << ")\n"
+                          << "  -s BOOL           Enable output saving (correlation file, simulation state, compressed data)\n"
+                          << "  -S, --serk2 BOOL  Use SERK2 method (default: true)\n"
+                          << "  -D BOOL           Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
+                          << "  -v                Display version information and exit\n"
+                          << "  -c, --check FILE  Check version compatibility of parameter file and exit\n"
+                          << "  -h, --help        Display this help message and exit\n";
                 return false;
             default:
                 std::cerr << "Unknown option: " << static_cast<char>(optopt) << std::endl;
@@ -167,7 +158,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  delta_t_min = " << config.delta_t_min << "\n"
               << "  delta_max = " << config.delta_max << "\n"
               << "  debug = " << (config.debug ? "true" : "false") << "\n"
-              << "  save_output = " << (config.save_output ? "true" : "false") << "\n";
+              << "  save_output = " << (config.save_output ? "true" : "false") << "\n"
+              << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n";
     return true;
 }
 

@@ -27,6 +27,7 @@ struct SimulationConfig {
     size_t len = 512;
     int ord = 0;
     bool gpu = false;
+    bool use_serk2 = true;
 };
 
 // Command line argument parsing

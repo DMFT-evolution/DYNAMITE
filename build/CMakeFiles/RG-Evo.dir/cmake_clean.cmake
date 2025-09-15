@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo"
-  "/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo.pdb"
+  "/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo"
+  "/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo.pdb"
   "CMakeFiles/RG-Evo.dir/cmake_device_link.o"
   "CMakeFiles/RG-Evo.dir/main.cu.o"
   "CMakeFiles/RG-Evo.dir/main.cu.o.d"

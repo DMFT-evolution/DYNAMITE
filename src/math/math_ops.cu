@@ -1,11 +1,9 @@
 #include "math_ops.hpp"
-#include "globals.hpp"           // host externs: lambda, p, p2
+#include "config.hpp"            // SimulationConfig values (runtime)
 #include "device_constants.hpp"   // device __constant__: d_lambda, d_p, d_p2
 
-// Explicit externs for host globals to ensure names are visible here
-extern double lambda;
-extern int p;
-extern int p2;
+// Access runtime-configured parameters via global config defined in main.cu
+extern SimulationConfig config;
 
 double pow_int(double base, int exp) {
 	if (exp == 0) return 1.0;
@@ -49,10 +47,10 @@ __device__ __forceinline__ double fast_pow_int(double base, int exp) {
 	return result;
 }
 
-double flambda(double q) { return lambda * pow_int(q, p) + (1 - lambda) * pow_int(q, p2); }
-double Dflambda(double q) { return lambda * p * pow_int(q, p - 1) + (1 - lambda) * p2 * pow_int(q, p2 - 1); }
-double DDflambda(double q) { return lambda * p * (p - 1) * pow_int(q, p - 2) + (1 - lambda) * p2 * (p2 - 1) * pow_int(q, p2 - 2); }
-double DDDflambda(double q) { return lambda * p * (p - 1) * (p - 2) * pow_int(q, p - 3) + (1 - lambda) * p2 * (p2 - 1) * (p2 - 2) * pow_int(q, p2 - 3); }
+double flambda(double q) { return config.lambda * pow_int(q, config.p) + (1 - config.lambda) * pow_int(q, config.p2); }
+double Dflambda(double q) { return config.lambda * config.p * pow_int(q, config.p - 1) + (1 - config.lambda) * config.p2 * pow_int(q, config.p2 - 1); }
+double DDflambda(double q) { return config.lambda * config.p * (config.p - 1) * pow_int(q, config.p - 2) + (1 - config.lambda) * config.p2 * (config.p2 - 1) * pow_int(q, config.p2 - 2); }
+double DDDflambda(double q) { return config.lambda * config.p * (config.p - 1) * (config.p - 2) * pow_int(q, config.p - 3) + (1 - config.lambda) * config.p2 * (config.p2 - 1) * (config.p2 - 2) * pow_int(q, config.p2 - 3); }
 
 __device__ double flambdaGPU(double q) { return d_lambda * fast_pow_int(q, d_p) + (1 - d_lambda) * fast_pow_int(q, d_p2); }
 __device__ double DflambdaGPU(double q) { return d_lambda * d_p * fast_pow_int(q, d_p - 1) + (1 - d_lambda) * d_p2 * fast_pow_int(q, d_p2 - 1); }

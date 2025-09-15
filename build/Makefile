@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/jlang/Nextcloud/Spin-glass/Codes/DMFE
+CMAKE_SOURCE_DIR = /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build
+CMAKE_BINARY_DIR = /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -142,12 +142,26 @@ RG-Evo/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo.dir/build.make CMakeFiles/RG-Evo.dir/build
 .PHONY : RG-Evo/fast
 
+#=============================================================================
+# Target rules for targets named RG-Evo-shared
+
+# Build rule for target.
+RG-Evo-shared: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 RG-Evo-shared
+.PHONY : RG-Evo-shared
+
+# fast build rule for target.
+RG-Evo-shared/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo-shared.dir/build.make CMakeFiles/RG-Evo-shared.dir/build
+.PHONY : RG-Evo-shared/fast
+
 main.o: main.cu.o
 .PHONY : main.o
 
 # target to build an object file
 main.cu.o:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo.dir/build.make CMakeFiles/RG-Evo.dir/main.cu.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo-shared.dir/build.make CMakeFiles/RG-Evo-shared.dir/main.cu.o
 .PHONY : main.cu.o
 
 main.i: main.cu.i
@@ -156,6 +170,7 @@ main.i: main.cu.i
 # target to preprocess a source file
 main.cu.i:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo.dir/build.make CMakeFiles/RG-Evo.dir/main.cu.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo-shared.dir/build.make CMakeFiles/RG-Evo-shared.dir/main.cu.i
 .PHONY : main.cu.i
 
 main.s: main.cu.s
@@ -164,6 +179,7 @@ main.s: main.cu.s
 # target to generate assembly for a file
 main.cu.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo.dir/build.make CMakeFiles/RG-Evo.dir/main.cu.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/RG-Evo-shared.dir/build.make CMakeFiles/RG-Evo-shared.dir/main.cu.s
 .PHONY : main.cu.s
 
 src/EOMs/runge_kutta.o: src/EOMs/runge_kutta.cu.o
@@ -752,6 +768,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... DFME-core"
 	@echo "... RG-Evo"
+	@echo "... RG-Evo-shared"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

@@ -52,6 +52,7 @@ Options (from the built-in help)
 - `-d FLOAT`    Set minimum time step
 - `-e FLOAT`    Set maximum error per step
 - `-s BOOL`     Enable output saving (correlation/state/compressed data)
+- `-S BOOL`     Use SERK2 fused SigmaK/SigmaR GPU kernel (default: true)
 - `-D BOOL`     Enable debug mode
 - `-v`          Display version information and exit
 - `-c FILE`     Check version compatibility of parameter file and exit
