@@ -30,8 +30,7 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
                                      const double* __restrict__ QRv,
                                      const double* __restrict__ dQKv,
                                      const double* __restrict__ dQRv,
-                                     bool* __restrict__ flags,
-                                     double threshold, size_t len, size_t n,
-                                     cudaStream_t stream = 0);
+                                     unsigned char* __restrict__ flags,
+                                     double threshold, size_t len, size_t n);
 
 #endif // SPARSIFY_UTILS_HPP

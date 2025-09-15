@@ -6,5 +6,5 @@ CUDA_DEFINES = -DH5_RUNTIME_OPTIONAL=1
 
 CUDA_INCLUDES = --options-file CMakeFiles/RG-Evo.dir/includes_CUDA.rsp
 
-CUDA_FLAGS = -O3 -DNDEBUG --generate-code=arch=compute_52,code=[compute_52,sm_52] -Xcompiler=-fPIE --extended-lambda --use_fast_math -allow-unsupported-compiler -std=c++17
+CUDA_FLAGS = -O3 -DNDEBUG --generate-code=arch=compute_80,code=[compute_80,sm_80] --generate-code=arch=compute_86,code=[compute_86,sm_86] --generate-code=arch=compute_89,code=[compute_89,sm_89] --generate-code=arch=compute_90,code=[compute_90,sm_90] -Xcompiler=-fPIE --extended-lambda --use_fast_math -allow-unsupported-compiler -std=c++17
 

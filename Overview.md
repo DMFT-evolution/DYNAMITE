@@ -6,69 +6,7 @@ High-performance CUDA/C++ implementation for DMFE simulations. The code builds a
 - Library: `DFME-core` (static) — shared GPU/host modules
 - Executable: `RG-Evo` — main entry point, placed in the project root on build
 
----
-
-## Build
-
-Requirements
-- CUDA toolkit (NVCC); a modern NVIDIA GPU with a matching driver
-- CMake ≥ 3.24
-- C++17 compiler (clang++-14 is preferred as NVCC host compiler if available)
-
-Quick start
-- With helper script:
-  - `./build.sh` (supports `--clean`)
-- Manually:
-  - Configure: `cmake -S . -B build`
-  - Build: `cmake --build build -j` 
-
-Config options (toggle at configure time)
-- `-DUSE_HDF5=ON` — enable compile-time HDF5 linkage (requires dev packages)
-- `-DUSE_HDF5_RUNTIME=ON` — enable runtime-optional HDF5 via dlopen (default ON)
-- `-DCMAKE_CUDA_ARCHITECTURES="80;86;89;90"` — set GPU arch list (override to match your GPU)
-- `-DCMAKE_BUILD_TYPE=Release|RelWithDebInfo|Debug` — choose build type (default Release)
-
-Notes
-- The executable is written to the project root (`./RG-Evo`).
-- When `USE_HDF5_RUNTIME=ON`, HDF5 is loaded at runtime if present; host link uses `-ldl` only.
-
----
-
-## Run
-
-After building:
-- `./RG-Evo -h` — show usage
-- `./RG-Evo [options]` — run a simulation
-
-Options (from the built-in help)
-- `-p INT`      Set p parameter (default: current config)
-- `-q INT`      Set p2 parameter
-- `-l FLOAT`    Set lambda parameter
-- `-T FLOAT`    Set T0 parameter; use `inf` for infinity
-- `-G FLOAT`    Set Gamma parameter
-- `-m INT`      Set maximum number of loops
-- `-L INT`      Set grid length/size (compiled paths expect matching grid assets)
-- `-t FLOAT`    Set maximum simulation time
-- `-d FLOAT`    Set minimum time step
-- `-e FLOAT`    Set maximum error per step
-- `-s BOOL`     Enable output saving (correlation/state/compressed data)
-- `-S BOOL`     Use SERK2 fused SigmaK/SigmaR GPU kernel (default: true)
-- `-D BOOL`     Enable debug mode
-- `-v`          Display version information and exit
-- `-c FILE`     Check version compatibility of parameter file and exit
-- `-h`          Display help and exit
-
-Examples
-- Minimal run: `./RG-Evo -p 3 -q 12 -l 0.3 -T inf -G 0.0 -L 512`
-- Tuning timestepping: `./RG-Evo -d 1e-5 -e 1e-10 -t 1e7`
-- Version info only: `./RG-Evo -v`
-- Check a parameter file: `./RG-Evo -c Results/params.txt`
-
-Data and outputs
-- Precomputed grid data lives under `Grid_data/` (e.g., `512/`, `1024/`, `2048/`).
-- When saving is enabled (`-s true`), outputs (correlations, state, optional HDF5) are written by the I/O layer; see `include/io_utils.hpp` for details.
-
----
+For build, run, inputs/outputs, and full CLI reference, see `README.md`.
 
 ## Module Map
 
@@ -150,9 +88,5 @@ Public headers are under `include/`, sources under `src/`:
 - Versioning
   - Version info and string — `src/version/version_info.cu`; API in `include/version_info.hpp`
   - Compatibility analysis/checks — `src/version/version_compat.cu`; API in `include/version_compat.hpp`
-
-## Troubleshooting
-- Host compiler: If NVCC warns about the host compiler, install `clang++-14` and re-configure; the build prefers it automatically when found.
-- GPU architectures: If your GPU is older/newer than the defaults, set `-DCMAKE_CUDA_ARCHITECTURES` accordingly (e.g., `75` for Turing, `90` for Hopper).
-- Clean rebuild: Use `./build.sh --clean` or delete the `build/` directory and re-run CMake.
+``` 
 

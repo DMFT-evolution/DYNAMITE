@@ -163,12 +163,12 @@ Failed to detect CUDA nvcc include information:
 
 
 Detecting C compiler ABI info compiled with the following output:
-Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf
+Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_921e6/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_921e6.dir/build.make CMakeFiles/cmTC_921e6.dir/build
-gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf'
-Building C object CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o
-/usr/bin/clang-14   -v -MD -MT CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a67dc/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a67dc.dir/build.make CMakeFiles/cmTC_a67dc.dir/build
+gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v'
+Building C object CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o
+/usr/bin/clang-14   -v -MD -MT CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -179,7 +179,7 @@ Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
  (in-process)
- "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -sys-header-deps -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -sys-header-deps -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c
 clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
 ignoring nonexistent directory "/include"
@@ -190,9 +190,9 @@ ignoring nonexistent directory "/include"
  /usr/include/x86_64-linux-gnu
  /usr/include
 End of search list.
-Linking C executable cmTC_921e6
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_921e6.dir/link.txt --verbose=1
-/usr/bin/clang-14  -v CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -o cmTC_921e6 
+Linking C executable cmTC_a67dc
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a67dc.dir/link.txt --verbose=1
+/usr/bin/clang-14  -v CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -o cmTC_a67dc 
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -202,8 +202,8 @@ Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
- "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_921e6 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
-gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf'
+ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_a67dc /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
+gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v'
 
 
 
@@ -224,12 +224,12 @@ Parsed C implicit include dir info from above output: rv=done
 
 Parsed C implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf]
+  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_921e6/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_921e6.dir/build.make CMakeFiles/cmTC_921e6.dir/build]
-  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf']
-  ignore line: [Building C object CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/usr/bin/clang-14   -v -MD -MT CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c]
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_a67dc/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_a67dc.dir/build.make CMakeFiles/cmTC_a67dc.dir/build]
+  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v']
+  ignore line: [Building C object CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/clang-14   -v -MD -MT CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -242,7 +242,7 @@ Parsed C implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -sys-header-deps -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-tmqIzf -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o.d -MT CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -sys-header-deps -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-F7Xf6v -ferror-limit 19 -fgnuc-version=4.2.1 -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -x c /usr/share/cmake-3.25/Modules/CMakeCCompilerABI.c]
   ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
   ignore line: [ignoring nonexistent directory "/include"]
@@ -253,9 +253,9 @@ Parsed C implicit link information from above output:
   ignore line: [ /usr/include/x86_64-linux-gnu]
   ignore line: [ /usr/include]
   ignore line: [End of search list.]
-  ignore line: [Linking C executable cmTC_921e6]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_921e6.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/clang-14  -v CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -o cmTC_921e6 ]
+  ignore line: [Linking C executable cmTC_a67dc]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_a67dc.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/clang-14  -v CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -o cmTC_a67dc ]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -267,7 +267,7 @@ Parsed C implicit link information from above output:
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
-  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_921e6 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
+  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_a67dc /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
     arg [/usr/bin/ld] ==> ignore
     arg [-pie] ==> ignore
     arg [--hash-style=both] ==> ignore
@@ -278,7 +278,7 @@ Parsed C implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_921e6] ==> ignore
+    arg [cmTC_a67dc] ==> ignore
     arg [/lib/x86_64-linux-gnu/Scrt1.o] ==> obj [/lib/x86_64-linux-gnu/Scrt1.o]
     arg [/lib/x86_64-linux-gnu/crti.o] ==> obj [/lib/x86_64-linux-gnu/crti.o]
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o] ==> obj [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o]
@@ -290,7 +290,7 @@ Parsed C implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/lib] ==> dir [/lib]
     arg [-L/usr/lib] ==> dir [/usr/lib]
-    arg [CMakeFiles/cmTC_921e6.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [CMakeFiles/cmTC_a67dc.dir/CMakeCCompilerABI.c.o] ==> ignore
     arg [-lgcc] ==> lib [gcc]
     arg [--as-needed] ==> ignore
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -319,12 +319,12 @@ Parsed C implicit link information from above output:
 
 
 Detecting CXX compiler ABI info compiled with the following output:
-Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv
+Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d8646/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d8646.dir/build.make CMakeFiles/cmTC_d8646.dir/build
-gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv'
-Building CXX object CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o
-/usr/bin/clang++-14   -v -MD -MT CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8eeb9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8eeb9.dir/build.make CMakeFiles/cmTC_8eeb9.dir/build
+gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q'
+Building CXX object CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/clang++-14   -v -MD -MT CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -335,7 +335,7 @@ Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
  (in-process)
- "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp
 clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
 ignoring nonexistent directory "/include"
@@ -349,9 +349,9 @@ ignoring nonexistent directory "/include"
  /usr/include/x86_64-linux-gnu
  /usr/include
 End of search list.
-Linking CXX executable cmTC_d8646
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d8646.dir/link.txt --verbose=1
-/usr/bin/clang++-14  -v CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_d8646 
+Linking CXX executable cmTC_8eeb9
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8eeb9.dir/link.txt --verbose=1
+/usr/bin/clang++-14  -v CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_8eeb9 
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -361,8 +361,8 @@ Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
- "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_d8646 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
-gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv'
+ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_8eeb9 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
+gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q'
 
 
 
@@ -389,12 +389,12 @@ Parsed CXX implicit include dir info from above output: rv=done
 
 Parsed CXX implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv]
+  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d8646/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d8646.dir/build.make CMakeFiles/cmTC_d8646.dir/build]
-  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv']
-  ignore line: [Building CXX object CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/bin/clang++-14   -v -MD -MT CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_8eeb9/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_8eeb9.dir/build.make CMakeFiles/cmTC_8eeb9.dir/build]
+  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q']
+  ignore line: [Building CXX object CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/clang++-14   -v -MD -MT CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -MF CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o.d -o CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -407,7 +407,7 @@ Parsed CXX implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-e35dAv -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -dependency-file CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o.d -MT CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -sys-header-deps -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-sP424q -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -x c++ /usr/share/cmake-3.25/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
   ignore line: [ignoring nonexistent directory "/include"]
@@ -421,9 +421,9 @@ Parsed CXX implicit link information from above output:
   ignore line: [ /usr/include/x86_64-linux-gnu]
   ignore line: [ /usr/include]
   ignore line: [End of search list.]
-  ignore line: [Linking CXX executable cmTC_d8646]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d8646.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/clang++-14  -v CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_d8646 ]
+  ignore line: [Linking CXX executable cmTC_8eeb9]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8eeb9.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/clang++-14  -v CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -o cmTC_8eeb9 ]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -435,7 +435,7 @@ Parsed CXX implicit link information from above output:
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
-  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_d8646 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
+  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_8eeb9 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
     arg [/usr/bin/ld] ==> ignore
     arg [-pie] ==> ignore
     arg [--hash-style=both] ==> ignore
@@ -446,7 +446,7 @@ Parsed CXX implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_d8646] ==> ignore
+    arg [cmTC_8eeb9] ==> ignore
     arg [/lib/x86_64-linux-gnu/Scrt1.o] ==> obj [/lib/x86_64-linux-gnu/Scrt1.o]
     arg [/lib/x86_64-linux-gnu/crti.o] ==> obj [/lib/x86_64-linux-gnu/crti.o]
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o] ==> obj [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o]
@@ -458,7 +458,7 @@ Parsed CXX implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/lib] ==> dir [/lib]
     arg [-L/usr/lib] ==> dir [/usr/lib]
-    arg [CMakeFiles/cmTC_d8646.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [CMakeFiles/cmTC_8eeb9.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
     arg [-lstdc++] ==> lib [stdc++]
     arg [-lm] ==> lib [m]
     arg [-lgcc_s] ==> lib [gcc_s]
@@ -485,12 +485,12 @@ Parsed CXX implicit link information from above output:
 
 
 Detecting CUDA compiler ABI info compiled with the following output:
-Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7
+Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04
 
-Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d19b5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d19b5.dir/build.make CMakeFiles/cmTC_d19b5.dir/build
-gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7'
-Building CUDA object CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o
-/usr/bin/nvcc -forward-unknown-to-host-compiler -ccbin=clang++-14   --generate-code=arch=compute_52,code=[compute_52,sm_52]   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o
+Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ff5a3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ff5a3.dir/build.make CMakeFiles/cmTC_ff5a3.dir/build
+gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04'
+Building CUDA object CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o
+/usr/bin/nvcc -forward-unknown-to-host-compiler -ccbin=clang++-14   --generate-code=arch=compute_80,code=[compute_80,sm_80] --generate-code=arch=compute_86,code=[compute_86,sm_86] --generate-code=arch=compute_89,code=[compute_89,sm_89] --generate-code=arch=compute_90,code=[compute_90,sm_90]   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -501,7 +501,7 @@ Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
  (in-process)
- "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_003cca7e_00000000-7_CMakeCUDACompilerABI.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=800 -D __CUDA_ARCH_LIST__=800,860,890,900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-10_CMakeCUDACompilerABI.compute_80.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
 clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
 ignoring nonexistent directory "/include"
@@ -525,7 +525,7 @@ Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
  (in-process)
- "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH_LIST__=520 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_003cca7e_00000000-5_CMakeCUDACompilerABI.cpp4.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=860 -D __CUDA_ARCH_LIST__=800,860,890,900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-11_CMakeCUDACompilerABI.compute_86.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
 clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
 ignoring nonexistent directory "/include"
@@ -549,7 +549,7 @@ Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
  (in-process)
- "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name tmpxft_003cca7e_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -x c++ /tmp/tmpxft_003cca7e_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=890 -D __CUDA_ARCH_LIST__=800,860,890,900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-12_CMakeCUDACompilerABI.compute_89.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
 clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
 ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
 ignoring nonexistent directory "/include"
@@ -563,9 +563,6 @@ ignoring nonexistent directory "/include"
  /usr/include/x86_64-linux-gnu
  /usr/include
 End of search list.
-Linking CUDA executable cmTC_d19b5
-/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d19b5.dir/link.txt --verbose=1
-/usr/bin/clang++-14  -v CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -o cmTC_d19b5  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/usr/lib/x86_64-linux-gnu/stubs" -L"/usr/lib/x86_64-linux-gnu"
 Debian clang version 14.0.6
 Target: x86_64-pc-linux-gnu
 Thread model: posix
@@ -575,8 +572,83 @@ Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
 Candidate multilib: .;@m64
 Selected multilib: .;@m64
 Found CUDA installation: /usr/lib/cuda, version 
- "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_d19b5 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/x86_64-linux-gnu/stubs -L/usr/lib/x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
-gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7'
+ (in-process)
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=900 -D __CUDA_ARCH_LIST__=800,860,890,900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-13_CMakeCUDACompilerABI.compute_90.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
+clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
+ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
+ignoring nonexistent directory "/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward
+ /usr/lib/llvm-14/lib/clang/14.0.6/include
+ /usr/local/include
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+Debian clang version 14.0.6
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Candidate multilib: .;@m64
+Selected multilib: .;@m64
+Found CUDA installation: /usr/lib/cuda, version 
+ (in-process)
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH_LIST__=800,860,890,900 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-5_CMakeCUDACompilerABI.cpp4.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu
+clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
+ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
+ignoring nonexistent directory "/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward
+ /usr/lib/llvm-14/lib/clang/14.0.6/include
+ /usr/local/include
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+Debian clang version 14.0.6
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Candidate multilib: .;@m64
+Selected multilib: .;@m64
+Found CUDA installation: /usr/lib/cuda, version 
+ (in-process)
+ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name tmpxft_0002d6e2_00000000-6_CMakeCUDACompilerABI.compute_90.cudafe1.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -D __CUDA_ARCH__=900 -D __CUDA_ARCH_LIST__=800,860,890,900 -D CUDA_DOUBLE_MATH_FUNCTIONS -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -x c++ /tmp/tmpxft_0002d6e2_00000000-6_CMakeCUDACompilerABI.compute_90.cudafe1.cpp
+clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu
+ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"
+ignoring nonexistent directory "/include"
+#include "..." search starts here:
+#include <...> search starts here:
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12
+ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward
+ /usr/lib/llvm-14/lib/clang/14.0.6/include
+ /usr/local/include
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+Linking CUDA executable cmTC_ff5a3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ff5a3.dir/link.txt --verbose=1
+/usr/bin/clang++-14  -v CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -o cmTC_ff5a3  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/usr/lib/x86_64-linux-gnu/stubs" -L"/usr/lib/x86_64-linux-gnu"
+Debian clang version 14.0.6
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/bin
+Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12
+Candidate multilib: .;@m64
+Selected multilib: .;@m64
+Found CUDA installation: /usr/lib/cuda, version 
+ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ff5a3 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/x86_64-linux-gnu/stubs -L/usr/lib/x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o
+gmake[1]: Leaving directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04'
 
 
 
@@ -603,12 +675,12 @@ Parsed CUDA implicit include dir info from above output: rv=done
 
 Parsed CUDA implicit link information from above output:
   link line regex: [^( *|.*[/\])(ld|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\]+-)?ld|collect2)[^/\]*( |$)]
-  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7]
+  ignore line: [Change Dir: /files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04]
   ignore line: []
-  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_d19b5/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_d19b5.dir/build.make CMakeFiles/cmTC_d19b5.dir/build]
-  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7']
-  ignore line: [Building CUDA object CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o]
-  ignore line: [/usr/bin/nvcc -forward-unknown-to-host-compiler -ccbin=clang++-14   --generate-code=arch=compute_52 code=[compute_52 sm_52]   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o]
+  ignore line: [Run Build Command(s):/usr/bin/gmake -f Makefile cmTC_ff5a3/fast && /usr/bin/gmake  -f CMakeFiles/cmTC_ff5a3.dir/build.make CMakeFiles/cmTC_ff5a3.dir/build]
+  ignore line: [gmake[1]: Entering directory '/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04']
+  ignore line: [Building CUDA object CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o]
+  ignore line: [/usr/bin/nvcc -forward-unknown-to-host-compiler -ccbin=clang++-14   --generate-code=arch=compute_80 code=[compute_80 sm_80] --generate-code=arch=compute_86 code=[compute_86 sm_86] --generate-code=arch=compute_89 code=[compute_89 sm_89] --generate-code=arch=compute_90 code=[compute_90 sm_90]   -Xcompiler=-v -MD -MT CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -MF CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o.d -x cu -c /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu -o CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -621,7 +693,7 @@ Parsed CUDA implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_003cca7e_00000000-7_CMakeCUDACompilerABI.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=800 -D __CUDA_ARCH_LIST__=800 860 890 900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-10_CMakeCUDACompilerABI.compute_80.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
   ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
   ignore line: [ignoring nonexistent directory "/include"]
@@ -647,7 +719,7 @@ Parsed CUDA implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH_LIST__=520 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_003cca7e_00000000-5_CMakeCUDACompilerABI.cpp4.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=860 -D __CUDA_ARCH_LIST__=800 860 890 900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-11_CMakeCUDACompilerABI.compute_86.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
   ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
   ignore line: [ignoring nonexistent directory "/include"]
@@ -673,7 +745,7 @@ Parsed CUDA implicit link information from above output:
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
   ignore line: [ (in-process)]
-  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name tmpxft_003cca7e_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -D __CUDA_ARCH__=520 -D __CUDA_ARCH_LIST__=520 -D CUDA_DOUBLE_MATH_FUNCTIONS -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-pngWD7 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -x c++ /tmp/tmpxft_003cca7e_00000000-6_CMakeCUDACompilerABI.cudafe1.cpp]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=890 -D __CUDA_ARCH_LIST__=800 860 890 900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-12_CMakeCUDACompilerABI.compute_89.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
   ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
   ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
   ignore line: [ignoring nonexistent directory "/include"]
@@ -687,9 +759,6 @@ Parsed CUDA implicit link information from above output:
   ignore line: [ /usr/include/x86_64-linux-gnu]
   ignore line: [ /usr/include]
   ignore line: [End of search list.]
-  ignore line: [Linking CUDA executable cmTC_d19b5]
-  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d19b5.dir/link.txt --verbose=1]
-  ignore line: [/usr/bin/clang++-14  -v CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -o cmTC_d19b5  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/usr/lib/x86_64-linux-gnu/stubs" -L"/usr/lib/x86_64-linux-gnu"]
   ignore line: [Debian clang version 14.0.6]
   ignore line: [Target: x86_64-pc-linux-gnu]
   ignore line: [Thread model: posix]
@@ -701,7 +770,88 @@ Parsed CUDA implicit link information from above output:
   ignore line: [Selected multilib: .]
   ignore line: [@m64]
   ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
-  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_d19b5 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/x86_64-linux-gnu/stubs -L/usr/lib/x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
+  ignore line: [ (in-process)]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH__=900 -D __CUDA_ARCH_LIST__=800 860 890 900 -D CUDA_DOUBLE_MATH_FUNCTIONS -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-13_CMakeCUDACompilerABI.compute_90.cpp1.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
+  ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
+  ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
+  ignore line: [ignoring nonexistent directory "/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward]
+  ignore line: [ /usr/lib/llvm-14/lib/clang/14.0.6/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [Debian clang version 14.0.6]
+  ignore line: [Target: x86_64-pc-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/bin]
+  ignore line: [Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Candidate multilib: .]
+  ignore line: [@m64]
+  ignore line: [Selected multilib: .]
+  ignore line: [@m64]
+  ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
+  ignore line: [ (in-process)]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -E -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCUDACompilerABI.cu -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -include cuda_runtime.h -D __CUDA_ARCH_LIST__=800 860 890 900 -D __CUDACC__ -D __NVCC__ -D __CUDACC_VER_MAJOR__=11 -D __CUDACC_VER_MINOR__=8 -D __CUDACC_VER_BUILD__=89 -D __CUDA_API_VER_MAJOR__=11 -D __CUDA_API_VER_MINOR__=8 -D __NVCC_DIAG_PRAGMA_SUPPORT__=1 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o /tmp/tmpxft_0002d6e2_00000000-5_CMakeCUDACompilerABI.cpp4.ii -x c++ /usr/share/cmake-3.25/Modules/CMakeCUDACompilerABI.cu]
+  ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
+  ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
+  ignore line: [ignoring nonexistent directory "/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward]
+  ignore line: [ /usr/lib/llvm-14/lib/clang/14.0.6/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [Debian clang version 14.0.6]
+  ignore line: [Target: x86_64-pc-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/bin]
+  ignore line: [Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Candidate multilib: .]
+  ignore line: [@m64]
+  ignore line: [Selected multilib: .]
+  ignore line: [@m64]
+  ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
+  ignore line: [ (in-process)]
+  ignore line: [ "/usr/lib/llvm-14/bin/clang" -cc1 -triple x86_64-pc-linux-gnu -emit-obj -mrelax-all --mrelax-relocations -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name tmpxft_0002d6e2_00000000-6_CMakeCUDACompilerABI.compute_90.cudafe1.cpp -mrelocation-model pic -pic-level 2 -pic-is-pie -mframe-pointer=all -fmath-errno -ffp-contract=on -fno-rounding-math -mconstructor-aliases -funwind-tables=2 -target-cpu x86-64 -tune-cpu generic -mllvm -treat-scalable-fixed-error-as-warning -debugger-tuning=gdb -v -fcoverage-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -resource-dir /usr/lib/llvm-14/lib/clang/14.0.6 -D __CUDA_ARCH__=900 -D __CUDA_ARCH_LIST__=800 860 890 900 -D CUDA_DOUBLE_MATH_FUNCTIONS -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12 -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward -internal-isystem /usr/lib/llvm-14/lib/clang/14.0.6/include -internal-isystem /usr/local/include -internal-isystem /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include -internal-externc-isystem /usr/include/x86_64-linux-gnu -internal-externc-isystem /include -internal-externc-isystem /usr/include -fdeprecated-macro -fdebug-compilation-dir=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/build/CMakeFiles/CMakeScratch/TryCompile-o5fK04 -ferror-limit 19 -fgnuc-version=4.2.1 -fcxx-exceptions -fexceptions -faddrsig -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -x c++ /tmp/tmpxft_0002d6e2_00000000-6_CMakeCUDACompilerABI.compute_90.cudafe1.cpp]
+  ignore line: [clang -cc1 version 14.0.6 based upon LLVM 14.0.6 default target x86_64-pc-linux-gnu]
+  ignore line: [ignoring nonexistent directory "/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../x86_64-linux-gnu/include"]
+  ignore line: [ignoring nonexistent directory "/include"]
+  ignore line: [#include "..." search starts here:]
+  ignore line: [#include <...> search starts here:]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/x86_64-linux-gnu/c++/12]
+  ignore line: [ /usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../include/c++/12/backward]
+  ignore line: [ /usr/lib/llvm-14/lib/clang/14.0.6/include]
+  ignore line: [ /usr/local/include]
+  ignore line: [ /usr/include/x86_64-linux-gnu]
+  ignore line: [ /usr/include]
+  ignore line: [End of search list.]
+  ignore line: [Linking CUDA executable cmTC_ff5a3]
+  ignore line: [/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_ff5a3.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/clang++-14  -v CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -o cmTC_ff5a3  -lcudadevrt -lcudart_static -lrt -lpthread -ldl  -L"/usr/lib/x86_64-linux-gnu/stubs" -L"/usr/lib/x86_64-linux-gnu"]
+  ignore line: [Debian clang version 14.0.6]
+  ignore line: [Target: x86_64-pc-linux-gnu]
+  ignore line: [Thread model: posix]
+  ignore line: [InstalledDir: /usr/bin]
+  ignore line: [Found candidate GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Selected GCC installation: /usr/bin/../lib/gcc/x86_64-linux-gnu/12]
+  ignore line: [Candidate multilib: .]
+  ignore line: [@m64]
+  ignore line: [Selected multilib: .]
+  ignore line: [@m64]
+  ignore line: [Found CUDA installation: /usr/lib/cuda  version ]
+  link line: [ "/usr/bin/ld" -pie --hash-style=both --build-id --eh-frame-hdr -m elf_x86_64 -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTC_ff5a3 /lib/x86_64-linux-gnu/Scrt1.o /lib/x86_64-linux-gnu/crti.o /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o -L/usr/lib/x86_64-linux-gnu/stubs -L/usr/lib/x86_64-linux-gnu -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12 -L/usr/bin/../lib/gcc/x86_64-linux-gnu/12/../../../../lib64 -L/lib/x86_64-linux-gnu -L/lib/../lib64 -L/usr/lib/x86_64-linux-gnu -L/usr/lib/../lib64 -L/lib -L/usr/lib CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o -lcudadevrt -lcudart_static -lrt -lpthread -ldl -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtendS.o /lib/x86_64-linux-gnu/crtn.o]
     arg [/usr/bin/ld] ==> ignore
     arg [-pie] ==> ignore
     arg [--hash-style=both] ==> ignore
@@ -712,7 +862,7 @@ Parsed CUDA implicit link information from above output:
     arg [-dynamic-linker] ==> ignore
     arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
     arg [-o] ==> ignore
-    arg [cmTC_d19b5] ==> ignore
+    arg [cmTC_ff5a3] ==> ignore
     arg [/lib/x86_64-linux-gnu/Scrt1.o] ==> obj [/lib/x86_64-linux-gnu/Scrt1.o]
     arg [/lib/x86_64-linux-gnu/crti.o] ==> obj [/lib/x86_64-linux-gnu/crti.o]
     arg [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o] ==> obj [/usr/bin/../lib/gcc/x86_64-linux-gnu/12/crtbeginS.o]
@@ -726,7 +876,7 @@ Parsed CUDA implicit link information from above output:
     arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
     arg [-L/lib] ==> dir [/lib]
     arg [-L/usr/lib] ==> dir [/usr/lib]
-    arg [CMakeFiles/cmTC_d19b5.dir/CMakeCUDACompilerABI.cu.o] ==> ignore
+    arg [CMakeFiles/cmTC_ff5a3.dir/CMakeCUDACompilerABI.cu.o] ==> ignore
     arg [-lcudadevrt] ==> lib [cudadevrt]
     arg [-lcudart_static] ==> lib [cudart_static]
     arg [-lrt] ==> lib [rt]

@@ -156,9 +156,8 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
                                      const double* __restrict__ QRv,
                                      const double* __restrict__ dQKv,
                                      const double* __restrict__ dQRv,
-                                     bool* __restrict__ flags,
-                                     double threshold, size_t len, size_t n,
-                                     cudaStream_t stream) {
+                                     unsigned char* __restrict__ flags,
+                                     double threshold, size_t len, size_t n) {
     size_t i = blockIdx.x * blockDim.x + threadIdx.x + 2;
     if (i + 1 >= n) return;
     if (i/2 * 2 != i) return; // Ensure i is even
@@ -188,15 +187,15 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
         val += fabs(scale * (2.0 * f_qk - tdiff2 * (df1_qk / tdiff1 + df2_qk / tdiff3)));
         val += fabs(scale * (2.0 * f_qr - tdiff2 * (df1_qr / tdiff1 + df2_qr / tdiff3)));
     }
-    flags[i] = (val >= threshold);
+    flags[i] = static_cast<unsigned char>(val >= threshold);
 }
 
 void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
 
     size_t t1len = sim->d_t1grid.size();
-    thrust::device_vector<bool> flags(t1len, true);
+    thrust::device_vector<unsigned char> flags(t1len, 1);
 
-    size_t threads = 64;
+    size_t threads = 128;
     size_t blocks = (t1len - 2 + threads - 1) / threads;
     computeSparsifyFlags<<<blocks, threads, 0, stream>>>(
         thrust::raw_pointer_cast(sim->d_t1grid.data()),
@@ -207,56 +206,57 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
         thrust::raw_pointer_cast(flags.data()),
         threshold, config.len, t1len);
 
-    thrust::device_vector<size_t> inds(t1len);
-    thrust::sequence(inds.begin(), inds.end());
+    auto pol = thrust::cuda::par.on(stream);
 
-    size_t n = inds.size();
+    thrust::device_vector<size_t> inds(t1len);
+    thrust::sequence(pol, inds.begin(), inds.end());
+
     thrust::device_vector<size_t> filtered(t1len); // max possible size
     auto end_it = thrust::copy_if(
-        inds.begin(), inds.end(), 
-        flags.begin(), 
-        filtered.begin(), 
-        thrust::identity<bool>()
+        pol,
+        inds.begin(), inds.end(),
+        flags.begin(),
+        filtered.begin(),
+        [] __device__ (unsigned char f) { return f != 0; }
     );
     filtered.resize(end_it - filtered.begin()); // shrink to actual size
 
-    // Construct d_indsD and tfac
-    thrust::device_vector<size_t> indsD(filtered.size(),0);
-    thrust::transform(filtered.begin(), filtered.end() - 1, indsD.begin() + 1, indsD.begin() + 1, thrust::placeholders::_1 + 1);
+    // Construct indsD and tfac
+    thrust::device_vector<size_t> indsD(filtered.size(), 0);
+    if (filtered.size() > 1) {
+        thrust::transform(pol,
+            filtered.begin(), filtered.end() - 1,
+            indsD.begin() + 1,
+            [] __device__ (size_t x) { return x + 1; }
+        );
+    }
 
     thrust::device_vector<double> tfac(filtered.size(), 1.0);
     const double* t1_ptr = thrust::raw_pointer_cast(sim->d_t1grid.data());
 
-    auto max_it = thrust::max_element(indsD.begin(), indsD.end());
-    auto min_it = thrust::min_element(indsD.begin(), indsD.end());
-    double max_val = *max_it;
-    double min_val = *min_it;
-
-    auto max_f = thrust::max_element(filtered.begin(), filtered.end());
-    auto min_f = thrust::min_element(filtered.begin(), filtered.end());
-    double max_valf = *max_f;
-    double min_valf = *min_f;
-
-    tfac[0]= 1.0;
-    thrust::transform(
-        thrust::make_zip_iterator(thrust::make_tuple(
-            filtered.begin() + 1,       // inds[i]
-            filtered.begin(),           // inds[i-1]
-            indsD.begin() + 1      // indsD[i]
-        )),
-        thrust::make_zip_iterator(thrust::make_tuple(
-            filtered.end(),             // one past last valid index
-            filtered.end() - 1,
-            indsD.end()
-        )),
-        tfac.begin() + 1,
-        [t1_ptr] __device__ (thrust::tuple<size_t, size_t, size_t> tup) {
-            size_t inds_i    = thrust::get<0>(tup);
-            size_t inds_im1  = thrust::get<1>(tup);
-            size_t indsD_i   = thrust::get<2>(tup);
-            return (t1_ptr[inds_i] - t1_ptr[inds_im1]) /
-                (t1_ptr[indsD_i] - t1_ptr[indsD_i - 1]);
-        });
+    if (filtered.size() > 1) {
+        thrust::transform(
+            pol,
+            thrust::make_zip_iterator(thrust::make_tuple(
+                filtered.begin() + 1,       // inds[i]
+                filtered.begin(),            // inds[i-1]
+                indsD.begin() + 1           // indsD[i]
+            )),
+            thrust::make_zip_iterator(thrust::make_tuple(
+                filtered.end(),
+                filtered.end() - 1,
+                indsD.end()
+            )),
+            tfac.begin() + 1,
+            [t1_ptr] __device__ (thrust::tuple<size_t, size_t, size_t> tup) {
+                size_t inds_i   = thrust::get<0>(tup);
+                size_t inds_im1 = thrust::get<1>(tup);
+                size_t indsD_i  = thrust::get<2>(tup);
+                double denom = t1_ptr[indsD_i] - t1_ptr[indsD_i - 1];
+                return denom != 0.0 ? (t1_ptr[inds_i] - t1_ptr[inds_im1]) / denom : 1.0;
+            }
+        );
+    }
 
     sim->d_QKv = gatherGPU(sim->d_QKv, filtered, config.len);
     sim->d_QRv = gatherGPU(sim->d_QRv, filtered, config.len);
@@ -269,8 +269,12 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
     size_t new_n = sim->d_t1grid.size();
     sim->d_delta_t_ratio.resize(new_n);
     thrust::device_vector<double> dgrid(new_n);
-    thrust::transform(sim->d_t1grid.begin() + 1, sim->d_t1grid.end(), sim->d_t1grid.begin(), dgrid.begin() + 1, thrust::minus<>());
-    thrust::transform(dgrid.begin() + 2, dgrid.end(), dgrid.begin() + 1, sim->d_delta_t_ratio.begin() + 2, thrust::divides<>());
+    if (new_n >= 2) {
+        thrust::transform(pol, sim->d_t1grid.begin() + 1, sim->d_t1grid.end(), sim->d_t1grid.begin(), dgrid.begin() + 1, thrust::minus<double>());
+    }
+    if (new_n >= 3) {
+        thrust::transform(pol, dgrid.begin() + 2, dgrid.end(), dgrid.begin() + 1, sim->d_delta_t_ratio.begin() + 2, thrust::divides<double>());
+    }
 
     // vector<double> gpu_result(tfac.size());
     // thrust::copy(tfac.begin(), tfac.end(), gpu_result.begin());

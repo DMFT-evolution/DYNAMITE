@@ -80,6 +80,27 @@ fi
 # Decide compilers to pass to CMake
 cmake_args=( -S "$SCRIPT_DIR" -B "$BDIR" )
 
+# If not explicitly set, try to pick a reasonable CUDA arch for the current GPU
+if [[ -z "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
+  gpu_arch=""
+  if command -v nvidia-smi >/dev/null 2>&1; then
+    gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 | tr 'A-Z' 'a-z') || true
+    case "$gpu_name" in
+      *h100*|*hopper*|*sm_90*|*sm90*) gpu_arch=90 ;;
+      *a100*|*sm_80*|*sm80*) gpu_arch=80 ;;
+      *a10*|*l40*|*ada*|*sm_89*|*sm89*) gpu_arch=89 ;;
+      *v100*|*sm_70*|*sm70*) gpu_arch=70 ;;
+    esac
+  fi
+  if [[ -n "$gpu_arch" ]]; then
+    echo "[detect] Setting CUDA arch to $gpu_arch based on GPU" >&2
+    cmake_args+=( -DCMAKE_CUDA_ARCHITECTURES=$gpu_arch )
+  else
+    # Fallback portable set if unknown
+    cmake_args+=( -DCMAKE_CUDA_ARCHITECTURES=80\;86\;89\;90 )
+  fi
+fi
+
 if command -v nvc++ >/dev/null 2>&1; then
   # Prefer NVHPC if present (works well as CUDA host and for C/C++)
   echo "[toolchain] Using NVHPC compilers (nvc, nvc++, nvfortran if needed)" >&2

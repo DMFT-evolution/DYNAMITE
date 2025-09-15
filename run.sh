@@ -51,7 +51,7 @@ USE_NCU=false
 # l=$(awk "BEGIN { printf \"%.2f\", 0.05 * $SLURM_ARRAY_TASK_ID }")
 # echo "[$(date)] Starting RG-Evo with -l $l"
 
-rm -rf build && ./build.sh
+rm -rf build && ./build.sh --clean
   
 if $USE_PROFILING; then
   nsys profile --trace=openmp,openacc,cuda -o profile.out ./RG-Evo
