@@ -21,6 +21,19 @@
 			],
 			"group": "build",
 			"detail": "compiler: /usr/bin/g++"
+		},
+		{
+			"label": "Build DMFE with CMake",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh"
+			],
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build"
 		}
 	]
 }

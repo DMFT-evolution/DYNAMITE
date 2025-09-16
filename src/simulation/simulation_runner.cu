@@ -88,7 +88,7 @@ int runSimulation() {
                     rk->init = 2;
                 } 
             }
-            if (config.gpu && config.save_output) {
+            if (config.save_output) {
                 // Get consistent filename based on physical parameters
                 std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.save_output);
                 
@@ -153,7 +153,7 @@ int runSimulation() {
         }
     }
 
-    if (config.gpu && config.save_output) {
+    if (config.save_output) {
         std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.save_output);
         saveSimulationState(filename, config.delta, config.delta_t);
     }

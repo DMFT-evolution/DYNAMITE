@@ -842,8 +842,10 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
 
 void saveSimulationStateBinary(const std::string& filename, double delta, double delta_t) {
     // Copy data from GPU to CPU
-    copyVectorsToCPU(*sim);
-    
+    if (config.gpu) {
+        copyVectorsToCPU(*sim);
+    }
+
     // Calculate energy before saving
     double energy;
     if (config.gpu) {
@@ -907,7 +909,9 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
 #if defined(H5_RUNTIME_OPTIONAL)
     if (!h5rt::available()) throw std::runtime_error("HDF5 not available at runtime");
     // Ensure data on CPU
-    copyVectorsToCPU(*sim);
+    if (config.gpu) {
+        copyVectorsToCPU(*sim);
+    }
     // Calculate energy
     double energy;
     if (config.gpu) {
