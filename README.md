@@ -116,6 +116,7 @@ cmake -S . -B build \
 	- `-t FLOAT` max simulation time
 	- `-d FLOAT` minimum time step
 	- `-e, --error FLOAT` max error per step
+	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
 	- `-s BOOL` save outputs (default true; pass `false` to disable)
 	- `-S, --serk2 BOOL` use SERK2 method (default true)
 	- `-D BOOL` debug messages (default true)
@@ -139,10 +140,17 @@ Example: `Grid_data/512/...` for `-L 512`.
 
 At startup, an output root directory is selected:
 
-- If the executable resides under your `$HOME`, results are written under `config.outputDir` (default in code: `/nobackups/jlang/Results/`).
-- Otherwise, results go to `config.resultsDir` (default `Results/`, relative to the working dir).
+- If you pass `-o /path/to/dir` (or `--out-dir /path/to/dir`), all results are written there. The path is created if needed.
+- Otherwise, if the executable resides under your `$HOME`, results are written under `config.outputDir` (default in code: `/nobackups/jlang/Results/`).
+- Else results go to `config.resultsDir` (default `Results/`, relative to the working dir).
 
-Both paths are defined in `include/config.hpp` and can be changed at compile time; there’s no CLI override.
+Both defaults live in `include/config.hpp`. The CLI `--out-dir` provides a runtime override without rebuilding.
+
+Example:
+
+```bash
+./RG-Evo -L 512 -l 0.5 -o /scratch/$USER/dmfe_runs
+```
 
 Within the selected root, results are organized by parameters:
 

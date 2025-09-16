@@ -4,6 +4,10 @@ Old Codes/
 # Ignore results
 Results/
 
+# Ignore logs
+logs/
+build_log.txt
+
 # Ignore build directory
 build/
 
@@ -24,7 +28,6 @@ Grid_data/2048/
 *.p
 
 # Ignore DS_Store file
-
 .DS_Store
 
 # Ignore Windows .ini file

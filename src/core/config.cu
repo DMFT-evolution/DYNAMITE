@@ -26,12 +26,13 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"Gamma", required_argument, 0, 'G'},
         {"error", required_argument, 0, 'e'},
         {"check", required_argument, 0, 'c'},
+        {"out-dir", required_argument, 0, 'o'},
         {"help", no_argument, 0, 'h'},
         {"serk2", required_argument, 0, 'S'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:hvc:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:o:hvc:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = std::stoi(optarg);
@@ -76,6 +77,16 @@ bool parseCommandLineArguments(int argc, char **argv) {
             case 'S':
                 config.use_serk2 = (std::string(optarg) != "false");
                 break;
+            case 'o': {
+                std::string path = optarg ? std::string(optarg) : std::string();
+                if (!path.empty() && path.back() != '/') path += '/';
+                if (!path.empty()) {
+                    // Override both to keep behavior consistent regardless of HOME location
+                    config.resultsDir = path;
+                    config.outputDir = path;
+                }
+                break;
+            }
             case 'v':
                 std::cout << g_version_info.toString() << std::endl;
                 return false;  // Exit after showing version
@@ -131,6 +142,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -t FLOAT          Set maximum simulation time (default: " << config.tmax << ")\n"
                           << "  -d FLOAT          Set minimum time step (default: " << config.delta_t_min << ")\n"
                           << "  -e, --error F     Set maximum error per step (default: " << config.delta_max << ")\n"
+                          << "  -o, --out-dir DIR Set directory for all outputs (overrides defaults)\n"
                           << "  -s BOOL           Enable output saving (correlation file, simulation state, compressed data)\n"
                           << "  -S, --serk2 BOOL  Use SERK2 method (default: true)\n"
                           << "  -D BOOL           Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
@@ -159,7 +171,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  delta_max = " << config.delta_max << "\n"
               << "  debug = " << (config.debug ? "true" : "false") << "\n"
               << "  save_output = " << (config.save_output ? "true" : "false") << "\n"
-              << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n";
+              << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n"
+              << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }
 
