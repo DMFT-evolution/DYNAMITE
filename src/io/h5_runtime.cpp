@@ -3,11 +3,15 @@
 #include <mutex>
 #include <vector>
 #include <cstring>
+#include <iostream>
 
 namespace h5rt {
 
 namespace {
 void* handle = nullptr;
+const char* loaded_name = nullptr;
+void* handle_hl = nullptr;            // HDF5 high-level library handle
+const char* loaded_name_hl = nullptr; // name of loaded HL lib
 std::once_flag once;
 
 template <typename T>
@@ -35,6 +39,7 @@ using p_H5Dwrite = herr_t (*)(hid_t, hid_t, hid_t, hid_t, hid_t, const void*);
 using p_H5Dclose = herr_t (*)(hid_t);
 using p_H5Dget_space = hid_t (*)(hid_t);
 using p_H5Screate_simple = hid_t (*)(int, const hsize_t*, const hsize_t*);
+using p_H5Screate = hid_t (*)(int);
 using p_H5Sclose = herr_t (*)(hid_t);
 using p_H5Sget_simple_extent_dims = int (*)(hid_t, hsize_t*, hsize_t*);
 using p_H5Pcreate = hid_t (*)(hid_t);
@@ -42,10 +47,17 @@ using p_H5Pset_deflate = herr_t (*)(hid_t, unsigned);
 using p_H5Pset_chunk = herr_t (*)(hid_t, int, const hsize_t*);
 using p_H5Pclose = herr_t (*)(hid_t);
 
+// High-level (H5LT) API helpers — avoid needing native type globals
+using p_H5LTmake_dataset_double = herr_t (*)(hid_t /*loc_id*/, const char* /*name*/, int /*rank*/, const hsize_t* /*dims*/, const double* /*buffer*/);
+using p_H5LTset_attribute_double = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const double* /*data*/, size_t /*size*/);
+using p_H5LTset_attribute_int = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const int* /*data*/, size_t /*size*/);
+using p_H5LTset_attribute_string = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const char* /*data*/);
+
 // Constants (copied values from HDF5 headers)
 constexpr unsigned H5F_ACC_RDONLY = 0x0000u;
 constexpr unsigned H5F_ACC_TRUNC  = 0x0002u;
 constexpr hid_t H5P_DEFAULT = 0;
+constexpr int H5S_SCALAR = 0; // dataspace type for scalars
 
 // Native types (H5T_NATIVE_DOUBLE, H5T_NATIVE_INT)
 // Using indirect lookup from dynamic lib; declare as hid_t constants that we resolve.
@@ -59,12 +71,44 @@ p_H5Aopen_by_name s_H5Aopen_by_name = nullptr; p_H5Acreate2 s_H5Acreate2 = nullp
 p_H5Dopen2 s_H5Dopen2 = nullptr; p_H5Dcreate2 s_H5Dcreate2 = nullptr; p_H5Dread s_H5Dread = nullptr; p_H5Dwrite s_H5Dwrite = nullptr; p_H5Dclose s_H5Dclose = nullptr;
 p_H5Dget_space s_H5Dget_space = nullptr;
 p_H5Screate_simple s_H5Screate_simple = nullptr; p_H5Sclose s_H5Sclose = nullptr; p_H5Sget_simple_extent_dims s_H5Sget_simple_extent_dims = nullptr;
+p_H5Screate s_H5Screate = nullptr;
 p_H5Pcreate s_H5Pcreate = nullptr; p_H5Pset_deflate s_H5Pset_deflate = nullptr; p_H5Pset_chunk s_H5Pset_chunk = nullptr; p_H5Pclose s_H5Pclose = nullptr;
 
+// High-level function pointers
+p_H5LTmake_dataset_double s_H5LTmake_dataset_double = nullptr;
+p_H5LTset_attribute_double s_H5LTset_attribute_double = nullptr;
+p_H5LTset_attribute_int s_H5LTset_attribute_int = nullptr;
+p_H5LTset_attribute_string s_H5LTset_attribute_string = nullptr;
+
 bool do_load() {
-  const char* candidates[] = {"libhdf5.so", "libhdf5_serial.so"};
-  for (const char* name : candidates) {
-    handle = dlopen(name, RTLD_LAZY | RTLD_LOCAL);
+  // Allow local overrides: current dir, ./HDF5, and an optional hint env var
+  std::vector<std::string> prefixes = {"", "./", "./HDF5/"};
+  if (const char* hint = std::getenv("DMFE_HDF5_LIBDIR")) {
+    std::string d(hint);
+    if (!d.empty() && d.back() != '/') d.push_back('/');
+    prefixes.push_back(d);
+  }
+
+  const char* candidates[] = {
+    "libhdf5.so",
+    "libhdf5.so.200",
+    "libhdf5_serial.so",
+    "libhdf5_serial.so.200",
+    "libhdf5_serial.so.103",
+    "libhdf5_openmpi.so",
+    "libhdf5_openmpi.so.200",
+    "libhdf5_openmpi.so.103",
+    "libhdf5_mpich.so",
+    "libhdf5_mpich.so.200",
+    "libhdf5_mpich.so.103"
+  };
+  for (const char* base : candidates) {
+    for (const auto& pre : prefixes) {
+      std::string path = pre + base;
+      // Load core with GLOBAL so HL can resolve against it
+      handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+      if (handle) { loaded_name = strdup(path.c_str()); break; }
+    }
     if (handle) break;
   }
   if (!handle) return false;
@@ -86,6 +130,7 @@ bool do_load() {
   s_H5Dclose = sym<p_H5Dclose>("H5Dclose");
   s_H5Dget_space = sym<p_H5Dget_space>("H5Dget_space");
   s_H5Screate_simple = sym<p_H5Screate_simple>("H5Screate_simple");
+  s_H5Screate = sym<p_H5Screate>("H5Screate");
   s_H5Sclose = sym<p_H5Sclose>("H5Sclose");
   s_H5Sget_simple_extent_dims = sym<p_H5Sget_simple_extent_dims>("H5Sget_simple_extent_dims");
   s_H5Pcreate = sym<p_H5Pcreate>("H5Pcreate");
@@ -93,11 +138,91 @@ bool do_load() {
   s_H5Pset_chunk = sym<p_H5Pset_chunk>("H5Pset_chunk");
   s_H5Pclose = sym<p_H5Pclose>("H5Pclose");
 
-  // Resolve native types constants exported by libhdf5
-  H5T_NATIVE_DOUBLE = *reinterpret_cast<hid_t*>(dlsym(handle, "H5T_NATIVE_DOUBLE_g"));
-  H5T_NATIVE_INT    = *reinterpret_cast<hid_t*>(dlsym(handle, "H5T_NATIVE_INT_g"));
+  // Try to load High-Level lib (H5LT*) to avoid relying on hidden native type globals
+  {
+    const char* hl_candidates[] = {
+      "libhdf5_hl.so",
+  "libhdf5_hl.so.310",
+  "libhdf5_hl.so.100",
+      "libhdf5_hl.so.200",
+      "libhdf5_hl.so.103",
+      "libhdf5_serial_hl.so",
+  "libhdf5_serial_hl.so.310",
+  "libhdf5_serial_hl.so.100",
+      "libhdf5_serial_hl.so.200",
+      "libhdf5_serial_hl.so.103",
+      "libhdf5_openmpi_hl.so",
+  "libhdf5_openmpi_hl.so.310",
+  "libhdf5_openmpi_hl.so.100",
+      "libhdf5_openmpi_hl.so.200",
+      "libhdf5_openmpi_hl.so.103",
+      "libhdf5_mpich_hl.so",
+  "libhdf5_mpich_hl.so.310",
+  "libhdf5_mpich_hl.so.100",
+      "libhdf5_mpich_hl.so.200",
+      "libhdf5_mpich_hl.so.103"
+    };
+    for (const char* base : hl_candidates) {
+      for (const auto& pre : prefixes) {
+        std::string path = pre + base;
+        handle_hl = dlopen(path.c_str(), RTLD_LAZY | RTLD_LOCAL);
+        if (handle_hl) { loaded_name_hl = strdup(path.c_str()); break; }
+      }
+      if (handle_hl) break;
+    }
+    if (handle_hl) {
+      // resolve symbols from HL library
+      s_H5LTmake_dataset_double = reinterpret_cast<p_H5LTmake_dataset_double>(dlsym(handle_hl, "H5LTmake_dataset_double"));
+      s_H5LTset_attribute_double = reinterpret_cast<p_H5LTset_attribute_double>(dlsym(handle_hl, "H5LTset_attribute_double"));
+      s_H5LTset_attribute_int = reinterpret_cast<p_H5LTset_attribute_int>(dlsym(handle_hl, "H5LTset_attribute_int"));
+      s_H5LTset_attribute_string = reinterpret_cast<p_H5LTset_attribute_string>(dlsym(handle_hl, "H5LTset_attribute_string"));
+    }
+  }
+
+  // Resolve native types constants exported by libhdf5 (best-effort; may be hidden)
+  if (!handle_hl) { // only needed when HL is not available
+    auto get_id = [&](std::initializer_list<const char*> names) -> hid_t {
+      for (const char* symname : names) {
+        void* p = dlsym(handle, symname);
+        if (p) return *reinterpret_cast<hid_t*>(p);
+      }
+      return static_cast<hid_t>(-1);
+    };
+
+    // Try native types with and without `_g`
+    H5T_NATIVE_DOUBLE = get_id({"H5T_NATIVE_DOUBLE_g", "H5T_NATIVE_DOUBLE"});
+    H5T_NATIVE_INT    = get_id({"H5T_NATIVE_INT_g",    "H5T_NATIVE_INT"});
+
+    // Fallbacks: standard types, both LE/BE, with and without `_g`
+    if (H5T_NATIVE_DOUBLE < 0) {
+      H5T_NATIVE_DOUBLE = get_id({
+        "H5T_IEEE_F64LE_g", "H5T_IEEE_F64LE",
+        "H5T_IEEE_F64BE_g", "H5T_IEEE_F64BE"
+      });
+      if (H5T_NATIVE_DOUBLE >= 0) {
+        std::cerr << "[h5rt] Using fallback IEEE F64 type for double" << std::endl;
+      }
+    }
+    if (H5T_NATIVE_INT < 0) {
+      H5T_NATIVE_INT = get_id({
+        "H5T_STD_I32LE_g", "H5T_STD_I32LE",
+        "H5T_STD_I32BE_g", "H5T_STD_I32BE"
+      });
+      if (H5T_NATIVE_INT >= 0) {
+        std::cerr << "[h5rt] Using fallback STD I32 type for int" << std::endl;
+      }
+    }
+  }
 
   if (s_H5open) s_H5open();
+  if (loaded_name) {
+    std::cerr << "[h5rt] loaded HDF5 library: " << loaded_name << std::endl;
+  }
+  if (loaded_name_hl) {
+    std::cerr << "[h5rt] loaded HDF5 HL library: " << loaded_name_hl << std::endl;
+  } else if (H5T_NATIVE_DOUBLE < 0 || H5T_NATIVE_INT < 0) {
+    std::cerr << "[h5rt] Warning: H5LT not available and native types unresolved; HDF5 writes may fail" << std::endl;
+  }
   return true;
 }
 } // namespace
@@ -117,6 +242,10 @@ void unload() {
     if (s_H5close) s_H5close();
     dlclose(handle);
     handle = nullptr;
+  }
+  if (handle_hl) {
+    dlclose(handle_hl);
+    handle_hl = nullptr;
   }
 }
 
@@ -153,8 +282,13 @@ bool read_attr_int(hid_t file, const char* name, int& out) {
 }
 
 bool write_attr_double(hid_t file, const char* name, double value) {
-  if (!available() || !s_H5Acreate2 || !s_H5Awrite) return false;
-  hid_t scalar_space = s_H5Screate_simple(0, nullptr, nullptr);
+  if (!available()) return false;
+  if (s_H5LTset_attribute_double) {
+    // Attach attribute to root object "."
+    return s_H5LTset_attribute_double(file, ".", name, &value, 1) >= 0;
+  }
+  if (!s_H5Acreate2 || !s_H5Awrite) return false;
+  hid_t scalar_space = s_H5Screate ? s_H5Screate(H5S_SCALAR) : (s_H5Screate_simple ? s_H5Screate_simple(0, nullptr, nullptr) : -1);
   if (scalar_space < 0) return false;
   hid_t attr = s_H5Acreate2(file, name, H5T_NATIVE_DOUBLE, scalar_space, 0, 0);
   bool ok = (attr >= 0) && (s_H5Awrite(attr, H5T_NATIVE_DOUBLE, &value) >= 0);
@@ -164,8 +298,12 @@ bool write_attr_double(hid_t file, const char* name, double value) {
 }
 
 bool write_attr_int(hid_t file, const char* name, int value) {
-  if (!available() || !s_H5Acreate2 || !s_H5Awrite) return false;
-  hid_t scalar_space = s_H5Screate_simple(0, nullptr, nullptr);
+  if (!available()) return false;
+  if (s_H5LTset_attribute_int) {
+    return s_H5LTset_attribute_int(file, ".", name, &value, 1) >= 0;
+  }
+  if (!s_H5Acreate2 || !s_H5Awrite) return false;
+  hid_t scalar_space = s_H5Screate ? s_H5Screate(H5S_SCALAR) : (s_H5Screate_simple ? s_H5Screate_simple(0, nullptr, nullptr) : -1);
   if (scalar_space < 0) return false;
   hid_t attr = s_H5Acreate2(file, name, H5T_NATIVE_INT, scalar_space, 0, 0);
   bool ok = (attr >= 0) && (s_H5Awrite(attr, H5T_NATIVE_INT, &value) >= 0);
@@ -176,7 +314,11 @@ bool write_attr_int(hid_t file, const char* name, int value) {
 
 bool write_attr_string(hid_t file, const char* name, const std::string& value) {
   // For simplicity, store as fixed-size array of chars
-  if (!available() || !s_H5Acreate2 || !s_H5Awrite) return false;
+  if (!available()) return false;
+  if (s_H5LTset_attribute_string) {
+    return s_H5LTset_attribute_string(file, ".", name, value.c_str()) >= 0;
+  }
+  if (!s_H5Acreate2 || !s_H5Awrite) return false;
   hsize_t dims[1] = { value.size() };
   hid_t space = s_H5Screate_simple(1, dims, nullptr);
   if (space < 0) return false;
@@ -210,7 +352,12 @@ bool read_dataset_1d_double(hid_t file, const char* name, std::vector<double>& o
 
 bool write_dataset_1d_double(hid_t file, const char* name, const double* data, size_t n,
                              int /*compression_level*/, size_t /*chunk*/) {
-  if (!available() || !s_H5Dcreate2 || !s_H5Screate_simple) return false;
+  if (!available()) return false;
+  if (s_H5LTmake_dataset_double) {
+    hsize_t dims[1] = { static_cast<hsize_t>(n) };
+    return s_H5LTmake_dataset_double(file, name, 1, dims, data) >= 0;
+  }
+  if (!s_H5Dcreate2 || !s_H5Screate_simple) return false;
   hsize_t dims[1] = { static_cast<hsize_t>(n) };
   hid_t space = s_H5Screate_simple(1, dims, nullptr);
   if (space < 0) return false;

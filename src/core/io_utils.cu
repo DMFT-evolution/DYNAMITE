@@ -929,28 +929,36 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     auto file = h5rt::create_file_trunc(filename.c_str());
     if (file < 0) throw std::runtime_error("Failed to create HDF5 file");
 
-    // Datasets
-    h5rt::write_dataset_1d_double(file, "QKv", sim->h_QKv.data(), sim->h_QKv.size());
-    h5rt::write_dataset_1d_double(file, "QRv", sim->h_QRv.data(), sim->h_QRv.size());
-    h5rt::write_dataset_1d_double(file, "dQKv", sim->h_dQKv.data(), sim->h_dQKv.size());
-    h5rt::write_dataset_1d_double(file, "dQRv", sim->h_dQRv.data(), sim->h_dQRv.size());
-    h5rt::write_dataset_1d_double(file, "t1grid", sim->h_t1grid.data(), sim->h_t1grid.size());
-    h5rt::write_dataset_1d_double(file, "rvec", sim->h_rvec.data(), sim->h_rvec.size());
-    h5rt::write_dataset_1d_double(file, "drvec", sim->h_drvec.data(), sim->h_drvec.size());
+    auto fail_and_fallback = [&](const char* why){
+        std::cerr << "[HDF5] write failed: " << why << "; falling back to binary." << std::endl;
+        h5rt::close_file(file);
+        // Remove possibly empty/partial file
+        std::remove(filename.c_str());
+        saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
+    };
+
+    // Datasets (fail fast if any write fails)
+    if (!h5rt::write_dataset_1d_double(file, "QKv", sim->h_QKv.data(), sim->h_QKv.size())) { fail_and_fallback("QKv"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "QRv", sim->h_QRv.data(), sim->h_QRv.size())) { fail_and_fallback("QRv"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->h_dQKv.data(), sim->h_dQKv.size())) { fail_and_fallback("dQKv"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->h_dQRv.data(), sim->h_dQRv.size())) { fail_and_fallback("dQRv"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->h_t1grid.data(), sim->h_t1grid.size())) { fail_and_fallback("t1grid"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "rvec", sim->h_rvec.data(), sim->h_rvec.size())) { fail_and_fallback("rvec"); return; }
+    if (!h5rt::write_dataset_1d_double(file, "drvec", sim->h_drvec.data(), sim->h_drvec.size())) { fail_and_fallback("drvec"); return; }
 
     // Attributes
     double t_current = sim->h_t1grid.back();
     int current_len = config.len; int current_loop = config.loop;
-    h5rt::write_attr_double(file, "time", t_current);
-    h5rt::write_attr_int(file, "iteration", current_loop);
-    h5rt::write_attr_int(file, "len", current_len);
-    h5rt::write_attr_double(file, "delta", config.delta);
-    h5rt::write_attr_double(file, "delta_t", config.delta_t);
-    h5rt::write_attr_double(file, "T0", config.T0);
-    h5rt::write_attr_double(file, "lambda", config.lambda);
-    h5rt::write_attr_int(file, "p", config.p);
-    h5rt::write_attr_int(file, "p2", config.p2);
-    h5rt::write_attr_double(file, "energy", energy);
+    if (!h5rt::write_attr_double(file, "time", t_current)) { fail_and_fallback("attr time"); return; }
+    if (!h5rt::write_attr_int(file, "iteration", current_loop)) { fail_and_fallback("attr iteration"); return; }
+    if (!h5rt::write_attr_int(file, "len", current_len)) { fail_and_fallback("attr len"); return; }
+    if (!h5rt::write_attr_double(file, "delta", config.delta)) { fail_and_fallback("attr delta"); return; }
+    if (!h5rt::write_attr_double(file, "delta_t", config.delta_t)) { fail_and_fallback("attr delta_t"); return; }
+    if (!h5rt::write_attr_double(file, "T0", config.T0)) { fail_and_fallback("attr T0"); return; }
+    if (!h5rt::write_attr_double(file, "lambda", config.lambda)) { fail_and_fallback("attr lambda"); return; }
+    if (!h5rt::write_attr_int(file, "p", config.p)) { fail_and_fallback("attr p"); return; }
+    if (!h5rt::write_attr_int(file, "p2", config.p2)) { fail_and_fallback("attr p2"); return; }
+    if (!h5rt::write_attr_double(file, "energy", energy)) { fail_and_fallback("attr energy"); return; }
 
     h5rt::close_file(file);
     std::cout << "Saved HDF5 data to " << filename << std::endl;
