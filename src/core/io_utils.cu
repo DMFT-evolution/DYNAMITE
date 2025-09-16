@@ -1000,6 +1000,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     // Base compression settings
     H5::DSetCreatPropList plist;
     plist.setDeflate(6); // Compression level
+    plist.setShuffle();
     
     // Write QKv dataset with appropriate chunking
     {
@@ -1007,7 +1008,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         H5::DataSpace qkv_space(1, qkv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(4096), sim->h_QKv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->h_QKv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
@@ -1021,7 +1022,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         H5::DataSpace qrv_space(1, qrv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(4096), sim->h_QRv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->h_QRv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
@@ -1035,7 +1036,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         H5::DataSpace dqkv_space(1, dqkv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(4096), sim->h_dQKv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->h_dQKv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
@@ -1049,7 +1050,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         H5::DataSpace dqrv_space(1, dqrv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(4096), sim->h_dQRv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->h_dQRv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         

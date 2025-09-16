@@ -30,6 +30,9 @@ extern RKData* rk;
 // Global timing variable
 std::chrono::high_resolution_clock::time_point program_start_time;
 
+// Track last rollback iteration
+int last_rollback_loop = -1000;
+
 int runSimulation() {
     // Only create CUDA streams if we're actually using the GPU
     StreamPool* pool = config.gpu ? new StreamPool(20) : nullptr;
@@ -76,7 +79,7 @@ int runSimulation() {
                 sparsifyNscale(config.delta_max);
                 interpolate();
             }
-            if (config.delta < config.delta_max / 2) {
+            if (config.delta < config.delta_max / 2 && config.loop - last_rollback_loop > 1000) {
                 config.delta_t *= 0.5;
                 if (config.gpu) {
                     if (rk->init == 1) {
@@ -117,8 +120,9 @@ int runSimulation() {
         }
         if (config.delta > 2 * config.delta_max && config.gpu) {
             rollbackState(10);
+            last_rollback_loop = config.loop;
             t = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) + config.delta_t;
-            config.delta_t = std::min(std::max(0.5*config.delta_t, config.delta_t_min),config.rmax[rk->init-1] / config.specRad);
+            config.delta_t = 0.5 * std::min(std::max(config.delta_t, config.delta_t_min), config.rmax[rk->init-1] / config.specRad);
             if (rk->init > 3) {
                 init_SERK2(2 * (rk->init - 3));
             } else {
