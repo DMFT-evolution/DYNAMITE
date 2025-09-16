@@ -52,6 +52,10 @@ using p_H5LTmake_dataset_double = herr_t (*)(hid_t /*loc_id*/, const char* /*nam
 using p_H5LTset_attribute_double = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const double* /*data*/, size_t /*size*/);
 using p_H5LTset_attribute_int = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const int* /*data*/, size_t /*size*/);
 using p_H5LTset_attribute_string = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, const char* /*data*/);
+using p_H5LTget_attribute_double = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, double* /*data*/);
+using p_H5LTget_attribute_int = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, int* /*data*/);
+using p_H5LTget_attribute_string = herr_t (*)(hid_t /*loc_id*/, const char* /*obj_name*/, const char* /*attr_name*/, char* /*data*/, size_t /*maxlen*/);
+using p_H5LTread_dataset_double = herr_t (*)(hid_t /*loc_id*/, const char* /*dset_name*/, double* /*buffer*/);
 
 // Constants (copied values from HDF5 headers)
 constexpr unsigned H5F_ACC_RDONLY = 0x0000u;
@@ -79,6 +83,10 @@ p_H5LTmake_dataset_double s_H5LTmake_dataset_double = nullptr;
 p_H5LTset_attribute_double s_H5LTset_attribute_double = nullptr;
 p_H5LTset_attribute_int s_H5LTset_attribute_int = nullptr;
 p_H5LTset_attribute_string s_H5LTset_attribute_string = nullptr;
+p_H5LTget_attribute_double s_H5LTget_attribute_double = nullptr;
+p_H5LTget_attribute_int s_H5LTget_attribute_int = nullptr;
+p_H5LTget_attribute_string s_H5LTget_attribute_string = nullptr;
+p_H5LTread_dataset_double s_H5LTread_dataset_double = nullptr;
 
 bool do_load() {
   // Allow local overrides: current dir, ./HDF5, and an optional hint env var
@@ -176,11 +184,15 @@ bool do_load() {
       s_H5LTset_attribute_double = reinterpret_cast<p_H5LTset_attribute_double>(dlsym(handle_hl, "H5LTset_attribute_double"));
       s_H5LTset_attribute_int = reinterpret_cast<p_H5LTset_attribute_int>(dlsym(handle_hl, "H5LTset_attribute_int"));
       s_H5LTset_attribute_string = reinterpret_cast<p_H5LTset_attribute_string>(dlsym(handle_hl, "H5LTset_attribute_string"));
+      s_H5LTget_attribute_double = reinterpret_cast<p_H5LTget_attribute_double>(dlsym(handle_hl, "H5LTget_attribute_double"));
+      s_H5LTget_attribute_int = reinterpret_cast<p_H5LTget_attribute_int>(dlsym(handle_hl, "H5LTget_attribute_int"));
+      s_H5LTget_attribute_string = reinterpret_cast<p_H5LTget_attribute_string>(dlsym(handle_hl, "H5LTget_attribute_string"));
+      s_H5LTread_dataset_double = reinterpret_cast<p_H5LTread_dataset_double>(dlsym(handle_hl, "H5LTread_dataset_double"));
     }
   }
 
   // Resolve native types constants exported by libhdf5 (best-effort; may be hidden)
-  if (!handle_hl) { // only needed when HL is not available
+  {
     auto get_id = [&](std::initializer_list<const char*> names) -> hid_t {
       for (const char* symname : names) {
         void* p = dlsym(handle, symname);
@@ -201,6 +213,10 @@ bool do_load() {
       });
       if (H5T_NATIVE_DOUBLE >= 0) {
         std::cerr << "[h5rt] Using fallback IEEE F64 type for double" << std::endl;
+      } else {
+        // Hardcoded fallback for little-endian systems
+        H5T_NATIVE_DOUBLE = 0x321; // H5T_IEEE_F64LE
+        std::cerr << "[h5rt] Using hardcoded IEEE F64LE type for double" << std::endl;
       }
     }
     if (H5T_NATIVE_INT < 0) {
@@ -210,6 +226,10 @@ bool do_load() {
       });
       if (H5T_NATIVE_INT >= 0) {
         std::cerr << "[h5rt] Using fallback STD I32 type for int" << std::endl;
+      } else {
+        // Hardcoded fallback for little-endian systems
+        H5T_NATIVE_INT = 0x320; // H5T_STD_I32LE
+        std::cerr << "[h5rt] Using hardcoded STD I32LE type for int" << std::endl;
       }
     }
   }
@@ -264,7 +284,12 @@ void close_file(hid_t file) {
 }
 
 bool read_attr_double(hid_t file, const char* name, double& out) {
-  if (!available() || !s_H5Aopen_by_name || !s_H5Aread) return false;
+  if (!available()) return false;
+  if (s_H5LTget_attribute_double) {
+    // Use HL API
+    return s_H5LTget_attribute_double(file, ".", name, &out) >= 0;
+  }
+  if (!s_H5Aopen_by_name || !s_H5Aread) return false;
   hid_t attr = s_H5Aopen_by_name(file, ".", name, 0, 0);
   if (attr < 0) return false;
   bool ok = (s_H5Aread(attr, H5T_NATIVE_DOUBLE, &out) >= 0);
@@ -273,7 +298,12 @@ bool read_attr_double(hid_t file, const char* name, double& out) {
 }
 
 bool read_attr_int(hid_t file, const char* name, int& out) {
-  if (!available() || !s_H5Aopen_by_name || !s_H5Aread) return false;
+  if (!available()) return false;
+  if (s_H5LTget_attribute_int) {
+    // Use HL API
+    return s_H5LTget_attribute_int(file, ".", name, &out) >= 0;
+  }
+  if (!s_H5Aopen_by_name || !s_H5Aread) return false;
   hid_t attr = s_H5Aopen_by_name(file, ".", name, 0, 0);
   if (attr < 0) return false;
   bool ok = (s_H5Aread(attr, H5T_NATIVE_INT, &out) >= 0);
@@ -336,7 +366,22 @@ bool write_attr_string(hid_t file, const char* name, const std::string& value) {
 }
 
 bool read_dataset_1d_double(hid_t file, const char* name, std::vector<double>& out) {
-  if (!available() || !s_H5Dopen2 || !s_H5Dread || !s_H5Sget_simple_extent_dims) return false;
+  if (!available()) return false;
+  if (s_H5LTread_dataset_double) {
+    // Use HL API - but need to get dimensions first
+    if (!s_H5Dopen2 || !s_H5Sget_simple_extent_dims) return false;
+    hid_t dset = s_H5Dopen2(file, name, 0);
+    if (dset < 0) return false;
+    hid_t space = s_H5Dget_space ? s_H5Dget_space(dset) : -1;
+    if (space < 0) { s_H5Dclose(dset); return false; }
+    hsize_t dims[1] = {0};
+    s_H5Sget_simple_extent_dims(space, dims, nullptr);
+    out.resize(static_cast<size_t>(dims[0]));
+    s_H5Sclose(space);
+    s_H5Dclose(dset);
+    return s_H5LTread_dataset_double(file, name, out.data()) >= 0;
+  }
+  if (!s_H5Dopen2 || !s_H5Dread || !s_H5Sget_simple_extent_dims) return false;
   hid_t dset = s_H5Dopen2(file, name, 0);
   if (dset < 0) return false;
   hid_t space = s_H5Dget_space ? s_H5Dget_space(dset) : -1;

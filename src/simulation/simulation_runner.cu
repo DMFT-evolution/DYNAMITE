@@ -118,6 +118,7 @@ int runSimulation() {
         if (config.delta > 2 * config.delta_max && config.gpu) {
             rollbackState(10);
             t = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) + config.delta_t;
+            config.delta_t = std::min(std::max(0.5*config.delta_t, config.delta_t_min),config.rmax[rk->init-1] / config.specRad);
             if (rk->init > 3) {
                 init_SERK2(2 * (rk->init - 3));
             } else {

@@ -821,7 +821,12 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "delta_t_min = " << config.delta_t_min << std::endl;
     params << "delta_max = " << config.delta_max << std::endl;
     params << "maxLoop = " << config.maxLoop << std::endl;
-    params << "rmax = [" << config.rmax[0] << ", " << config.rmax[1] << "]" << std::endl;
+    params << "rmax = [";
+    for (size_t i = 0; i < config.rmax.size(); ++i) {
+        params << config.rmax[i];
+        if (i + 1 < config.rmax.size()) params << ", ";
+    }
+    params << "]" << std::endl;
     params << std::endl;
     
     params << "# Current Simulation State" << std::endl;
