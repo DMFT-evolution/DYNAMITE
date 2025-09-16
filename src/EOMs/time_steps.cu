@@ -122,6 +122,84 @@ __global__ void computeCopy(
     }
 }
 
+// Fused copy of qK, qR, dqK, dqR into contiguous history buffers.
+// Scales derivative arrays by dt = t - t1grid[idx-1].
+__global__ void append4Kernel(
+    const double* __restrict__ qK,
+    const double* __restrict__ qR,
+    const double* __restrict__ dqK,
+    const double* __restrict__ dqR,
+    double* __restrict__ QKv,
+    double* __restrict__ QRv,
+    double* __restrict__ dQKv,
+    double* __restrict__ dQRv,
+    const double* __restrict__ t1grid,
+    size_t idx,         // time index being appended
+    size_t offset,      // element offset = previous size of QKv
+    size_t len,
+    double t)
+{
+    const size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= len) return;
+
+    const double dt = t - t1grid[idx - 1];
+
+    QKv[offset + i]  = qK[i];
+    QRv[offset + i]  = qR[i];
+    dQKv[offset + i] = dqK[i] * dt;
+    dQRv[offset + i] = dqR[i] * dt;
+}
+
+// Update t1grid[idx], delta_t_ratio[idx], and drvec[idx] on device.
+__global__ void updateTimeScalarsKernel(
+    double* __restrict__ t1grid,
+    double* __restrict__ delta_t_ratio,
+    double* __restrict__ drvec,
+    size_t idx,
+    double t,
+    double dr)
+{
+    if (threadIdx.x == 0 && blockIdx.x == 0) {
+        const double tprev1 = t1grid[idx - 1];
+        const double dt = t - tprev1;
+        t1grid[idx] = t;
+        if (idx > 1) {
+            const double tprev2 = t1grid[idx - 2];
+            delta_t_ratio[idx] = dt / (tprev1 - tprev2);
+        } else {
+            delta_t_ratio[idx] = 0.0;
+        }
+        drvec[idx] = dt * dr;
+    }
+}
+
+// Fused replacement of the last slice (qK,qR,dqK,dqR) with scaling by dt using t1grid[idx-1].
+__global__ void replace4Kernel(
+    const double* __restrict__ qK,
+    const double* __restrict__ qR,
+    const double* __restrict__ dqK,
+    const double* __restrict__ dqR,
+    double* __restrict__ QKv,
+    double* __restrict__ QRv,
+    double* __restrict__ dQKv,
+    double* __restrict__ dQRv,
+    const double* __restrict__ t1grid,
+    size_t idx,         // time index being replaced (typically last = size-1)
+    size_t offset,      // element offset = idx * len
+    size_t len,
+    double t)
+{
+    const size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= len) return;
+
+    const double dt = t - t1grid[idx - 1];
+
+    QKv[offset + i]  = qK[i];
+    QRv[offset + i]  = qR[i];
+    dQKv[offset + i] = dqK[i] * dt;
+    dQRv[offset + i] = dqR[i] * dt;
+}
+
 // CPU time-step functions
 vector<double> QKstep()
 {
@@ -768,33 +846,62 @@ void appendAllGPU_ptr(
     const size_t len,
     StreamPool& pool)
 {
-    size_t t1len = sim->d_t1grid.size();
-    if (sim->d_t1grid.capacity() < t1len + 1) {
-        // Allocate a new vector with more capacity
-        sim->d_t1grid.reserve(t1len + 1000);
-        sim->d_delta_t_ratio.reserve(t1len + 1000);
+    // Current time index before append
+    const size_t idx = sim->d_t1grid.size();
+
+    // Keep existing resize cadence: grow by exactly one time-step when needed
+    if (sim->d_t1grid.capacity() < idx + 1) {
+        sim->d_t1grid.reserve(idx + 1000);
+        sim->d_delta_t_ratio.reserve(idx + 1000);
     }
 
-    // 1) update sim->d_t1grid and sim->d_delta_t_ratio
-    sim->d_t1grid.push_back(t);
-    size_t idx = t1len;
-    double tdiff = sim->d_t1grid[idx] - sim->d_t1grid[idx - 1];
-    if (idx > 1) {
-        double prev = sim->d_t1grid[idx - 1] - sim->d_t1grid[idx - 2];
-        sim->d_delta_t_ratio.push_back(tdiff / prev);
-    }
-    else {
-        sim->d_delta_t_ratio.push_back(0.0);
-    }
+    // Ensure scalar timelines have space for the new entry
+    sim->d_t1grid.resize(idx + 1);
+    sim->d_delta_t_ratio.resize(idx + 1);
+    sim->d_drvec.resize(idx + 1);
+    sim->d_rvec.resize(idx + 1);
 
-    appendGPU_ptr(sim->d_QKv, qK, len, 1.0, pool[0]);
-    appendGPU_ptr(sim->d_QRv, qR, len, 1.0, pool[1]);
-    appendGPU_ptr(sim->d_dQKv, dqK, len, tdiff, pool[2]);
-    appendGPU_ptr(sim->d_dQRv, dqR, len, tdiff, pool[3]);
+    // History buffers: compute offset and resize by +len (no change in frequency)
+    const size_t offset = sim->d_QKv.size();
+    if (sim->d_QKv.capacity() < offset + len) sim->d_QKv.reserve(offset + 1000 * len);
+    if (sim->d_QRv.capacity() < offset + len) sim->d_QRv.reserve(offset + 1000 * len);
+    if (sim->d_dQKv.capacity() < offset + len) sim->d_dQKv.reserve(offset + 1000 * len);
+    if (sim->d_dQRv.capacity() < offset + len) sim->d_dQRv.reserve(offset + 1000 * len);
+    sim->d_QKv.resize(offset + len);
+    sim->d_QRv.resize(offset + len);
+    sim->d_dQKv.resize(offset + len);
+    sim->d_dQRv.resize(offset + len);
 
-    // 2) finally update drvec and rvec
-    sim->d_drvec.push_back(tdiff * dr);
-    sim->d_rvec.push_back(rstepGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool));
+    // Launch fused history append (1 kernel instead of 4)
+    const int threads = 64;
+    const int blocks  = static_cast<int>((len + threads - 1) / threads);
+    append4Kernel<<<blocks, threads, 0, pool[0]>>>(
+        thrust::raw_pointer_cast(qK),
+        thrust::raw_pointer_cast(qR),
+        thrust::raw_pointer_cast(dqK),
+        thrust::raw_pointer_cast(dqR),
+        thrust::raw_pointer_cast(sim->d_QKv.data()),
+        thrust::raw_pointer_cast(sim->d_QRv.data()),
+        thrust::raw_pointer_cast(sim->d_dQKv.data()),
+        thrust::raw_pointer_cast(sim->d_dQRv.data()),
+        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        idx,
+        offset,
+        len,
+        t);
+
+    // Update time scalars (t1grid[idx], delta[idx], drvec[idx]) on device
+    updateTimeScalarsKernel<<<1, 1, 0, pool[0]>>>(
+        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        thrust::raw_pointer_cast(sim->d_delta_t_ratio.data()),
+        thrust::raw_pointer_cast(sim->d_drvec.data()),
+        idx,
+        t,
+        dr);
+
+    // Compute r(t) and store it in d_rvec[idx]
+    const double r_now = rstepGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+    sim->d_rvec[idx] = r_now;
 }
 
 void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double dr, const double t)
@@ -877,30 +984,40 @@ void replaceAllGPU_ptr(
     const size_t len,
     StreamPool& pool)
 {   
-    const int threads = 64;
-    const int blocks = (len + threads - 1) / threads;
-
-    // Replace the existing values in the vectors with the new values
+    // Replace the existing values in the vectors with the new values (last slice)
     const size_t gridSize = sim->d_t1grid.size();
-    const double tprev1 = sim->d_t1grid[gridSize - 2];
-    const double tdiff = t - tprev1;
-
-    sim->d_t1grid.back() = t;
-
-    if (gridSize > 2) {
-        const double tprev2 = sim->d_t1grid[gridSize - 3];
-        sim->d_delta_t_ratio.back() = tdiff / (tprev1 - tprev2);
-    } else {
-        sim->d_delta_t_ratio.back() = 0.0;
-    }
-
+    const size_t idx = gridSize - 1;
     const size_t offset = sim->d_QKv.size() - len;
 
-    computeCopy<<<blocks, threads, 0, pool[0]>>>(thrust::raw_pointer_cast(qK), thrust::raw_pointer_cast(sim->d_QKv.data()), offset, len, 1.0);
-    computeCopy<<<blocks, threads, 0, pool[1]>>>(thrust::raw_pointer_cast(qR), thrust::raw_pointer_cast(sim->d_QRv.data()), offset, len, 1.0);
-    computeCopy<<<blocks, threads, 0, pool[2]>>>(thrust::raw_pointer_cast(dqK), thrust::raw_pointer_cast(sim->d_dQKv.data()), offset, len, tdiff);
-    computeCopy<<<blocks, threads, 0, pool[3]>>>(thrust::raw_pointer_cast(dqR), thrust::raw_pointer_cast(sim->d_dQRv.data()), offset, len, tdiff);
+    const int threads = 64;
+    const int blocks  = static_cast<int>((len + threads - 1) / threads);
 
-    sim->d_drvec.back() = tdiff * dr;
-    sim->d_rvec.back() = rstepGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+    // Fused replace of 4 arrays with dt scaling computed on device
+    replace4Kernel<<<blocks, threads, 0, pool[0]>>>(
+        thrust::raw_pointer_cast(qK),
+        thrust::raw_pointer_cast(qR),
+        thrust::raw_pointer_cast(dqK),
+        thrust::raw_pointer_cast(dqR),
+        thrust::raw_pointer_cast(sim->d_QKv.data()),
+        thrust::raw_pointer_cast(sim->d_QRv.data()),
+        thrust::raw_pointer_cast(sim->d_dQKv.data()),
+        thrust::raw_pointer_cast(sim->d_dQRv.data()),
+        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        idx,
+        offset,
+        len,
+        t);
+
+    // Update time scalars for the last entry
+    updateTimeScalarsKernel<<<1, 1, 0, pool[0]>>>(
+        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        thrust::raw_pointer_cast(sim->d_delta_t_ratio.data()),
+        thrust::raw_pointer_cast(sim->d_drvec.data()),
+        idx,
+        t,
+        dr);
+
+    // Update r(t) at the last position
+    const double r_now = rstepGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+    sim->d_rvec.back() = r_now;
 }
