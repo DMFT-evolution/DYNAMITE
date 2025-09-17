@@ -3,6 +3,7 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <chrono>
+#include <cstdlib>
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
 #endif
@@ -161,6 +162,25 @@ size_t getGPUMemoryUsage() {
     }
     used_mem = total_mem - free_mem;
     return used_mem / (1024 * 1024); // Convert to MB
+}
+
+// Function to get available GPU memory in MB
+size_t getAvailableGPUMemory() {
+    if (!config.gpu) return 0;
+    
+    // Check for SLURM memory limit
+    const char* slurm_mem = getenv("SLURM_MEM_PER_GPU");
+    if (slurm_mem) {
+        return std::atoi(slurm_mem); // Assume MB
+    }
+    
+    // Otherwise, use CUDA total memory
+    size_t free_mem, total_mem;
+    cudaError_t err = cudaMemGetInfo(&free_mem, &total_mem);
+    if (err != cudaSuccess) {
+        return 0;
+    }
+    return total_mem / (1024 * 1024); // Convert to MB
 }
 
 // Function to update peak memory usage

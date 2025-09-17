@@ -12,6 +12,7 @@ bool isCompatibleGPUInstalled();
 bool isHDF5Available();
 size_t getCurrentMemoryUsage();
 size_t getGPUMemoryUsage();
+size_t getAvailableGPUMemory();
 void updatePeakMemory();
 std::string getHostname();
 

@@ -119,6 +119,7 @@ cmake -S . -B build \
 	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
 	- `-s BOOL` save outputs (default true; pass `false` to disable)
 	- `-S, --serk2 BOOL` use SERK2 method (default true)
+	- `-a, --aggressive-sparsify BOOL` enable aggressive sparsification (default true)
 	- `-D BOOL` debug messages (default true)
 	- `-v` print version info and exit
 	- `-c, --check FILE` check version compatibility of a params file and exit

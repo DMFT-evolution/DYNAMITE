@@ -28,6 +28,9 @@ struct SimulationConfig {
     int ord = 0;
     bool gpu = false;
     bool use_serk2 = true;
+    int sparsify_sweeps = 1;
+    bool aggressive_sparsify = true;
+    std::vector<std::string> command_line_args;  // Store original command-line arguments
 };
 
 // Command line argument parsing

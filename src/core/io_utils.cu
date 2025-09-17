@@ -784,6 +784,19 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "cuda_version = " << g_version_info.cuda_version << std::endl;
     params << std::endl;
 
+    // Command Line Arguments
+    params << "# Command Line Arguments" << std::endl;
+    if (!config.command_line_args.empty()) {
+        params << "command_line =";
+        for (size_t i = 0; i < config.command_line_args.size(); ++i) {
+            params << " " << config.command_line_args[i];
+        }
+        params << std::endl;
+    } else {
+        params << "command_line = (none stored)" << std::endl;
+    }
+    params << std::endl;
+
     // System and Performance Information
     params << "# System Information" << std::endl;
     params << "hostname = " << getHostname() << std::endl;

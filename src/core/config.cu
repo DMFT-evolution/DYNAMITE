@@ -18,6 +18,12 @@ extern RKData* rk;
 
 // Parse command line arguments and update simulation parameters
 bool parseCommandLineArguments(int argc, char **argv) {
+    // Store the original command-line arguments
+    config.command_line_args.clear();
+    for (int i = 0; i < argc; ++i) {
+        config.command_line_args.push_back(std::string(argv[i]));
+    }
+    
     int opt;
     int long_index = 0;
     static struct option long_opts[] = {
@@ -27,12 +33,13 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"error", required_argument, 0, 'e'},
         {"check", required_argument, 0, 'c'},
         {"out-dir", required_argument, 0, 'o'},
+        {"aggressive-sparsify", required_argument, 0, 'a'},
         {"help", no_argument, 0, 'h'},
         {"serk2", required_argument, 0, 'S'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:o:hvc:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:hvc:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = std::stoi(optarg);
@@ -76,6 +83,9 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 break;
             case 'S':
                 config.use_serk2 = (std::string(optarg) != "false");
+                break;
+            case 'a':
+                config.aggressive_sparsify = (std::string(optarg) != "false");
                 break;
             case 'o': {
                 std::string path = optarg ? std::string(optarg) : std::string();
@@ -132,23 +142,24 @@ bool parseCommandLineArguments(int argc, char **argv) {
             case 'h':
                 std::cout << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
-                          << "  -p INT            Set p parameter (default: " << config.p << ")\n"
-                          << "  -q INT            Set p2 parameter (default: " << config.p2 << ")\n"
-                          << "  -l, --lambda F    Set lambda parameter (default: " << config.lambda << ")\n"
-                          << "  -T, --T0 F        Set T0 parameter (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
-                          << "  -G, --Gamma F     Set Gamma parameter (default: " << config.Gamma << ")\n"
-                          << "  -m INT            Set maximum number of loops (default: " << config.maxLoop << ")\n"
-                          << "  -L INT            Set grid length N (default: " << config.len << ")\n"
-                          << "  -t FLOAT          Set maximum simulation time (default: " << config.tmax << ")\n"
-                          << "  -d FLOAT          Set minimum time step (default: " << config.delta_t_min << ")\n"
-                          << "  -e, --error F     Set maximum error per step (default: " << config.delta_max << ")\n"
-                          << "  -o, --out-dir DIR Set directory for all outputs (overrides defaults)\n"
-                          << "  -s BOOL           Enable output saving (correlation file, simulation state, compressed data)\n"
-                          << "  -S, --serk2 BOOL  Use SERK2 method (default: true)\n"
-                          << "  -D BOOL           Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
-                          << "  -v                Display version information and exit\n"
-                          << "  -c, --check FILE  Check version compatibility of parameter file and exit\n"
-                          << "  -h, --help        Display this help message and exit\n";
+                          << "  -p INT                          Set p parameter (default: " << config.p << ")\n"
+                          << "  -q INT                          Set p2 parameter (default: " << config.p2 << ")\n"
+                          << "  -l, --lambda F                  Set lambda parameter (default: " << config.lambda << ")\n"
+                          << "  -T, --T0 F                      Set T0 parameter (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
+                          << "  -G, --Gamma F                   Set Gamma parameter (default: " << config.Gamma << ")\n"
+                          << "  -m INT                          Set maximum number of loops (default: " << config.maxLoop << ")\n"
+                          << "  -L INT                          Set grid length N (default: " << config.len << ")\n"
+                          << "  -t FLOAT                        Set maximum simulation time (default: " << config.tmax << ")\n"
+                          << "  -d FLOAT                        Set minimum time step (default: " << config.delta_t_min << ")\n"
+                          << "  -e, --error F                   Set maximum error per step (default: " << config.delta_max << ")\n"
+                          << "  -o, --out-dir DIR               Set directory for all outputs (overrides defaults)\n"
+                          << "  -s BOOL                         Enable output saving (correlation file, simulation state, compressed data)\n"
+                          << "  -S, --serk2 BOOL                Use SERK2 method (default: true)\n"
+                          << "  -a, --aggressive-sparsify BOOL  Enable aggressive sparsification (default: " << (config.aggressive_sparsify ? "true" : "false") << ")\n"
+                          << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
+                          << "  -v                              Display version information and exit\n"
+                          << "  -c, --check FILE                Check version compatibility of parameter file and exit\n"
+                          << "  -h, --help                      Display this help message and exit\n";
                 return false;
             default:
                 std::cerr << "Unknown option: " << static_cast<char>(optopt) << std::endl;
@@ -172,6 +183,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  debug = " << (config.debug ? "true" : "false") << "\n"
               << "  save_output = " << (config.save_output ? "true" : "false") << "\n"
               << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n"
+              << "  aggressive_sparsify = " << (config.aggressive_sparsify ? "true" : "false") << "\n"
               << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }

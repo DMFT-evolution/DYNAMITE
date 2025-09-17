@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <limits>
 #include <chrono>
+#include <algorithm>
 
 // External global variables (defined in main.cu)
 extern SimulationConfig config;
@@ -72,11 +73,47 @@ int runSimulation() {
         }
 
         if (config.loop % 100000 == 0) {
+            // Update peak memory
+            updatePeakMemory();
+            
+            // Check memory usage and adjust sparsify sweeps
             if (config.gpu) {
-                sparsifyNscaleGPU(config.delta_max);
+                size_t available = getAvailableGPUMemory();
+                if (peak_gpu_memory_mb > 0.5 * available) {
+                    config.sparsify_sweeps = 2;
+                } else {
+                    config.sparsify_sweeps = 1;
+                }
+            }
+            
+            if (config.aggressive_sparsify) {
+                size_t prev_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+                int count = 0;
+                int max_sweeps = config.gpu ? config.sparsify_sweeps : 1; // For CPU, default to 1, but can adjust
+                while (count < std::min(10, max_sweeps)) {
+                    if (config.gpu) {
+                        sparsifyNscaleGPU(config.delta_max);
+                    } else {
+                        sparsifyNscale(config.delta_max);
+                    }
+                    size_t new_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+                    if (new_size >= prev_size) break;
+                    prev_size = new_size;
+                    count++;
+                }
+            } else {
+                if (config.gpu) {
+                    for (int i = 0; i < config.sparsify_sweeps; ++i) {
+                        sparsifyNscaleGPU(config.delta_max);
+                    }
+                } else {
+                    sparsifyNscale(config.delta_max);
+                }
+            }
+            
+            if (config.gpu) {
                 interpolateGPU();
             } else {
-                sparsifyNscale(config.delta_max);
                 interpolate();
             }
             if (config.delta < config.delta_max / 2 && config.loop - last_rollback_loop > 1000) {
