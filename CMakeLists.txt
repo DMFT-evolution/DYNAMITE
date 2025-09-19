@@ -13,6 +13,8 @@ endif()
 
 project(DMFE LANGUAGES C CXX CUDA)
 
+find_package(CUDAToolkit REQUIRED)
+
 find_package(OpenMP REQUIRED)
 
 option(USE_HDF5 "Enable HDF5 support (compile-time link)" OFF)
@@ -119,6 +121,7 @@ add_library(DFME-core
 target_include_directories(DFME-core
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PUBLIC ${CUDAToolkit_INCLUDE_DIRS}
 )
 
 if(OpenMP_CXX_FOUND)
