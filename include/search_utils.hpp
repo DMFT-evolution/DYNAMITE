@@ -34,12 +34,14 @@ thrust::device_vector<double> isearchPosSortedInitGPU(
     const thrust::device_vector<double>& elem,
     const thrust::device_vector<double>& inits);
 
-// CUDA kernel for binary search with interpolation
+// CUDA kernel declarations (only for CUDA compilation)
+#ifdef __CUDACC__
 __global__ __launch_bounds__(64, 1) void bsearch_interp_kernel(
     const double* __restrict__ list,
     const double* __restrict__ elem,
     double* __restrict__ result,
     size_t list_size,
     size_t elem_size);
+#endif
 
 #endif // SEARCH_UTILS_HPP

@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=gpu
 #SBATCH -G h100:1
-#SBATCH --mem=24gb
+#SBATCH --mem=100gb
 #SBATCH --time=7-00:15:00 
 #SBATCH --job-name=rg-evo-run
 #SBATCH --mail-user=jlang15@uni-koeln.de

@@ -62,13 +62,6 @@ void SigmaKGPU(const thrust::device_vector<double>& qk, thrust::device_vector<do
     );
 }
 
-void SigmaR(const std::vector<double>& qk, const std::vector<double>& qr, std::vector<double>& result)
-{
-    for (size_t i = 0; i < qk.size(); ++i) {
-        result[i] = DDflambda(qk[i]) * qr[i];
-    }
-}
-
 void SigmaRGPU(const thrust::device_vector<double>& qk, 
                const thrust::device_vector<double>& qr, 
                thrust::device_vector<double>& result,
@@ -86,40 +79,4 @@ void SigmaRGPU(const thrust::device_vector<double>& qk,
             return DDflambdaGPU(qk) * qr;
         }
     );
-}
-
-std::vector<double> SigmaK10(const std::vector<double>& qk)
-{
-    std::vector<double> result(qk.size());
-    for (size_t i = 0; i < qk.size(); ++i) {
-        result[i] = DDflambda(qk[i]);
-    }
-    return std::move(result);
-}
-
-std::vector<double> SigmaR10(const std::vector<double>& qk, const std::vector<double>& qr)
-{
-    std::vector<double> result(qk.size());
-    for (size_t i = 0; i < qk.size(); ++i) {
-        result[i] = DDDflambda(qk[i]) * qr[i];
-    }
-    return std::move(result);
-}
-
-std::vector<double> SigmaK01(const std::vector<double>& qk)
-{
-    std::vector<double> result(qk.size());
-    for (size_t i = 0; i < qk.size(); ++i) {
-        result[i] = 0.0;
-    }
-    return std::move(result);
-}
-
-std::vector<double> SigmaR01(const std::vector<double>& qk, const std::vector<double>& qr)
-{
-    std::vector<double> result(qk.size());
-    for (size_t i = 0; i < qk.size(); ++i) {
-        result[i] = DDflambda(qk[i]);
-    }
-    return std::move(result);
 }

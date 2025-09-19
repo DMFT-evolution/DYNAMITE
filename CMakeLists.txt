@@ -13,6 +13,8 @@ endif()
 
 project(DMFE LANGUAGES C CXX CUDA)
 
+find_package(OpenMP REQUIRED)
+
 option(USE_HDF5 "Enable HDF5 support (compile-time link)" OFF)
 option(USE_HDF5_RUNTIME "Enable runtime-optional HDF5 (dlopen)" ON)
 option(DMFE_NATIVE "Enable -march=native for host compilation" ON)
@@ -54,6 +56,11 @@ set(common_host_flags -O3)
 # Toolchain-specific host flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     list(APPEND common_host_flags -ffast-math)
+    if(OpenMP_CXX_FOUND)
+        list(APPEND common_host_flags ${OpenMP_CXX_FLAGS})
+        # Add OpenMP flags to CUDA compilation for host code in .cu files
+        list(APPEND common_cuda_flags -Xcompiler=${OpenMP_CXX_FLAGS})
+    endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "NVIDIA|PGI")
     list(APPEND common_host_flags -fast)
 elseif(MSVC)
@@ -87,7 +94,9 @@ add_library(DFME-core
     src/core/device_constants.cu
     src/core/host_utils.cu
     src/core/compute_utils.cu
-    src/core/io_utils.cu
+    src/io/io_utils.cu
+    src/io/io_output.cu
+    src/io/io_input.cu
     src/core/gpu_memory_utils.cu
     src/core/config.cu
     src/core/initialization.cu
@@ -112,6 +121,10 @@ target_include_directories(DFME-core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(DFME-core PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 if(USE_HDF5)
     find_package(HDF5 COMPONENTS C CXX)
     if(HDF5_FOUND)
@@ -126,6 +139,14 @@ if(USE_HDF5_RUNTIME)
     target_sources(DFME-core PRIVATE src/io/h5_runtime.cpp)
     target_compile_definitions(DFME-core PUBLIC H5_RUNTIME_OPTIONAL=1)
 endif()
+
+# Add OpenMP-enabled CPU source files
+target_sources(DFME-core PRIVATE src/math/math_sigma.cpp)
+target_sources(DFME-core PRIVATE src/search/search_utils.cpp)
+target_sources(DFME-core PRIVATE src/core/host_utils.cpp)
+target_sources(DFME-core PRIVATE src/convolution/convolution.cpp)
+target_sources(DFME-core PRIVATE src/interpolation/index_vec.cpp)
+target_sources(DFME-core PRIVATE src/interpolation/index_mat.cpp)
 
 add_executable(RG-Evo main.cu)
 target_link_libraries(RG-Evo PRIVATE DFME-core)

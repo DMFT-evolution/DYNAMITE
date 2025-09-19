@@ -212,46 +212,4 @@ void ConvRGPU_Stream(const thrust::device_vector<double>& f,
 }
 
 // Host convolution functions
-std::vector<double> ConvA(const std::vector<double>& f, const std::vector<double>& g, const double t)
-{
-    size_t length = sim->h_integ.size();
-    size_t depth = f.size() / length;
-    std::vector<double> out(depth, 0.0);
-    if (depth == 1)
-    {
-        double temp = 0.0;
-        for (size_t j = 0; j < length; j++)
-        {
-            temp += t * sim->h_integ[j] * f[j] * g[j];
-        }
-        out[0] = temp;
-    }
-    else
-    {
-        for (size_t j = 0; j < depth; j++)
-        {
-            for (size_t i = 0; i < length; i++)
-            {
-                out[j] += sim->h_integ[i] * f[j * length + i] * g[j * length + i];
-            }
-            out[j] *= t * sim->h_theta[j];
-        }
-    }
-    return out;
-}
-
-std::vector<double> ConvR(const std::vector<double>& f, const std::vector<double>& g, const double t)
-{
-    size_t length = sim->h_integ.size();
-    size_t depth = f.size() / length;
-    std::vector<double> out(length, 0.0);
-    for (size_t j = 0; j < length; j++)
-    {
-        for (size_t i = 0; i < depth; i++)
-        {
-            out[j] += sim->h_integ[i] * f[j * length + i] * g[j * length + i];
-        }
-        out[j] *= t * (1 - sim->h_theta[j]);
-    }
-    return out;
-}
+// GPU convolution functions

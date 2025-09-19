@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <chrono>
+#include <thread>
 #include "include/simulation_data.hpp" // SimulationData definition
 #include "include/rk_data.hpp" // RKData definition
 #include "include/version_info.hpp" // versioning system
@@ -28,6 +29,12 @@ SimulationData* sim = nullptr;
 RKData* rk = nullptr;
 
 int main(int argc, char **argv) {
+    // Note: OpenMP initialization is handled in the parallel regions of other functions
+    // The actual thread count will be determined by the OpenMP runtime in the computational functions
+    
+    std::cout << "DMFE Simulation starting..." << std::endl;
+    std::cout << "Available CPU cores: " << std::thread::hardware_concurrency() << std::endl;
+    
     // Record program start time
     program_start_time = std::chrono::high_resolution_clock::now();
 

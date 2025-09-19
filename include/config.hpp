@@ -26,11 +26,14 @@ struct SimulationConfig {
     double delta_t = 0.0;
     size_t len = 512;
     int ord = 0;
-    bool gpu = false;
+    bool gpu = true;
     bool use_serk2 = true;
     int sparsify_sweeps = 1;
     bool aggressive_sparsify = true;
+    bool async_export = true;  // Enable asynchronous data export by default
     std::vector<std::string> command_line_args;  // Store original command-line arguments
+    bool loaded = false;
+    std::string paramDir;
 };
 
 // Command line argument parsing

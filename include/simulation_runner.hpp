@@ -30,4 +30,11 @@ int runSimulation();
  */
 void runPerformanceBenchmark();
 
+/**
+ * @brief Performance benchmarking for CPU operations
+ * 
+ * Runs performance tests on various CPU functions when debug mode is enabled
+ */
+void runPerformanceBenchmarkCPU();
+
 #endif // SIMULATION_RUNNER_HPP

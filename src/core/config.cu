@@ -34,12 +34,14 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"check", required_argument, 0, 'c'},
         {"out-dir", required_argument, 0, 'o'},
         {"aggressive-sparsify", required_argument, 0, 'a'},
+        {"gpu", required_argument, 0, 'g'},
+        {"async-export", required_argument, 0, 'A'},
         {"help", no_argument, 0, 'h'},
         {"serk2", required_argument, 0, 'S'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:hvc:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:g:A:hvc:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = std::stoi(optarg);
@@ -86,6 +88,12 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 break;
             case 'a':
                 config.aggressive_sparsify = (std::string(optarg) != "false");
+                break;
+            case 'g':
+                config.gpu = (std::string(optarg) != "false");
+                break;
+            case 'A':
+                config.async_export = (std::string(optarg) != "false");
                 break;
             case 'o': {
                 std::string path = optarg ? std::string(optarg) : std::string();
@@ -156,6 +164,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -s BOOL                         Enable output saving (correlation file, simulation state, compressed data)\n"
                           << "  -S, --serk2 BOOL                Use SERK2 method (default: true)\n"
                           << "  -a, --aggressive-sparsify BOOL  Enable aggressive sparsification (default: " << (config.aggressive_sparsify ? "true" : "false") << ")\n"
+                          << "  -g, --gpu BOOL                 Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
+                          << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
                           << "  -v                              Display version information and exit\n"
                           << "  -c, --check FILE                Check version compatibility of parameter file and exit\n"
@@ -184,6 +194,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  save_output = " << (config.save_output ? "true" : "false") << "\n"
               << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n"
               << "  aggressive_sparsify = " << (config.aggressive_sparsify ? "true" : "false") << "\n"
+              << "  gpu = " << (config.gpu ? "true" : "false") << "\n"
+              << "  async_export = " << (config.async_export ? "true" : "false") << "\n"
               << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }

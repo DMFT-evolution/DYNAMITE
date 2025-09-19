@@ -277,37 +277,4 @@ void indexMatAllGPU(const thrust::device_vector<double>& posx,
     IndexMatAllOptimizer::run(posx, indsy, weightsy, dtratio, qK_result, qR_result, QKv, QRv, dQKv, dQRv, len, stream);
 }
 
-// CPU version of indexMatAll
-void indexMatAll(const vector<double>& posx, const vector<size_t>& indsy,
-    const vector<double>& weightsy, const vector<double>& dtratio,
-    vector<double>& qK_result, vector<double>& qR_result)
-{
-    size_t prod = indsy.size();
-    size_t dims2 = weightsy.size();
-    size_t depth = dims2 / prod;
-    size_t t1len = dtratio.size();
-
-    double inx, inx2, inx3;
-    size_t inds, indsx;
-
-    for (size_t j = 0; j < prod; j++)
-    {
-        indsx = max(min((size_t)posx[j], (size_t)(posx[prod - 1] - 0.5)), (size_t)1);
-        inx = posx[j] - indsx;
-        inx2 = inx * inx;
-        inx3 = inx2 * inx;
-        inds = (indsx - 1) * config.len + indsy[j];
-
-        auto weights_start = weightsy.begin() + depth * j;
-        if (indsx < t1len - 1)
-        {
-            qK_result[j] = (1 - 3 * inx2 + 2 * inx3) * inner_product(weights_start, weights_start + depth, sim->h_QKv.begin() + inds, 0.0) + (inx - 2 * inx2 + inx3) * inner_product(weights_start, weights_start + depth, sim->h_dQKv.begin() + config.len + inds, 0.0) + (3 * inx2 - 2 * inx3) * inner_product(weights_start, weights_start + depth, sim->h_QKv.begin() + config.len + inds, 0.0) + (-inx2 + inx3) * inner_product(weights_start, weights_start + depth, sim->h_dQKv.begin() + 2 * config.len + inds, 0.0) / dtratio[indsx + 1];
-            qR_result[j] = (1 - 3 * inx2 + 2 * inx3) * inner_product(weights_start, weights_start + depth, sim->h_QRv.begin() + inds, 0.0) + (inx - 2 * inx2 + inx3) * inner_product(weights_start, weights_start + depth, sim->h_dQRv.begin() + config.len + inds, 0.0) + (3 * inx2 - 2 * inx3) * inner_product(weights_start, weights_start + depth, sim->h_QRv.begin() + config.len + inds, 0.0) + (-inx2 + inx3) * inner_product(weights_start, weights_start + depth, sim->h_dQRv.begin() + 2 * config.len + inds, 0.0) / dtratio[indsx + 1];
-        }
-        else
-        {
-            qK_result[j] = (1 - inx2) * inner_product(weights_start, weights_start + depth, sim->h_QKv.begin() + inds, 0.0) + inx2 * inner_product(weights_start, weights_start + depth, sim->h_QKv.begin() + config.len + inds, 0.0) + (inx - inx2) * inner_product(weights_start, weights_start + depth, sim->h_dQKv.begin() + config.len + inds, 0.0);
-            qR_result[j] = (1 - inx2) * inner_product(weights_start, weights_start + depth, sim->h_QRv.begin() + inds, 0.0) + inx2 * inner_product(weights_start, weights_start + depth, sim->h_QRv.begin() + config.len + inds, 0.0) + (inx - inx2) * inner_product(weights_start, weights_start + depth, sim->h_dQRv.begin() + config.len + inds, 0.0);
-        }
-    }
-}
+// GPU interpolation functions

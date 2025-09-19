@@ -18,7 +18,20 @@ extern RKData* rk;
 
 void init()
 {
-    config.gpu = isCompatibleGPUInstalled();
+    // Handle GPU configuration based on user preference and hardware availability
+    if (config.gpu) {
+        if (isCompatibleGPUInstalled()) {
+            std::cout << "GPU acceleration enabled." << std::endl;
+            config.gpu = true;
+        } else {
+            std::cout << "Warning: GPU acceleration requested but no compatible GPU found. Falling back to CPU." << std::endl;
+            config.gpu = false;
+        }
+    } else {
+        std::cout << "GPU acceleration disabled by user. Using CPU." << std::endl;
+        config.gpu = false;
+    }
+    
     sim = new SimulationData();
     rk = new RKData();
 
@@ -27,14 +40,19 @@ void init()
     import(*sim, config.len, config.ord);
 
     // Generate filename based on parameters
-    std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.save_output);
+    std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.aggressive_sparsify, config.save_output);
     bool loaded = false;
     LoadedStateParams loaded_params;  // Declare the structure to hold loaded parameters
 
     // Try to load existing simulation data
     if (fileExists(filename) || fileExists(filename.substr(0, filename.find_last_of('.')) + ".bin")) {
         std::cout << "Found existing simulation file. Attempting to load..." << std::endl;
-        loaded = loadSimulationState(filename, *sim, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, loaded_params);
+        loaded = loadSimulationState(filename, *sim, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.aggressive_sparsify, loaded_params);
+        if (loaded) {
+            config.loaded = true;
+            std::string dirPath = filename.substr(0, filename.find_last_of('/'));
+            config.paramDir = dirPath;
+        }
     }
     
     if (!loaded) {

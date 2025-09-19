@@ -22,6 +22,8 @@
 #include <limits>
 #include <chrono>
 #include <algorithm>
+#include <numeric>
+#include "search_utils.hpp"
 
 // External global variables (defined in main.cu)
 extern SimulationConfig config;
@@ -42,9 +44,16 @@ int runSimulation() {
 
     // 1) Open the output file for correlation
     std::ofstream corr;
-    std::string paramDir = getParameterDirPath(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len);
+    std::string paramDir;
+    if (config.loaded) {
+        paramDir = config.paramDir;
+    } else {
+        paramDir = getParameterDirPath(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len);
+        if (config.save_output) {
+            ensureDirectoryExists(paramDir);
+        }
+    }
     if (config.save_output) {
-        ensureDirectoryExists(paramDir);
         std::string corrFilename = paramDir + "/correlation.txt";
         corr.open(corrFilename);
         if (!corr) {
@@ -72,7 +81,7 @@ int runSimulation() {
             updatePeakMemory();
         }
 
-        if (config.loop % 100000 == 0) {
+        if (config.loop % 10000 == 0) {
             // Update peak memory
             updatePeakMemory();
             
@@ -110,12 +119,13 @@ int runSimulation() {
                     sparsifyNscale(config.delta_max);
                 }
             }
-            
+
             if (config.gpu) {
                 interpolateGPU();
             } else {
                 interpolate();
             }
+
             if (config.delta < config.delta_max / 2 && config.loop - last_rollback_loop > 1000) {
                 config.delta_t *= 0.5;
                 if (config.gpu) {
@@ -129,11 +139,11 @@ int runSimulation() {
                 } 
             }
             if (config.save_output) {
-                // Get consistent filename based on physical parameters
-                std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.save_output);
+                // Use the same directory as correlation.txt for consistency
+                std::string filename = paramDir + "/data.h5";
                 
                 // Save state before sparsifying (overwriting the same file)
-                saveSimulationState(filename, config.delta, config.delta_t);
+                saveSimulationState(filename, config.delta, config.delta_t); // Return value ignored for intermediate saves
             }
         }
 
@@ -195,32 +205,63 @@ int runSimulation() {
         }
     }
 
+    SimulationDataSnapshot* final_snapshot = nullptr;
     if (config.save_output) {
-        std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.save_output);
-        saveSimulationState(filename, config.delta, config.delta_t);
+        // Use the established paramDir for consistency with correlation.txt
+        std::string filename = paramDir + "/data.h5";
+        SimulationDataSnapshot snapshot = saveSimulationState(filename, config.delta, config.delta_t);
+        final_snapshot = new SimulationDataSnapshot(snapshot); // Store for final output
     }
 
     if (config.save_output) {
         saveCompressedData(paramDir);
     }
 
+    // Wait for any async saves to complete before terminating (only if async mode is enabled)
+    if (config.async_export) {
+        waitForAsyncSavesToComplete();
+    }
+
     if (config.gpu && !config.save_output) {
         copyVectorsToCPU(*sim);
     } 
 
-    if (config.gpu && config.debug) {
-        runPerformanceBenchmark();
+    double output_delta_t = config.delta_t;
+    double output_delta = config.delta;
+    int output_loop = config.loop;
+    double output_t1grid_last = sim->h_t1grid.back();
+    double output_rvec_last = sim->h_rvec.back();
+    double output_drvec_last = sim->h_drvec.back();
+    double output_QKv_last = sim->h_QKv[(sim->h_t1grid.size() - 1) * config.len];
+    double output_QRv_last = sim->h_QRv[(sim->h_t1grid.size() - 1) * config.len];
+
+    // Use snapshot data for final output if async saving was used
+    if (final_snapshot != nullptr) {
+        output_t1grid_last = final_snapshot->t1grid.back();
+        output_rvec_last = final_snapshot->rvec.back();
+        output_drvec_last = final_snapshot->drvec.back();
+        output_QKv_last = final_snapshot->QKv[(final_snapshot->t1grid.size() - 1) * final_snapshot->current_len];
+        output_QRv_last = final_snapshot->QRv[(final_snapshot->t1grid.size() - 1) * final_snapshot->current_len];
+        delete final_snapshot; // Clean up
+    }
+
+    if (config.debug) {
+        if (config.gpu) {
+            runPerformanceBenchmark();
+        } else {
+            runPerformanceBenchmarkCPU();
+        }
     } 
 
     // 3) Print the final results
-    std::cout << "final delta_t: " << config.delta_t << std::endl;
-    std::cout << "final delta:   " << config.delta << std::endl;
-    std::cout << "final loop:    " << config.loop << std::endl;
-    std::cout << "final t1grid:  " << sim->h_t1grid.back() << std::endl;
-    std::cout << "final rvec:    " << sim->h_rvec.back() << std::endl;
-    std::cout << "final drvec:   " << sim->h_drvec.back() << std::endl;
-    std::cout << "final QKv:     " << sim->h_QKv[(sim->h_t1grid.size() - 1) * config.len] - 1 << std::endl;
-    std::cout << "final QRv:     " << sim->h_QRv[(sim->h_t1grid.size() - 1) * config.len] - 1 << std::endl;
+    std::cout << "final delta_t: " << output_delta_t << std::endl;
+    std::cout << "final delta:   " << output_delta << std::endl;
+    std::cout << "final loop:    " << output_loop << std::endl;
+    std::cout << "final t1grid:  " << output_t1grid_last << std::endl;
+    std::cout << "final rvec:    " << output_rvec_last << std::endl;
+    std::cout << "final drvec:   " << output_drvec_last << std::endl;
+    std::cout << "final QKv:     " << output_QKv_last << std::endl;
+    std::cout << "final QRv:     " << output_QRv_last << std::endl;
     std::cout << "Simulation finished." << std::endl;
 
     // 4) Close the file
@@ -266,4 +307,31 @@ void runPerformanceBenchmark() {
     std::cout << "Average wall time: " << avg_ms << " ms" << std::endl;
     
     delete pool;
+}
+
+void runPerformanceBenchmarkCPU() {
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < 1000; ++i) {
+        interpolate();
+    }
+
+    auto end = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double, std::milli> total = end - start;
+    double avg_ms = total.count() / 1000;
+    std::cout << "Average CPU interpolation time: " << avg_ms << " ms" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+
+    for (int i = 0; i < 100; ++i) {
+        update();
+    }
+
+    end = std::chrono::high_resolution_clock::now();
+
+    total = end - start;
+    avg_ms = total.count() / 100;
+    std::cout << "Average CPU update time: " << avg_ms << " ms" << std::endl;
 }

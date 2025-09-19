@@ -121,10 +121,22 @@ cmake -S . -B build \
 	- `-S, --serk2 BOOL` use SERK2 method (default true)
 	- `-a, --aggressive-sparsify BOOL` enable aggressive sparsification (default true)
 	- `-D BOOL` debug messages (default true)
+	- `-g, --gpu BOOL` enable GPU acceleration (default true)
+	- `-A, --async-export BOOL` enable asynchronous data export (default true)
 	- `-v` print version info and exit
 	- `-c, --check FILE` check version compatibility of a params file and exit
 
-GPU/CPU: The program auto-detects a compatible GPU at runtime and uses it when available; otherwise it runs on CPU.
+GPU/CPU: By default, the program attempts to use GPU acceleration if compatible hardware is detected (`--gpu true`). You can explicitly disable GPU acceleration with `--gpu false` to force CPU-only execution. The program will automatically fall back to CPU if GPU is disabled or if no compatible GPU hardware is found.
+
+## Data Export Modes
+
+The program supports two data export modes controlled by the `--async-export` flag:
+
+- **Asynchronous export** (`--async-export true`, default): Data saving operations run in background threads, allowing the simulation to continue without waiting for I/O operations to complete. This improves performance for long-running simulations but carries a small risk of data loss if the program terminates unexpectedly before background saves complete.
+
+- **Synchronous export** (`--async-export false`): All data saving operations complete before the simulation continues. This ensures data integrity but may slow down the simulation during save operations, especially for large datasets.
+
+For most use cases, asynchronous export is recommended as it provides better performance while the built-in synchronization ensures data is properly saved at program termination. Use synchronous export if you need guaranteed data integrity at every save point or are experiencing issues with missing files.
 
 ## Inputs (required data)
 
@@ -174,7 +186,7 @@ Saving occurs periodically and at the end when `-s true` (default). Disable with
 
 ## Resume/continue runs
 
-On startup, the code looks for an existing checkpoint in the parameter directory (`data.h5` or `data.bin`) and resumes automatically if parameters match. A compatibility check against `params.txt` is performed when present. To inspect a params file without running:
+On startup, the code looks for an existing checkpoint in the parameter directory (`data.h5` or `data.bin`) and resumes automatically if parameters match. A compatibility check against `params.txt` is performed when present, including version compatibility: versions are considered compatible if at least the first two positions of the version number agree (e.g., v1.2.3.4 is compatible with v1.2.5.6). If compatible data is found, the simulation will save its output into the existing directory. To inspect a params file without running:
 
 ```bash
 ./RG-Evo -c /path/to/Results/.../params.txt
