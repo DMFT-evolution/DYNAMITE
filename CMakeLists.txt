@@ -20,11 +20,13 @@ find_package(OpenMP REQUIRED)
 option(USE_HDF5 "Enable HDF5 support (compile-time link)" OFF)
 option(USE_HDF5_RUNTIME "Enable runtime-optional HDF5 (dlopen)" ON)
 option(DMFE_NATIVE "Enable -march=native for host compilation" ON)
+option(DMFE_STATIC_OPENMP "Link OpenMP statically for portability across systems" OFF)
 
 # Portable/cluster build helper: disable -march=native and prefer shared cudart
 option(DMFE_PORTABLE_BUILD "Build portable binary for heterogeneous cluster nodes" OFF)
 if(DMFE_PORTABLE_BUILD)
     set(DMFE_NATIVE OFF CACHE BOOL "" FORCE)
+    set(DMFE_STATIC_OPENMP ON CACHE BOOL "" FORCE)
 endif()
 
 # Debug helper: enable device debug, no fast-math, and Thrust debug checks
@@ -62,6 +64,17 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         list(APPEND common_host_flags ${OpenMP_CXX_FLAGS})
         # Add OpenMP flags to CUDA compilation for host code in .cu files
         list(APPEND common_cuda_flags -Xcompiler=${OpenMP_CXX_FLAGS})
+        if(DMFE_STATIC_OPENMP)
+            if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+                list(APPEND common_host_flags -static-libgomp)
+                list(APPEND common_cuda_flags -Xcompiler=-static-libgomp)
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                # For LLVM libomp, attempt static linking
+                list(APPEND common_host_flags -lomp)
+                list(APPEND common_cuda_flags -Xcompiler=-lomp)
+                set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+            endif()
+        endif()
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "NVIDIA|PGI")
     list(APPEND common_host_flags -fast)
