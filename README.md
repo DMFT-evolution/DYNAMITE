@@ -123,6 +123,7 @@ cmake -S . -B build \
 	- `-D BOOL` debug messages (default true)
 	- `-g, --gpu BOOL` enable GPU acceleration (default true)
 	- `-A, --async-export BOOL` enable asynchronous data export (default true)
+	- `-I, --allow-incompatible-versions BOOL` allow loading data saved with incompatible versions (default false)
 	- `-v` print version info and exit
 	- `-c, --check FILE` check version compatibility of a params file and exit
 
@@ -186,7 +187,7 @@ Saving occurs periodically and at the end when `-s true` (default). Disable with
 
 ## Resume/continue runs
 
-On startup, the code looks for an existing checkpoint in the parameter directory (`data.h5` or `data.bin`) and resumes automatically if parameters match. A compatibility check against `params.txt` is performed when present, including version compatibility: versions are considered compatible if at least the first two positions of the version number agree (e.g., v1.2.3.4 is compatible with v1.2.5.6). If compatible data is found, the simulation will save its output into the existing directory. To inspect a params file without running:
+On startup, the code looks for an existing checkpoint in the parameter directory (`data.h5` or `data.bin`) and resumes automatically if parameters match. A compatibility check against `params.txt` is performed when present, including version compatibility: versions are considered compatible if at least the first two positions of the version number agree (e.g., v1.2.3.4 is compatible with v1.2.5.6). If incompatible data is found, loading will be aborted unless the `--allow-incompatible-versions true` flag is used. If compatible data is found, the simulation will save its output into the existing directory. To inspect a params file without running:
 
 ```bash
 ./RG-Evo -c /path/to/Results/.../params.txt

@@ -34,6 +34,7 @@ struct SimulationConfig {
     std::vector<std::string> command_line_args;  // Store original command-line arguments
     bool loaded = false;
     std::string paramDir;
+    bool allow_incompatible_versions = false;  // Allow loading data saved with incompatible versions
 };
 
 // Command line argument parsing

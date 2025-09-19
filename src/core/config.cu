@@ -38,10 +38,11 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"async-export", required_argument, 0, 'A'},
         {"help", no_argument, 0, 'h'},
         {"serk2", required_argument, 0, 'S'},
+        {"allow-incompatible-versions", required_argument, 0, 'I'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:g:A:hvc:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:g:A:hvc:I:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = std::stoi(optarg);
@@ -147,6 +148,9 @@ bool parseCommandLineArguments(int argc, char **argv) {
                     
                     return false;  // Exit after checking
                 }
+            case 'I':
+                config.allow_incompatible_versions = (std::string(optarg) != "false");
+                break;
             case 'h':
                 std::cout << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
@@ -167,6 +171,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -g, --gpu BOOL                 Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
                           << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
+                          << "  -I, --allow-incompatible-versions BOOL  Allow loading data saved with incompatible versions (default: " << (config.allow_incompatible_versions ? "true" : "false") << ")\n"
                           << "  -v                              Display version information and exit\n"
                           << "  -c, --check FILE                Check version compatibility of parameter file and exit\n"
                           << "  -h, --help                      Display this help message and exit\n";
@@ -196,6 +201,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  aggressive_sparsify = " << (config.aggressive_sparsify ? "true" : "false") << "\n"
               << "  gpu = " << (config.gpu ? "true" : "false") << "\n"
               << "  async_export = " << (config.async_export ? "true" : "false") << "\n"
+              << "  allow_incompatible_versions = " << (config.allow_incompatible_versions ? "true" : "false") << "\n"
               << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }

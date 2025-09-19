@@ -144,6 +144,7 @@ SimulationDataSnapshot createDataSnapshot()
         copyDeviceToSnapshot(snapshot.QKB1int, sim->d_QKB1int);
         copyDeviceToSnapshot(snapshot.QRB1int, sim->d_QRB1int);
         copyDeviceToSnapshot(snapshot.theta, sim->d_theta);
+        snapshot.t_current = snapshot.t1grid.back();
     } else {
         // For CPU runs, copy from host vectors as before
         snapshot.QKv = sim->h_QKv;
@@ -158,6 +159,7 @@ SimulationDataSnapshot createDataSnapshot()
         snapshot.QKB1int = sim->h_QKB1int;
         snapshot.QRB1int = sim->h_QRB1int;
         snapshot.theta = sim->h_theta;
+        snapshot.t_current = sim->h_t1grid.back();
     }
     
     // Calculate energy
@@ -171,7 +173,7 @@ SimulationDataSnapshot createDataSnapshot()
     }
     
     // Copy metadata
-    snapshot.t_current = sim->h_t1grid.back();
+
     snapshot.current_len = config.len;
     snapshot.current_loop = config.loop;
     snapshot.config_snapshot = config;

@@ -1,9 +1,13 @@
 #include "version_compat.hpp"
+#include "config.hpp"
 #include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <sstream>
 #include <vector>
+
+// External declaration for global config variable
+extern SimulationConfig config;
 
 // Helper function to parse version string into vector of integers
 std::vector<int> parseVersion(const std::string& version) {
@@ -92,9 +96,15 @@ bool checkVersionCompatibilityInteractive(const std::string& paramFilename) {
             for (auto &w : analysis.warnings) std::cerr << "  - " << w << std::endl;
             return true;
         case VersionCompatibility::INCOMPATIBLE:
-            std::cerr << "Version incompatibility detected. Aborting load." << std::endl;
-            for (auto &e : analysis.errors) std::cerr << "  - " << e << std::endl;
-            return false;
+            if (config.allow_incompatible_versions) {
+                std::cerr << "Version incompatibility detected, but proceeding due to --allow-incompatible-versions flag." << std::endl;
+                for (auto &e : analysis.errors) std::cerr << "  - " << e << std::endl;
+                return true;
+            } else {
+                std::cerr << "Version incompatibility detected. Aborting load." << std::endl;
+                for (auto &e : analysis.errors) std::cerr << "  - " << e << std::endl;
+                return false;
+            }
     }
     return false;
 }

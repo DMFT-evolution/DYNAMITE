@@ -55,7 +55,7 @@ int runSimulation() {
     }
     if (config.save_output) {
         std::string corrFilename = paramDir + "/correlation.txt";
-        corr.open(corrFilename);
+        corr.open(corrFilename, std::ios::app);
         if (!corr) {
             std::cerr << "Error: Unable to open " << corrFilename << std::endl;
             delete pool;
@@ -81,7 +81,7 @@ int runSimulation() {
             updatePeakMemory();
         }
 
-        if (config.loop % 10000 == 0) {
+        if (config.loop % 100000 == 0) {
             // Update peak memory
             updatePeakMemory();
             
