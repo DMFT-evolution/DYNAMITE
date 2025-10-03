@@ -19,6 +19,8 @@ ROOT_BUILD_DIR="build"
 # Parse arguments: optional build dir + flags
 CLEAN=0
 CUDA_MODE="auto"  # auto, on, or off
+# Optional: honor CMAKE_BUILD_TYPE if exported; default to Release
+BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
 for arg in "$@"; do
   case "$arg" in
     --clean)
@@ -114,7 +116,7 @@ if [[ $ENABLE_CUDA -eq 1 ]] && ! command -v nvc++ >/dev/null 2>&1; then
 fi
 
 # Decide compilers to pass to CMake
-cmake_args=( -S "$SCRIPT_DIR" -B "$BDIR" )
+cmake_args=( -S "$SCRIPT_DIR" -B "$BDIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" )
 
 # Set CUDA mode
 if [[ $ENABLE_CUDA -eq 1 ]]; then
@@ -160,8 +162,32 @@ if [[ $ENABLE_CUDA -eq 1 ]] && command -v nvc++ >/dev/null 2>&1; then
     cmake_args+=( -DCMAKE_CUDA_HOST_COMPILER=nvc++ )
   fi
 else
-  # Fallback: use system defaults; CMakeLists.txt may prefer clang++-14 if present
-  echo "[toolchain] Using system default compilers (with CUDA host fallback if needed)" >&2
+  # CPU-only build: prefer a fast toolchain similar to CUDA host (Clang + libomp) when available
+  echo "[toolchain] CPU-only build: selecting optimized host toolchain" >&2
+
+  # Prefer Clang 14 if present for consistent OpenMP (libomp) and vectorization behavior
+  if command -v clang++-14 >/dev/null 2>&1 && command -v clang-14 >/dev/null 2>&1; then
+    echo "[toolchain] Selecting Clang 14 toolchain for CPU-only build" >&2
+    cmake_args+=(
+      -DCMAKE_C_COMPILER=clang-14
+      -DCMAKE_CXX_COMPILER=clang++-14
+    )
+  # Otherwise, fall back to a recent GCC if available
+  elif command -v g++-12 >/dev/null 2>&1 && command -v gcc-12 >/dev/null 2>&1; then
+    echo "[toolchain] Selecting GCC 12 toolchain for CPU-only build" >&2
+    cmake_args+=(
+      -DCMAKE_C_COMPILER=gcc-12
+      -DCMAKE_CXX_COMPILER=g++-12
+    )
+  elif command -v g++-11 >/dev/null 2>&1 && command -v gcc-11 >/dev/null 2>&1; then
+    echo "[toolchain] Selecting GCC 11 toolchain for CPU-only build" >&2
+    cmake_args+=(
+      -DCMAKE_C_COMPILER=gcc-11
+      -DCMAKE_CXX_COMPILER=g++-11
+    )
+  else
+    echo "[toolchain] Using system default compilers" >&2
+  fi
   
   if [[ $ENABLE_CUDA -eq 1 ]]; then
     # Prefer a host compiler known to work with the installed CUDA version
