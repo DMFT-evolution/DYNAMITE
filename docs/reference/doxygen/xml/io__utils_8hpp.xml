@@ -1,0 +1,913 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="io__utils_8hpp" kind="file" language="C++">
+    <compoundname>io_utils.hpp</compoundname>
+    <includes local="no">string</includes>
+    <includes local="no">vector</includes>
+    <includes local="no">chrono</includes>
+    <includes refid="simulation__data_8hpp" local="yes">simulation/simulation_data.hpp</includes>
+    <includes refid="config_8hpp" local="yes">core/config.hpp</includes>
+    <includedby refid="time__steps_8cpp" local="yes">src/EOMs/time_steps.cpp</includedby>
+    <includedby refid="config_8cpp" local="yes">src/core/config.cpp</includedby>
+    <includedby refid="initialization_8cpp" local="yes">src/core/initialization.cpp</includedby>
+    <includedby refid="io__input_8cpp" local="yes">src/io/io_input.cpp</includedby>
+    <includedby refid="io__output_8cpp" local="yes">src/io/io_output.cpp</includedby>
+    <includedby refid="io__utils_8cpp" local="yes">src/io/io_utils.cpp</includedby>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="8">
+        <label>core/config.hpp</label>
+        <link refid="config_8hpp_source"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>core/config_build.hpp</label>
+        <link refid="config__build_8hpp_source"/>
+      </node>
+      <node id="1">
+        <label>include/io/io_utils.hpp</label>
+        <link refid="io__utils_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>simulation/simulation_data.hpp</label>
+        <link refid="simulation__data_8hpp_source"/>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>chrono</label>
+      </node>
+      <node id="7">
+        <label>cstddef</label>
+      </node>
+      <node id="2">
+        <label>string</label>
+      </node>
+      <node id="3">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+    <innerclass refid="structSimulationDataSnapshot" prot="public">SimulationDataSnapshot</innerclass>
+    <innerclass refid="structLoadedStateParams" prot="public">LoadedStateParams</innerclass>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="io__utils_8hpp_1ab1800b463f048dab67db68b9a167b31b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; importVectorFromFile</definition>
+        <argsstring>(const std::string &amp;filename)</argsstring>
+        <name>importVectorFromFile</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="32" column="13" bodyfile="src/io/io_input.cpp" bodystart="58" bodyend="71" declfile="include/io/io_utils.hpp" declline="32" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1ad98ae49f90c7868460b0f33d92dae61a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt; size_t &gt; importIntVectorFromFile</definition>
+        <argsstring>(const std::string &amp;filename)</argsstring>
+        <name>importIntVectorFromFile</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="33" column="13" bodyfile="src/io/io_input.cpp" bodystart="73" bodyend="86" declfile="include/io/io_utils.hpp" declline="33" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1adb7eadc224c53307a8b7188fae9144e5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void import</definition>
+        <argsstring>(SimulationData &amp;sim, size_t len_param, int &amp;ord_ref)</argsstring>
+        <name>import</name>
+        <param>
+          <type>SimulationData &amp;</type>
+          <declname>sim</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>int &amp;</type>
+          <declname>ord_ref</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="34" column="6" bodyfile="src/io/io_input.cpp" bodystart="88" bodyend="108" declfile="include/io/io_utils.hpp" declline="34" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a78867d3a05846f5b473da0d1a30c5f60" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void setupOutputDirectory</definition>
+        <argsstring>()</argsstring>
+        <name>setupOutputDirectory</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="37" column="6" bodyfile="src/io/io_output.cpp" bodystart="58" bodyend="138" declfile="include/io/io_utils.hpp" declline="37" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1af76ca3bd6e2f011b5be5d61a06a4ffb6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string getParameterDirPath</definition>
+        <argsstring>(const std::string &amp;resultsDir_param, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param)</argsstring>
+        <name>getParameterDirPath</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>resultsDir_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="38" column="13" bodyfile="src/io/io_utils.cpp" bodystart="94" bodyend="122" declfile="include/io/io_utils.hpp" declline="38" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a69fad26b671fb107970b78f781f99446" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string findExistingParamDir</definition>
+        <argsstring>(const std::string &amp;resultsDir_param, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param)</argsstring>
+        <name>findExistingParamDir</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>resultsDir_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t_min_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_max_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_serk2_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>aggressive_sparsify_param</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="40" column="13" bodyfile="src/io/io_utils.cpp" bodystart="58" bodyend="92" declfile="include/io/io_utils.hpp" declline="40" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a5e915d313aee03bba572d46606f392dd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void ensureDirectoryExists</definition>
+        <argsstring>(const std::string &amp;dir)</argsstring>
+        <name>ensureDirectoryExists</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>dir</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="43" column="6" bodyfile="src/io/io_utils.cpp" bodystart="124" bodyend="133" declfile="include/io/io_utils.hpp" declline="43" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1add70673c288d5527012844a5aca9762d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string getFilename</definition>
+        <argsstring>(const std::string &amp;resultsDir_param, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param, bool save_output_param)</argsstring>
+        <name>getFilename</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>resultsDir_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t_min_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_max_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_serk2_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>aggressive_sparsify_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>save_output_param</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="44" column="13" bodyfile="src/io/io_utils.cpp" bodystart="135" bodyend="174" declfile="include/io/io_utils.hpp" declline="44" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1afdd89841220a8b18e39e0844a833a18b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool fileExists</definition>
+        <argsstring>(const std::string &amp;filename)</argsstring>
+        <name>fileExists</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="50" column="6" bodyfile="src/io/io_utils.cpp" bodystart="176" bodyend="180" declfile="include/io/io_utils.hpp" declline="50" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a42420a2540f8db50414747590f6915e4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool loadSimulationStateBinary</definition>
+        <argsstring>(const std::string &amp;filename, SimulationData &amp;sim, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param, LoadedStateParams &amp;loaded_params)</argsstring>
+        <name>loadSimulationStateBinary</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>SimulationData &amp;</type>
+          <declname>sim</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t_min_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_max_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_serk2_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>aggressive_sparsify_param</declname>
+        </param>
+        <param>
+          <type>LoadedStateParams &amp;</type>
+          <declname>loaded_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="53" column="6" bodyfile="src/io/io_input.cpp" bodystart="110" bodyend="173" declfile="include/io/io_utils.hpp" declline="53" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1afb0cfc43ff866e2803613b52164f36e3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool checkParametersMatch</definition>
+        <argsstring>(const std::string &amp;paramFilename, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param)</argsstring>
+        <name>checkParametersMatch</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>paramFilename</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t_min_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_max_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_serk2_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>aggressive_sparsify_param</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="65" column="6" bodyfile="src/io/io_input.cpp" bodystart="318" bodyend="403" declfile="include/io/io_utils.hpp" declline="65" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1aff04b9e712d7b8aaa763fc64e451c15e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool loadSimulationState</definition>
+        <argsstring>(const std::string &amp;filename, SimulationData &amp;sim, int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param, LoadedStateParams &amp;loaded_params)</argsstring>
+        <name>loadSimulationState</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>SimulationData &amp;</type>
+          <declname>sim</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p_param</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>p2_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>lambda_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>Gamma_param</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t_min_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_max_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>use_serk2_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>aggressive_sparsify_param</declname>
+        </param>
+        <param>
+          <type>LoadedStateParams &amp;</type>
+          <declname>loaded_params</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="68" column="6" bodyfile="src/io/io_input.cpp" bodystart="405" bodyend="453" declfile="include/io/io_utils.hpp" declline="68" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a01ba35ea54b46b461017064224344424" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveHistory</definition>
+        <argsstring>(const std::string &amp;filename, double delta, double delta_t, SimulationData &amp;simulation, size_t len_param, double T0_param, bool gpu_param)</argsstring>
+        <name>saveHistory</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t</declname>
+        </param>
+        <param>
+          <type>SimulationData &amp;</type>
+          <declname>simulation</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>len_param</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>T0_param</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>gpu_param</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="75" column="6" declfile="include/io/io_utils.hpp" declline="75" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a2a088dc37e5b1f7406af33cae3133b08" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveParametersToFile</definition>
+        <argsstring>(const std::string &amp;dirPath, double delta, double delta_t)</argsstring>
+        <name>saveParametersToFile</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>dirPath</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="79" column="6" bodyfile="src/io/io_output.cpp" bodystart="140" bodyend="261" declfile="include/io/io_utils.hpp" declline="79" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1ab9b417d6c536c2720e5cb63091025789" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveSimulationStateBinary</definition>
+        <argsstring>(const std::string &amp;filename, double delta, double delta_t)</argsstring>
+        <name>saveSimulationStateBinary</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="80" column="6" bodyfile="src/io/io_output.cpp" bodystart="371" bodyend="442" declfile="include/io/io_utils.hpp" declline="80" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a88c483abace85ae090be53f4300f59a4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>SimulationDataSnapshot</type>
+        <definition>SimulationDataSnapshot saveSimulationState</definition>
+        <argsstring>(const std::string &amp;filename, double delta, double delta_t)</argsstring>
+        <name>saveSimulationState</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="84" column="24" bodyfile="src/io/io_output.cpp" bodystart="934" bodyend="1046" declfile="include/io/io_utils.hpp" declline="84" declcolumn="24"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a40a571e7c3476875911262ca0ccdee08" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveCompressedData</definition>
+        <argsstring>(const std::string &amp;dirPath)</argsstring>
+        <name>saveCompressedData</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>dirPath</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="85" column="6" bodyfile="src/io/io_output.cpp" bodystart="1048" bodyend="1114" declfile="include/io/io_utils.hpp" declline="85" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1ae08c461a1ef939fbedc73ed901407141" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void waitForAsyncSavesToComplete</definition>
+        <argsstring>()</argsstring>
+        <name>waitForAsyncSavesToComplete</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="86" column="6" bodyfile="src/io/io_utils.cpp" bodystart="250" bodyend="255" declfile="include/io/io_utils.hpp" declline="86" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1ae87c00b45d604429e1d10c1fede26d63" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>SimulationDataSnapshot</type>
+        <definition>SimulationDataSnapshot createDataSnapshot</definition>
+        <argsstring>()</argsstring>
+        <name>createDataSnapshot</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="89" column="24" declfile="include/io/io_utils.hpp" declline="89" declcolumn="24"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1af8888b29fd209bda13e43dcf7b96a76a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveHistoryAsync</definition>
+        <argsstring>(const std::string &amp;filename, double delta, double delta_t, const SimulationDataSnapshot &amp;snapshot)</argsstring>
+        <name>saveHistoryAsync</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>filename</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>delta_t</declname>
+        </param>
+        <param>
+          <type>const SimulationDataSnapshot &amp;</type>
+          <declname>snapshot</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="90" column="6" declfile="include/io/io_utils.hpp" declline="90" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1aa977188403ea8ef1e17556ad62ee6703" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void saveCompressedDataAsync</definition>
+        <argsstring>(const std::string &amp;dirPath, const SimulationDataSnapshot &amp;snapshot)</argsstring>
+        <name>saveCompressedDataAsync</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>dirPath</declname>
+        </param>
+        <param>
+          <type>const SimulationDataSnapshot &amp;</type>
+          <declname>snapshot</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="91" column="6" bodyfile="src/io/io_output.cpp" bodystart="1117" bodyend="1169" declfile="include/io/io_utils.hpp" declline="91" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a96df0851c9cd89da0191e6457b0de548" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string getCurrentTimestamp</definition>
+        <argsstring>()</argsstring>
+        <name>getCurrentTimestamp</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="94" column="13" bodyfile="src/io/io_utils.cpp" bodystart="183" bodyend="190" declfile="include/io/io_utils.hpp" declline="94" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1aede64208104ba4d67f0feb645241a89d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double getRuntimeSeconds</definition>
+        <argsstring>()</argsstring>
+        <name>getRuntimeSeconds</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="95" column="8" bodyfile="src/io/io_utils.cpp" bodystart="192" bodyend="196" declfile="include/io/io_utils.hpp" declline="95" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a2e4474b035486c3f7feae2138f9331ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string formatDuration</definition>
+        <argsstring>(double total_seconds)</argsstring>
+        <name>formatDuration</name>
+        <param>
+          <type>double</type>
+          <declname>total_seconds</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="96" column="13" bodyfile="src/io/io_utils.cpp" bodystart="198" bodyend="215" declfile="include/io/io_utils.hpp" declline="96" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1a64d74aaa2b6fe580417bcf5172bb65d1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string getGPUInfo</definition>
+        <argsstring>()</argsstring>
+        <name>getGPUInfo</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="97" column="13" bodyfile="src/io/io_utils.cpp" bodystart="217" bodyend="237" declfile="include/io/io_utils.hpp" declline="97" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="io__utils_8hpp_1ae001c0d646c1766e529a07af244e7aa6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string formatMemory</definition>
+        <argsstring>(size_t memory_kb)</argsstring>
+        <name>formatMemory</name>
+        <param>
+          <type>size_t</type>
+          <declname>memory_kb</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/io_utils.hpp" line="98" column="13" bodyfile="src/io/io_utils.cpp" bodystart="239" bodyend="247" declfile="include/io/io_utils.hpp" declline="98" declcolumn="13"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;chrono&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;simulation/simulation_data.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/config.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Struct<sp/>to<sp/>hold<sp/>simulation<sp/>data<sp/>snapshot<sp/>for<sp/>background<sp/>saving</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">SimulationDataSnapshot<sp/>{</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;double&gt;<sp/>QKv,<sp/>QRv,<sp/>dQKv,<sp/>dQRv,<sp/>t1grid,<sp/>rvec,<sp/>drvec;</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/>std::vector&lt;double&gt;<sp/>QKB1int,<sp/>QRB1int,<sp/>theta;</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>energy;</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>t_current;</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>current_len,<sp/>current_loop;</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"><sp/><sp/><sp/><sp/>SimulationConfig<sp/>config_snapshot;</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="comment">//<sp/>Version<sp/>and<sp/>memory<sp/>info<sp/>for<sp/>async<sp/>saving</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/>std::string<sp/>code_version,<sp/>git_hash,<sp/>git_branch,<sp/>git_tag,<sp/>build_date,<sp/>build_time,<sp/>compiler_version,<sp/>cuda_version;</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>git_dirty;</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>peak_memory_kb_snapshot,<sp/>peak_gpu_memory_mb_snapshot;</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"><sp/><sp/><sp/><sp/>std::chrono::high_resolution_clock::time_point<sp/>program_start_time_snapshot;</highlight></codeline>
+<codeline lineno="23"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Structure<sp/>to<sp/>hold<sp/>loaded<sp/>simulation<sp/>state<sp/>parameters</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal">LoadedStateParams<sp/>{</highlight></codeline>
+<codeline lineno="27"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/>delta_t;</highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>loop;</highlight></codeline>
+<codeline lineno="29"><highlight class="normal">};</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Basic<sp/>text<sp/>file<sp/>imports</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal">std::vector&lt;double&gt;<sp/>importVectorFromFile(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename);</highlight></codeline>
+<codeline lineno="33"><highlight class="normal">std::vector&lt;size_t&gt;<sp/>importIntVectorFromFile(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename);</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/></highlight><highlight class="keyword">import</highlight><highlight class="normal">(SimulationData&amp;<sp/>sim,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal">&amp;<sp/>ord_ref);<sp/></highlight><highlight class="comment">//<sp/>bulk<sp/>grid<sp/>import</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Path<sp/>helpers</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>setupOutputDirectory();</highlight></codeline>
+<codeline lineno="38"><highlight class="normal">std::string<sp/>getParameterDirPath(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>resultsDir_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param);</highlight></codeline>
+<codeline lineno="40"><highlight class="normal">std::string<sp/>findExistingParamDir(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>resultsDir_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param);</highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>ensureDirectoryExists(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>dir);</highlight></codeline>
+<codeline lineno="44"><highlight class="normal">std::string<sp/>getFilename(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>resultsDir_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight></codeline>
+<codeline lineno="46"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param,</highlight></codeline>
+<codeline lineno="47"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>save_output_param);</highlight></codeline>
+<codeline lineno="48"><highlight class="normal"></highlight></codeline>
+<codeline lineno="49"><highlight class="normal"></highlight><highlight class="comment">//<sp/>File<sp/>existence</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>fileExists(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename);</highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+<codeline lineno="52"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Loaders</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="53"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>loadSimulationStateBinary(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/>SimulationData&amp;<sp/>sim,</highlight></codeline>
+<codeline lineno="54"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,</highlight></codeline>
+<codeline lineno="55"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,</highlight></codeline>
+<codeline lineno="56"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param,</highlight></codeline>
+<codeline lineno="57"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>LoadedStateParams&amp;<sp/>loaded_params);</highlight></codeline>
+<codeline lineno="58"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>defined(USE_HDF5)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="59"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>loadSimulationStateHDF5(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/>SimulationData&amp;<sp/>sim,</highlight></codeline>
+<codeline lineno="60"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,</highlight></codeline>
+<codeline lineno="61"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,</highlight></codeline>
+<codeline lineno="62"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param,</highlight></codeline>
+<codeline lineno="63"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>LoadedStateParams&amp;<sp/>loaded_params);</highlight></codeline>
+<codeline lineno="64"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="65"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>checkParametersMatch(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>paramFilename,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight></codeline>
+<codeline lineno="66"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,</highlight></codeline>
+<codeline lineno="67"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param);</highlight></codeline>
+<codeline lineno="68"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>loadSimulationState(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/>SimulationData&amp;<sp/>sim,</highlight></codeline>
+<codeline lineno="69"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p_param,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>p2_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>lambda_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Gamma_param,<sp/></highlight></codeline>
+<codeline lineno="70"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t_min_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_max_param,</highlight></codeline>
+<codeline lineno="71"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>use_serk2_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>aggressive_sparsify_param,</highlight></codeline>
+<codeline lineno="72"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>LoadedStateParams&amp;<sp/>loaded_params);</highlight></codeline>
+<codeline lineno="73"><highlight class="normal"></highlight></codeline>
+<codeline lineno="74"><highlight class="normal"></highlight><highlight class="comment">//<sp/>History<sp/>saving</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="75"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveHistory(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t,<sp/></highlight></codeline>
+<codeline lineno="76"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>SimulationData&amp;<sp/>simulation,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len_param,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>T0_param,<sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>gpu_param);</highlight></codeline>
+<codeline lineno="77"><highlight class="normal"></highlight></codeline>
+<codeline lineno="78"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Save<sp/>functions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="79"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveParametersToFile(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>dirPath,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t);</highlight></codeline>
+<codeline lineno="80"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveSimulationStateBinary(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t);</highlight></codeline>
+<codeline lineno="81"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>defined(USE_HDF5)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="82"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveSimulationStateHDF5(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t);</highlight></codeline>
+<codeline lineno="83"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="84"><highlight class="normal">SimulationDataSnapshot<sp/>saveSimulationState(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t);</highlight></codeline>
+<codeline lineno="85"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveCompressedData(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>dirPath);</highlight></codeline>
+<codeline lineno="86"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>waitForAsyncSavesToComplete();</highlight></codeline>
+<codeline lineno="87"><highlight class="normal"></highlight></codeline>
+<codeline lineno="88"><highlight class="normal"></highlight><highlight class="comment">//<sp/>GPU-side<sp/>internal<sp/>functions<sp/>(defined<sp/>in<sp/>.cu<sp/>files,<sp/>called<sp/>by<sp/>.cpp)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="89"><highlight class="normal">SimulationDataSnapshot<sp/>createDataSnapshot();</highlight></codeline>
+<codeline lineno="90"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveHistoryAsync(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>filename,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>delta_t,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SimulationDataSnapshot&amp;<sp/>snapshot);</highlight></codeline>
+<codeline lineno="91"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>saveCompressedDataAsync(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>dirPath,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>SimulationDataSnapshot&amp;<sp/>snapshot);</highlight></codeline>
+<codeline lineno="92"><highlight class="normal"></highlight></codeline>
+<codeline lineno="93"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Utility<sp/>functions<sp/>for<sp/>save<sp/>operations</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="94"><highlight class="normal">std::string<sp/>getCurrentTimestamp();</highlight></codeline>
+<codeline lineno="95"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>getRuntimeSeconds();</highlight></codeline>
+<codeline lineno="96"><highlight class="normal">std::string<sp/>formatDuration(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>total_seconds);</highlight></codeline>
+<codeline lineno="97"><highlight class="normal">std::string<sp/>getGPUInfo();</highlight></codeline>
+<codeline lineno="98"><highlight class="normal">std::string<sp/>formatMemory(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>memory_kb);</highlight></codeline>
+<codeline lineno="99"><highlight class="normal"></highlight></codeline>
+<codeline lineno="100"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Helper<sp/>functions<sp/>for<sp/>computation<sp/>(used<sp/>by<sp/>saveHistory<sp/>and<sp/>other<sp/>functions)</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="include/io/io_utils.hpp"/>
+  </compounddef>
+</doxygen>

@@ -1,19 +1,42 @@
 cmake_minimum_required(VERSION 3.24)
 
+# Optional CUDA support with tri-state behavior (AUTO/ON/OFF)
+option(DMFE_WITH_CUDA "Enable CUDA support" ON)
+
 # Prefer clang++-14 as CUDA host compiler only if explicitly requested
 option(DMFE_PREFER_CLANG_HOST "Prefer clang++ as CUDA host compiler for nvcc" OFF)
-if(DMFE_PREFER_CLANG_HOST AND NOT DEFINED CMAKE_CUDA_HOST_COMPILER)
-    find_program(CLANGPP_14 NAMES clang++-14)
-    if(CLANGPP_14)
-        # Must be set before enabling CUDA language
-        set(CMAKE_CUDA_HOST_COMPILER ${CLANGPP_14})
-        message(STATUS "Using ${CLANGPP_14} as CUDA host compiler")
+
+# Detect CUDA if AUTO or ON
+if(DMFE_WITH_CUDA)
+    # Check if CUDA compiler is available before enabling the language
+    include(CheckLanguage)
+    check_language(CUDA)
+    
+    if(CMAKE_CUDA_COMPILER)
+    # nvcc 11.x + GCC >= 12 requires this flag even during compiler-id checks
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -allow-unsupported-compiler" CACHE STRING "" FORCE)
+        message(STATUS "CUDA compiler found: enabling CUDA support")
+        # Prefer clang++-14 as nvcc host if available (reduces GCC12 interactions)
+        if(NOT DEFINED CMAKE_CUDA_HOST_COMPILER)
+            find_program(CLANGPP_14 NAMES clang++-14)
+            if(CLANGPP_14)
+                set(CMAKE_CUDA_HOST_COMPILER ${CLANGPP_14})
+                message(STATUS "Using ${CLANGPP_14} as CUDA host compiler")
+            endif()
+        endif()
+        project(DMFE LANGUAGES C CXX CUDA)
+        set(DMFE_WITH_CUDA ON)
+        # Now find the CUDA toolkit after CUDA language is enabled
+        find_package(CUDAToolkit REQUIRED)
+    else()
+        message(WARNING "CUDA compiler not found; building CPU-only version")
+        set(DMFE_WITH_CUDA OFF)
+        project(DMFE LANGUAGES C CXX)
     endif()
+else()
+    message(STATUS "CUDA support disabled; building CPU-only version")
+    project(DMFE LANGUAGES C CXX)
 endif()
-
-project(DMFE LANGUAGES C CXX CUDA)
-
-find_package(CUDAToolkit REQUIRED)
 
 find_package(OpenMP REQUIRED)
 
@@ -27,18 +50,33 @@ option(DMFE_PORTABLE_BUILD "Build portable binary for heterogeneous cluster node
 if(DMFE_PORTABLE_BUILD)
     set(DMFE_NATIVE OFF CACHE BOOL "" FORCE)
     set(DMFE_STATIC_OPENMP ON CACHE BOOL "" FORCE)
+    if(DMFE_WITH_CUDA)
+        set(DMFE_STATIC_CUDART OFF CACHE BOOL "" FORCE)
+    endif()
+endif()
+
+if(DMFE_WITH_CUDA AND NOT CMAKE_CUDA_ARCHITECTURES)
+    # Consider setting this explicitly for the cluster nodes, e.g. -DCMAKE_CUDA_ARCHITECTURES=80
+    set(CMAKE_CUDA_ARCHITECTURES 80 86 89 90)
 endif()
 
 # Debug helper: enable device debug, no fast-math, and Thrust debug checks
 option(DMFE_DEBUG "Enable CUDA device debug and Thrust debug checks" OFF)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CUDA_STANDARD 17)
+if(DMFE_WITH_CUDA)
+    set(CMAKE_CUDA_STANDARD 17)
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Prefer static CUDA runtime to allow running on systems without CUDA
-option(DMFE_STATIC_CUDART "Link CUDA runtime statically to run on systems without CUDA installed" ON)
-option(DMFE_BUILD_SHARED_VARIANT "Also build a shared-runtime variant to avoid nvlink host-lib warnings" ON)
+# Prefer static CUDA runtime to allow running on systems without CUDA (only when CUDA is enabled)
+if(DMFE_WITH_CUDA)
+    option(DMFE_STATIC_CUDART "Link CUDA runtime statically to run on systems without CUDA installed" ON)
+    option(DMFE_BUILD_SHARED_VARIANT "Also build a shared-runtime variant to avoid nvlink host-lib warnings" ON)
+else()
+    set(DMFE_STATIC_CUDART OFF)
+    set(DMFE_BUILD_SHARED_VARIANT OFF)
+endif()
 
 if(DMFE_PORTABLE_BUILD)
     set(DMFE_STATIC_CUDART OFF CACHE BOOL "" FORCE)
@@ -54,8 +92,18 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Base flags
-set(common_cuda_flags --extended-lambda --use_fast_math -allow-unsupported-compiler)
 set(common_host_flags -O3)
+if(DMFE_WITH_CUDA)
+    set(common_cuda_flags --extended-lambda --use_fast_math -allow-unsupported-compiler)
+    # Workaround: nvcc 11.x + GCC >= 12 trips over libstdc++ locale headers when __STRICT_ANSI__ is set.
+    # Undefine it for CUDA compilations when using CUDA 11.* with GCC 12+.
+    if(DEFINED CUDAToolkit_VERSION AND CUDAToolkit_VERSION VERSION_LESS 12)
+        if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 12)
+            list(APPEND common_cuda_flags -U__STRICT_ANSI__)
+            message(STATUS "Applying GCC 12 + CUDA 11.x workaround for locale headers")
+        endif()
+    endif()
+endif()
 
 # Toolchain-specific host flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
@@ -63,15 +111,21 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
     if(OpenMP_CXX_FOUND)
         list(APPEND common_host_flags ${OpenMP_CXX_FLAGS})
         # Add OpenMP flags to CUDA compilation for host code in .cu files
-        list(APPEND common_cuda_flags -Xcompiler=${OpenMP_CXX_FLAGS})
+        if(DMFE_WITH_CUDA)
+            list(APPEND common_cuda_flags -Xcompiler=${OpenMP_CXX_FLAGS})
+        endif()
         if(DMFE_STATIC_OPENMP)
             if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
                 list(APPEND common_host_flags -static-libgomp)
-                list(APPEND common_cuda_flags -Xcompiler=-static-libgomp)
+                if(DMFE_WITH_CUDA)
+                    list(APPEND common_cuda_flags -Xcompiler=-static-libgomp)
+                endif()
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 # For LLVM libomp, attempt static linking
                 list(APPEND common_host_flags -lomp)
-                list(APPEND common_cuda_flags -Xcompiler=-lomp)
+                if(DMFE_WITH_CUDA)
+                    list(APPEND common_cuda_flags -Xcompiler=-lomp)
+                endif()
                 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
             endif()
         endif()
@@ -89,53 +143,109 @@ endif()
 
 # Debug mode adjusts flags
 if(DMFE_DEBUG)
-    # Disable fast-math for determinism and better diagnostics
-    list(REMOVE_ITEM common_cuda_flags --use_fast_math)
-    # Device debug, no device optimizations, line info
-    list(APPEND common_cuda_flags -G -lineinfo -Xptxas=-O0)
+    if(DMFE_WITH_CUDA)
+        # Disable fast-math for determinism and better diagnostics
+        list(REMOVE_ITEM common_cuda_flags --use_fast_math)
+        # Device debug, no device optimizations, line info
+        list(APPEND common_cuda_flags -G -lineinfo -Xptxas=-O0)
+    endif()
     # Host debug
     set(common_host_flags -O0 -g)
 endif()
 
-message(STATUS "CUDA archs: ${CMAKE_CUDA_ARCHITECTURES}")
-message(STATUS "CUDA runtime linkage: ${DMFE_STATIC_CUDART}? (ON=static, OFF=shared)")
+if(DMFE_WITH_CUDA)
+    message(STATUS "CUDA archs: ${CMAKE_CUDA_ARCHITECTURES}")
+    message(STATUS "CUDA runtime linkage: ${DMFE_STATIC_CUDART}? (ON=static, OFF=shared)")
+    message(STATUS "CUDA flags: ${common_cuda_flags}")
+endif()
 message(STATUS "Host compiler: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "Host flags: ${common_host_flags}")
-message(STATUS "CUDA flags: ${common_cuda_flags}")
 
-add_library(DFME-core
-    src/core/device_utils.cu
-    src/core/stream_pool.cu
-    src/core/device_constants.cu
-    src/core/host_utils.cu
-    src/core/compute_utils.cu
-    src/io/io_utils.cu
+# Define source lists
+set(GPU_SOURCES "")
+set(CPU_SOURCES "")
+
+if(DMFE_WITH_CUDA)
+    # CUDA sources (.cu files)
+    set(GPU_SOURCES
+        src/core/device_utils.cu
+        src/core/stream_pool.cu
+        src/core/device_constants.cu
+        src/core/compute_utils.cu
     src/io/io_output.cu
-    src/io/io_input.cu
     src/core/gpu_memory_utils.cu
-    src/core/config.cu
-    src/core/initialization.cu
-    src/interpolation/index_mat.cu
-    src/interpolation/index_vec.cu
-    src/interpolation/interpolation_core.cu
-    src/convolution/convolution.cu
-    src/math/math_ops.cu
-    src/math/math_sigma.cu
-    src/EOMs/time_steps.cu
-    src/EOMs/runge_kutta.cu
-    src/search/search_utils.cu
-    src/sparsify/sparsify_utils.cu
-    src/simulation/simulation_control.cu
-    src/simulation/simulation_runner.cu
-    src/version/version_info.cu
-    src/version/version_compat.cu
+        src/interpolation/index_mat.cu
+        src/interpolation/index_vec.cu
+        src/interpolation/interpolation_core.cu
+        src/convolution/convolution.cu
+        src/math/math_ops.cu
+        src/math/math_sigma.cu
+        src/EOMs/time_steps.cu
+        src/EOMs/runge_kutta.cu
+        src/search/search_utils.cu
+        src/sparsify/sparsify_utils.cu
+    )
+endif()
+
+# CPU-only sources (.cpp files) - always included
+set(CPU_SOURCES
+    src/core/config.cpp
+    src/core/initialization.cpp
+    src/math/math_sigma.cpp
+    src/search/search_utils.cpp
+    src/core/host_utils.cpp
+    src/core/device_utils.cpp
+    src/convolution/convolution.cpp
+    src/interpolation/index_vec.cpp
+    src/interpolation/index_mat.cpp
+    src/interpolation/interpolation_core.cpp
+    src/io/io_input.cpp
+    src/io/io_output.cpp
+    src/io/io_utils.cpp
+    src/math/math_ops.cpp
+    src/simulation/simulation_control.cpp
+    src/simulation/simulation_runner.cpp
+    src/version/version_info.cpp
+    src/version/version_compat.cpp
+    src/EOMs/time_steps.cpp
+    src/EOMs/runge_kutta.cpp
 )
+
+# Additional CPU-only sources when CUDA is disabled
+if(NOT DMFE_WITH_CUDA)
+    list(APPEND CPU_SOURCES
+        src/sparsify/sparsify_utils.cpp
+    )
+endif()
+
+# Be explicit about source file languages to avoid CMake misclassifying some .cpp
+# files as CUDA when CUDA is enabled (which can cause nvcc to compile libstdc++ headers).
+if(DMFE_WITH_CUDA)
+    set_source_files_properties(${GPU_SOURCES} PROPERTIES LANGUAGE CUDA)
+endif()
+set_source_files_properties(${CPU_SOURCES} PROPERTIES LANGUAGE CXX)
+
+# Some C++ sources use Thrust device vectors and must be compiled with nvcc when CUDA is enabled.
+if(DMFE_WITH_CUDA)
+    set_source_files_properties(
+        src/simulation/simulation_control.cpp
+        src/simulation/simulation_runner.cpp
+        PROPERTIES LANGUAGE CUDA)
+endif()
+
+add_library(DFME-core ${GPU_SOURCES} ${CPU_SOURCES})
 
 target_include_directories(DFME-core
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-    PUBLIC ${CUDAToolkit_INCLUDE_DIRS}
 )
+
+if(DMFE_WITH_CUDA)
+    target_include_directories(DFME-core PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
+    target_compile_definitions(DFME-core PUBLIC DMFE_WITH_CUDA=1)
+else()
+    target_compile_definitions(DFME-core PUBLIC DMFE_WITH_CUDA=0)
+endif()
 
 if(OpenMP_CXX_FOUND)
     target_link_libraries(DFME-core PUBLIC OpenMP::OpenMP_CXX)
@@ -156,21 +266,22 @@ if(USE_HDF5_RUNTIME)
     target_compile_definitions(DFME-core PUBLIC H5_RUNTIME_OPTIONAL=1)
 endif()
 
-# Add OpenMP-enabled CPU source files
-target_sources(DFME-core PRIVATE src/math/math_sigma.cpp)
-target_sources(DFME-core PRIVATE src/search/search_utils.cpp)
-target_sources(DFME-core PRIVATE src/core/host_utils.cpp)
-target_sources(DFME-core PRIVATE src/convolution/convolution.cpp)
-target_sources(DFME-core PRIVATE src/interpolation/index_vec.cpp)
-target_sources(DFME-core PRIVATE src/interpolation/index_mat.cpp)
+# CPU source files are already in CPU_SOURCES list above
 
-add_executable(RG-Evo main.cu)
+if(DMFE_WITH_CUDA)
+    add_executable(RG-Evo main.cu)
+else()
+    add_executable(RG-Evo main.cpp)
+endif()
+
 target_link_libraries(RG-Evo PRIVATE DFME-core)
 target_link_options(RG-Evo PRIVATE $<HOST_LINK:-ldl>)
 
-# Ensure device linking stage unifies __constant__ definitions across TUs
-set_target_properties(DFME-core PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-set_target_properties(RG-Evo PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+# Ensure device linking stage unifies __constant__ definitions across TUs (CUDA only)
+if(DMFE_WITH_CUDA)
+    set_target_properties(DFME-core PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+    set_target_properties(RG-Evo PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+endif()
 
 set_target_properties(DFME-core PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(RG-Evo PROPERTIES
@@ -178,17 +289,17 @@ set_target_properties(RG-Evo PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
 )
 
-# Set per-target CUDA runtime linkage
-if(DMFE_STATIC_CUDART)
+# Set per-target CUDA runtime linkage (CUDA only)
+if(DMFE_WITH_CUDA AND DMFE_STATIC_CUDART)
     set_target_properties(DFME-core PROPERTIES CUDA_RUNTIME_LIBRARY Static)
     set_target_properties(RG-Evo PROPERTIES CUDA_RUNTIME_LIBRARY Static)
-else()
+elseif(DMFE_WITH_CUDA)
     set_target_properties(DFME-core PROPERTIES CUDA_RUNTIME_LIBRARY Shared)
     set_target_properties(RG-Evo PROPERTIES CUDA_RUNTIME_LIBRARY Shared)
 endif()
 
-# Optional shared-runtime variant
-if(DMFE_BUILD_SHARED_VARIANT)
+# Optional shared-runtime variant (CUDA only)
+if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
     add_executable(RG-Evo-shared main.cu)
     target_link_libraries(RG-Evo-shared PRIVATE DFME-core)
     target_link_options(RG-Evo-shared PRIVATE $<HOST_LINK:-ldl>)
@@ -198,22 +309,24 @@ if(DMFE_BUILD_SHARED_VARIANT)
         CUDA_RUNTIME_LIBRARY Shared
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
     )
-    foreach(tgt IN ITEMS RG-Evo-shared)
-        target_compile_options(${tgt} PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:${common_cuda_flags}>
-            $<$<COMPILE_LANGUAGE:CXX>:${common_host_flags}>
-        )
-        if(DMFE_DEBUG)
-            target_compile_definitions(${tgt} PUBLIC THRUST_DEBUG=1)
-        endif()
-    endforeach()
+    target_compile_options(RG-Evo-shared PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:${common_cuda_flags}>
+        $<$<COMPILE_LANGUAGE:CXX>:${common_host_flags}>
+    )
+    if(DMFE_DEBUG)
+        target_compile_definitions(RG-Evo-shared PUBLIC THRUST_DEBUG=1)
+    endif()
 endif()
 
 foreach(tgt IN ITEMS DFME-core RG-Evo)
     target_compile_options(${tgt} PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:${common_cuda_flags}>
         $<$<COMPILE_LANGUAGE:CXX>:${common_host_flags}>
     )
+    if(DMFE_WITH_CUDA)
+        target_compile_options(${tgt} PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:${common_cuda_flags}>
+        )
+    endif()
     if(DMFE_DEBUG)
         target_compile_definitions(${tgt} PUBLIC THRUST_DEBUG=1)
     endif()

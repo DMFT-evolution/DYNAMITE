@@ -1,5 +1,5 @@
 // compute_utils.cu - Definitions of basic element-wise CUDA kernels
-#include "compute_utils.hpp"
+#include "core/compute_utils.hpp"
 
 __global__ void computeScale(double* a, double b, size_t N) {
     size_t idx = blockIdx.x * blockDim.x + threadIdx.x;

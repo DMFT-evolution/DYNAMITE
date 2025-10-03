@@ -1,0 +1,327 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="math__ops_8hpp" kind="file" language="C++">
+    <compoundname>math_ops.hpp</compoundname>
+    <includes refid="config__build_8hpp" local="yes">core/config_build.hpp</includes>
+    <includes local="no">cstddef</includes>
+    <includedby refid="time__steps_8cpp" local="yes">src/EOMs/time_steps.cpp</includedby>
+    <includedby refid="initialization_8cpp" local="yes">src/core/initialization.cpp</includedby>
+    <includedby refid="index__vec_8cpp" local="yes">src/interpolation/index_vec.cpp</includedby>
+    <includedby refid="io__input_8cpp" local="yes">src/io/io_input.cpp</includedby>
+    <includedby refid="io__output_8cpp" local="yes">src/io/io_output.cpp</includedby>
+    <includedby refid="io__utils_8cpp" local="yes">src/io/io_utils.cpp</includedby>
+    <includedby refid="math__ops_8cpp" local="yes">src/math/math_ops.cpp</includedby>
+    <includedby refid="math__sigma_8cpp" local="yes">src/math/math_sigma.cpp</includedby>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="2">
+        <label>core/config_build.hpp</label>
+        <link refid="config__build_8hpp_source"/>
+      </node>
+      <node id="1">
+        <label>include/math/math_ops.hpp</label>
+        <link refid="math__ops_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>cstddef</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="math__ops_8hpp_1aa1edda9c37187adb0cd95ea9a0886c4c" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>int</type>
+            <declname>P</declname>
+            <defname>P</defname>
+          </param>
+        </templateparamlist>
+        <type>constexpr double</type>
+        <definition>constexpr double pow_const</definition>
+        <argsstring>(double q)</argsstring>
+        <name>pow_const</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="12" column="18" bodyfile="include/math/math_ops.hpp" bodystart="12" bodyend="12"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a09897e0c3b121fb978b37ab27f738176" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+        </templateparamlist>
+        <type>constexpr double</type>
+        <definition>constexpr double pow_const&lt; 0 &gt;</definition>
+        <argsstring>(double)</argsstring>
+        <name>pow_const&lt; 0 &gt;</name>
+        <param>
+          <type>double</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="13" column="21" bodyfile="include/math/math_ops.hpp" bodystart="13" bodyend="13"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a2d1d3b444f177ccaef51a81775a741f1" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+        </templateparamlist>
+        <type>constexpr double</type>
+        <definition>constexpr double pow_const&lt;-1 &gt;</definition>
+        <argsstring>(double)</argsstring>
+        <name>pow_const&lt;-1 &gt;</name>
+        <param>
+          <type>double</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="14" column="21" bodyfile="include/math/math_ops.hpp" bodystart="14" bodyend="14"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a3e2e1e81efc0a2b9f389be2f9bf3be21" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double pow_int</definition>
+        <argsstring>(double base, int exp)</argsstring>
+        <name>pow_int</name>
+        <param>
+          <type>double</type>
+          <declname>base</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>exp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="28" column="8" bodyfile="src/math/math_ops.cpp" bodystart="7" bodyend="21" declfile="include/math/math_ops.hpp" declline="28" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a181b9732c71543ab14ad8dc6082fe87a" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>DMFE_HOST_DEVICE size_t</type>
+        <definition>DMFE_HOST_DEVICE size_t max_device</definition>
+        <argsstring>(size_t a, size_t b)</argsstring>
+        <name>max_device</name>
+        <param>
+          <type>size_t</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="32" column="32" bodyfile="include/math/math_ops.hpp" bodystart="32" bodyend="32"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1aea25d380589ccb1c154701f5d9cc2b2e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>DMFE_HOST_DEVICE double</type>
+        <definition>DMFE_HOST_DEVICE double max_device</definition>
+        <argsstring>(double a, double b)</argsstring>
+        <name>max_device</name>
+        <param>
+          <type>double</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="33" column="32" bodyfile="include/math/math_ops.hpp" bodystart="33" bodyend="33"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1ac0b6e876812f4958e6995246cda3474e" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>DMFE_HOST_DEVICE size_t</type>
+        <definition>DMFE_HOST_DEVICE size_t min_device</definition>
+        <argsstring>(size_t a, size_t b)</argsstring>
+        <name>min_device</name>
+        <param>
+          <type>size_t</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="34" column="32" bodyfile="include/math/math_ops.hpp" bodystart="34" bodyend="34"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1aae1abfe8ee5068a1b4811694d5aaa555" prot="public" static="no" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>DMFE_HOST_DEVICE double</type>
+        <definition>DMFE_HOST_DEVICE double min_device</definition>
+        <argsstring>(double a, double b)</argsstring>
+        <name>min_device</name>
+        <param>
+          <type>double</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="35" column="32" bodyfile="include/math/math_ops.hpp" bodystart="35" bodyend="35"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a763996575d19bfd277b9cbc1cc41bbc6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double flambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>flambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="38" column="8" bodyfile="src/math/math_ops.cpp" bodystart="23" bodyend="25" declfile="include/math/math_ops.hpp" declline="38" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1aee49334157b8c2e47de4a9936c95cf02" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double Dflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>Dflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="39" column="8" bodyfile="src/math/math_ops.cpp" bodystart="27" bodyend="29" declfile="include/math/math_ops.hpp" declline="39" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a54600d1c5b4eb515c86f1908f58a6dae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double DDflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>DDflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="40" column="8" bodyfile="src/math/math_ops.cpp" bodystart="31" bodyend="33" declfile="include/math/math_ops.hpp" declline="40" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8hpp_1a1549ac7e2f2fed6278ba44af83106e91" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double DDDflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>DDDflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_ops.hpp" line="41" column="8" bodyfile="src/math/math_ops.cpp" bodystart="35" bodyend="37" declfile="include/math/math_ops.hpp" declline="41" declcolumn="8"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>Basic<sp/>math<sp/>helper<sp/>utilities<sp/>(host<sp/>+<sp/>device)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/config_build.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstddef&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cuda_runtime.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Host<sp/>compile-time<sp/>power</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>P&gt;</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>q<sp/>*<sp/>pow_const&lt;P-1&gt;(q);<sp/>}</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;&gt;<sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const&lt;0&gt;(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal">)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1.0;<sp/>}</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;&gt;<sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const&lt;-1&gt;(double)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0.0;<sp/>}</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Device<sp/>version</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>P&gt;</highlight></codeline>
+<codeline lineno="19"><highlight class="normal">__device__<sp/>__forceinline__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const_device(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>q<sp/>*<sp/>pow_const_device&lt;P-1&gt;(q);<sp/>}</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;&gt;<sp/>__device__<sp/>__forceinline__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const_device&lt;0&gt;(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal">)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1.0;<sp/>}</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="keyword">template</highlight><highlight class="normal">&lt;&gt;<sp/>__device__<sp/>__forceinline__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_const_device&lt;-1&gt;(double)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>0.0;<sp/>}</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Integer<sp/>power<sp/>(host)<sp/>and<sp/>fast<sp/>device<sp/>integer<sp/>power</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_int(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>base,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>exp);</highlight></codeline>
+<codeline lineno="25"><highlight class="normal">__device__<sp/>__forceinline__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>fast_pow_int(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>base,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>exp);</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight><highlight class="preprocessor">#else</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="comment">//<sp/>CPU-only<sp/>version</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_int(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>base,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>exp);</highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Min<sp/>/<sp/>Max<sp/>helpers<sp/>(host<sp/>+<sp/>device)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="32"><highlight class="normal">DMFE_HOST_DEVICE<sp/></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>max_device(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>a,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>b)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(a<sp/>&gt;<sp/>b)<sp/>?<sp/>a<sp/>:<sp/>b;<sp/>}</highlight></codeline>
+<codeline lineno="33"><highlight class="normal">DMFE_HOST_DEVICE<sp/></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>max_device(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>a,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>b)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(a<sp/>&gt;<sp/>b)<sp/>?<sp/>a<sp/>:<sp/>b;<sp/>}</highlight></codeline>
+<codeline lineno="34"><highlight class="normal">DMFE_HOST_DEVICE<sp/></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>min_device(</highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>a,<sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>b)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(a<sp/>&lt;<sp/>b)<sp/>?<sp/>a<sp/>:<sp/>b;<sp/>}</highlight></codeline>
+<codeline lineno="35"><highlight class="normal">DMFE_HOST_DEVICE<sp/></highlight><highlight class="keyword">inline</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>min_device(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>a,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>b)<sp/>{<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>(a<sp/>&lt;<sp/>b)<sp/>?<sp/>a<sp/>:<sp/>b;<sp/>}</highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Lambda<sp/>polynomial<sp/>helpers<sp/>(host)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>flambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Dflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDDflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal"></highlight></codeline>
+<codeline lineno="43"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Device<sp/>versions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal">__device__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>flambdaGPU(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="46"><highlight class="normal">__device__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DflambdaGPU(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="47"><highlight class="normal">__device__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DflambdaGPU2(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="48"><highlight class="normal">__device__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDflambdaGPU(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="49"><highlight class="normal">__device__<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDDflambdaGPU(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="50"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="51"><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="include/math/math_ops.hpp"/>
+  </compounddef>
+</doxygen>

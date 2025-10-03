@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="version__compat_8hpp" kind="file" language="C++">
+    <compoundname>version_compat.hpp</compoundname>
+    <includes refid="version__info_8hpp" local="yes">version/version_info.hpp</includes>
+    <includes local="no">string</includes>
+    <includedby refid="config_8cpp" local="yes">src/core/config.cpp</includedby>
+    <includedby refid="io__input_8cpp" local="yes">src/io/io_input.cpp</includedby>
+    <includedby refid="io__output_8cpp" local="yes">src/io/io_output.cpp</includedby>
+    <includedby refid="io__utils_8cpp" local="yes">src/io/io_utils.cpp</includedby>
+    <includedby refid="version__compat_8cpp" local="yes">src/version/version_compat.cpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>include/version/version_compat.hpp</label>
+        <link refid="version__compat_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>version/version_info.hpp</label>
+        <link refid="version__info_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>string</label>
+      </node>
+      <node id="4">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="version__compat_8hpp_1aeff2285f574a7072e12fa93a53d1638a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>VersionAnalysis</type>
+        <definition>VersionAnalysis analyzeVersionCompatibility</definition>
+        <argsstring>(const std::string &amp;paramFilename)</argsstring>
+        <name>analyzeVersionCompatibility</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>paramFilename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_compat.hpp" line="5" column="17" bodyfile="src/version/version_compat.cpp" bodystart="37" bodyend="83" declfile="include/version/version_compat.hpp" declline="5" declcolumn="17"/>
+      </memberdef>
+      <memberdef kind="function" id="version__compat_8hpp_1ac975f3ca4c44649f87d3509d9c610a96" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool checkVersionCompatibilityInteractive</definition>
+        <argsstring>(const std::string &amp;paramFilename)</argsstring>
+        <name>checkVersionCompatibilityInteractive</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>paramFilename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_compat.hpp" line="6" column="6" bodyfile="src/version/version_compat.cpp" bodystart="88" bodyend="110" declfile="include/version/version_compat.hpp" declline="6" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="version__compat_8hpp_1aa92b9183310e9563474c8ca5784e1a73" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>VersionAnalysis</type>
+        <definition>VersionAnalysis checkVersionCompatibility</definition>
+        <argsstring>(const std::string &amp;paramFilename)</argsstring>
+        <name>checkVersionCompatibility</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>paramFilename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_compat.hpp" line="7" column="17" declfile="include/version/version_compat.hpp" declline="7" declcolumn="17"/>
+      </memberdef>
+      <memberdef kind="function" id="version__compat_8hpp_1adfda93ccc133a489888ac542af9b29dd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool checkVersionCompatibilityBasic</definition>
+        <argsstring>(const std::string &amp;paramFilename)</argsstring>
+        <name>checkVersionCompatibilityBasic</name>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>paramFilename</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_compat.hpp" line="8" column="6" bodyfile="src/version/version_compat.cpp" bodystart="113" bodyend="131" declfile="include/version/version_compat.hpp" declline="8" declcolumn="6"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;version/version_info.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;string&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal">VersionAnalysis<sp/>analyzeVersionCompatibility(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>paramFilename);</highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>checkVersionCompatibilityInteractive(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>paramFilename);</highlight></codeline>
+<codeline lineno="7"><highlight class="normal">VersionAnalysis<sp/>checkVersionCompatibility(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>paramFilename);</highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/>checkVersionCompatibilityBasic(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::string&amp;<sp/>paramFilename);</highlight></codeline>
+    </programlisting>
+    <location file="include/version/version_compat.hpp"/>
+  </compounddef>
+</doxygen>

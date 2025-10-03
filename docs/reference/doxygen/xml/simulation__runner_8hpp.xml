@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="simulation__runner_8hpp" kind="file" language="C++">
+    <compoundname>simulation_runner.hpp</compoundname>
+    <includes local="no">chrono</includes>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>include/simulation/simulation_runner.hpp</label>
+        <link refid="simulation__runner_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>chrono</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="simulation__runner_8hpp_1a83df0e9d228b8cff99357941a61d53ef" prot="public" static="no" mutable="no">
+        <type>std::chrono::high_resolution_clock::time_point</type>
+        <definition>std::chrono::high_resolution_clock::time_point program_start_time</definition>
+        <argsstring></argsstring>
+        <name>program_start_time</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_runner.hpp" line="7" column="55" bodyfile="src/simulation/simulation_runner.cpp" bodystart="37" bodyend="-1" declfile="include/simulation/simulation_runner.hpp" declline="7" declcolumn="55"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="simulation__runner_8hpp_1a98cf9ee72ba225d4b40136d2e8aabe1b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>int</type>
+        <definition>int runSimulation</definition>
+        <argsstring>()</argsstring>
+        <name>runSimulation</name>
+        <briefdescription>
+<para>Run the main simulation loop. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function contains the core simulation logic including:<itemizedlist>
+<listitem><para>File output setup</para>
+</listitem><listitem><para>Main time-stepping loop</para>
+</listitem><listitem><para>Adaptive time-step control</para>
+</listitem><listitem><para>Performance benchmarking (if debug mode)</para>
+</listitem><listitem><para>Final result output and cleanup</para>
+</listitem></itemizedlist>
+</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pool</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>StreamPool for GPU operations </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>int Exit code (0 for success) </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_runner.hpp" line="22" column="5" bodyfile="src/simulation/simulation_runner.cpp" bodystart="42" bodyend="356" declfile="include/simulation/simulation_runner.hpp" declline="22" declcolumn="5"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__runner_8hpp_1a78dfd3f20c5db7f4c334e0453c72bf74" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void runPerformanceBenchmark</definition>
+        <argsstring>()</argsstring>
+        <name>runPerformanceBenchmark</name>
+        <briefdescription>
+<para>Performance benchmarking for GPU operations. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Runs performance tests on various GPU kernels when debug mode is enabled</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>pool</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>StreamPool for GPU operations </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_runner.hpp" line="31" column="6" declfile="include/simulation/simulation_runner.hpp" declline="31" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="simulation__runner_8hpp_1abee230f1c24e778f25308945e623124f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void runPerformanceBenchmarkCPU</definition>
+        <argsstring>()</argsstring>
+        <name>runPerformanceBenchmarkCPU</name>
+        <briefdescription>
+<para>Performance benchmarking for CPU operations. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Runs performance tests on various CPU functions when debug mode is enabled </para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_runner.hpp" line="38" column="6" bodyfile="src/simulation/simulation_runner.cpp" bodystart="390" bodyend="415" declfile="include/simulation/simulation_runner.hpp" declline="38" declcolumn="6"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#ifndef<sp/>SIMULATION_RUNNER_HPP</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>SIMULATION_RUNNER_HPP</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;chrono&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Global<sp/>timing<sp/>variable</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>std::chrono::high_resolution_clock::time_point<sp/>program_start_time;</highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>runSimulation();</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>runPerformanceBenchmark();</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>runPerformanceBenchmarkCPU();</highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>SIMULATION_RUNNER_HPP</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="include/simulation/simulation_runner.hpp"/>
+  </compounddef>
+</doxygen>

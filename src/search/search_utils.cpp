@@ -1,5 +1,5 @@
-#include "search_utils.hpp"
-#include "config.hpp"
+#include "search/search_utils.hpp"
+#include "core/config.hpp"
 #include <vector>
 #include <cmath>
 #include <algorithm>

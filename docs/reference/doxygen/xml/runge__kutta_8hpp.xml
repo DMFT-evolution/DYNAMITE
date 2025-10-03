@@ -1,0 +1,268 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="runge__kutta_8hpp" kind="file" language="C++">
+    <compoundname>runge_kutta.hpp</compoundname>
+    <includes refid="config__build_8hpp" local="yes">core/config_build.hpp</includes>
+    <includes local="no">vector</includes>
+    <includes refid="stream__pool_8hpp" local="yes">core/stream_pool.hpp</includes>
+    <includedby refid="runge__kutta_8cpp" local="yes">src/EOMs/runge_kutta.cpp</includedby>
+    <includedby refid="initialization_8cpp" local="yes">src/core/initialization.cpp</includedby>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>include/EOMs/runge_kutta.hpp</label>
+        <link refid="runge__kutta_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="5">
+        <label>core/config.hpp</label>
+        <link refid="config_8hpp_source"/>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>core/config_build.hpp</label>
+        <link refid="config__build_8hpp_source"/>
+      </node>
+      <node id="4">
+        <label>core/stream_pool.hpp</label>
+        <link refid="stream__pool_8hpp_source"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="6">
+        <label>string</label>
+      </node>
+      <node id="3">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="runge__kutta_8hpp_1ab3480cdcca7a81c6d16ea21aea9554c9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double SSPRK104</definition>
+        <argsstring>()</argsstring>
+        <name>SSPRK104</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="19" column="8" bodyfile="src/EOMs/runge_kutta.cpp" bodystart="19" bodyend="144" declfile="include/EOMs/runge_kutta.hpp" declline="19" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1a7224fa30b1c84cbf6dea3029aff80008" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double RK54</definition>
+        <argsstring>()</argsstring>
+        <name>RK54</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="20" column="8" bodyfile="src/EOMs/runge_kutta.cpp" bodystart="146" bodyend="252" declfile="include/EOMs/runge_kutta.hpp" declline="20" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1a425bfbdcecbf020d76e6637828cc93c5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void init_RK54GPU</definition>
+        <argsstring>()</argsstring>
+        <name>init_RK54GPU</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="23" column="6" declfile="include/EOMs/runge_kutta.hpp" declline="23" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1af81aa065bd73762369930fab5d59bdda" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void init_SSPRK104GPU</definition>
+        <argsstring>()</argsstring>
+        <name>init_SSPRK104GPU</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="24" column="6" declfile="include/EOMs/runge_kutta.hpp" declline="24" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1aad08cc6f145833cdf2c260d85d8659ea" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void init_SERK2</definition>
+        <argsstring>(int q)</argsstring>
+        <name>init_SERK2</name>
+        <param>
+          <type>int</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="25" column="6" declfile="include/EOMs/runge_kutta.hpp" declline="25" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1ac82fb1d81d9506a9d2600d3f9714733a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double update</definition>
+        <argsstring>()</argsstring>
+        <name>update</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="27" column="8" bodyfile="src/EOMs/runge_kutta.cpp" bodystart="254" bodyend="261" declfile="include/EOMs/runge_kutta.hpp" declline="27" declcolumn="8"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1a07758e288e5b8c7e7a74bb2cc3df7891" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>long double</type>
+        <definition>long double chebyshevT_ld</definition>
+        <argsstring>(int n, long double x)</argsstring>
+        <name>chebyshevT_ld</name>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>long double</type>
+          <declname>x</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="40" column="13" declfile="include/EOMs/runge_kutta.hpp" declline="40" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1ab0ce48b63b564d3b5f904ae6acec7023" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>long double</type>
+        <definition>long double chebyshevU_ld</definition>
+        <argsstring>(int n, long double x)</argsstring>
+        <name>chebyshevU_ld</name>
+        <param>
+          <type>int</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>long double</type>
+          <declname>x</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="41" column="13" declfile="include/EOMs/runge_kutta.hpp" declline="41" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1af8ce9fe7aa8fb804edda6b7815961111" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; long double &gt;</type>
+        <definition>std::vector&lt; long double &gt; gaussianElimination_ld</definition>
+        <argsstring>(std::vector&lt; std::vector&lt; long double &gt; &gt; A, std::vector&lt; long double &gt; b)</argsstring>
+        <name>gaussianElimination_ld</name>
+        <param>
+          <type>std::vector&lt; std::vector&lt; long double &gt; &gt;</type>
+          <declname>A</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; long double &gt;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="42" column="13" declfile="include/EOMs/runge_kutta.hpp" declline="42" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="runge__kutta_8hpp_1a75f4533ff9103c374ef30eb3e2e267dd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; SERKcoeffs</definition>
+        <argsstring>(int q)</argsstring>
+        <name>SERKcoeffs</name>
+        <param>
+          <type>int</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/EOMs/runge_kutta.hpp" line="43" column="13" declfile="include/EOMs/runge_kutta.hpp" declline="43" declcolumn="13"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#ifndef<sp/>RUNGE_KUTTA_HPP</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#define<sp/>RUNGE_KUTTA_HPP</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/config_build.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/stream_pool.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Forward<sp/>declarations<sp/>for<sp/>kernel<sp/>functions<sp/>used<sp/>by<sp/>Runge-Kutta<sp/>methods</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal">__global__<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>computeError(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>gKfinal,</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>gKe,</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>gRfinal,</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>gRe,</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>result,</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len);</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="comment">//<sp/>CPU<sp/>Runge-Kutta<sp/>methods</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>SSPRK104();</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>RK54();</highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Runge-Kutta<sp/>initialization<sp/>functions<sp/>(work<sp/>for<sp/>both<sp/>CPU<sp/>and<sp/>GPU)</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>init_RK54GPU();</highlight></codeline>
+<codeline lineno="24"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>init_SSPRK104GPU();</highlight></codeline>
+<codeline lineno="25"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>init_SERK2(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>update();</highlight></codeline>
+<codeline lineno="28"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight><highlight class="comment">//<sp/>GPU<sp/>Runge-Kutta<sp/>methods</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>RK54GPU(StreamPool*<sp/>pool<sp/>=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="32"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>SSPRK104GPU(StreamPool*<sp/>pool<sp/>=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="33"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>SERK2GPU(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>q,<sp/>StreamPool*<sp/>pool<sp/>=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Helper<sp/>functions<sp/>for<sp/>method<sp/>selection</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>updateGPU(StreamPool*<sp/>pool<sp/>=<sp/></highlight><highlight class="keyword">nullptr</highlight><highlight class="normal">);</highlight></codeline>
+<codeline lineno="37"><highlight class="normal"></highlight><highlight class="preprocessor">#endif</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="38"><highlight class="normal"></highlight></codeline>
+<codeline lineno="39"><highlight class="normal"></highlight><highlight class="comment">//<sp/>SERK<sp/>coefficient<sp/>generation<sp/>functions</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="40"><highlight class="normal"></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>chebyshevT_ld(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>x);</highlight></codeline>
+<codeline lineno="41"><highlight class="normal"></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>chebyshevU_ld(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>n,<sp/></highlight><highlight class="keywordtype">long</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>x);</highlight></codeline>
+<codeline lineno="42"><highlight class="normal">std::vector&lt;long<sp/>double&gt;<sp/>gaussianElimination_ld(std::vector&lt;std::vector&lt;long<sp/>double&gt;&gt;<sp/>A,<sp/>std::vector&lt;long<sp/>double&gt;<sp/>b);</highlight></codeline>
+<codeline lineno="43"><highlight class="normal">std::vector&lt;double&gt;<sp/>SERKcoeffs(</highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>q);</highlight></codeline>
+<codeline lineno="44"><highlight class="normal"></highlight></codeline>
+<codeline lineno="45"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>RUNGE_KUTTA_HPP</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="include/EOMs/runge_kutta.hpp"/>
+  </compounddef>
+</doxygen>

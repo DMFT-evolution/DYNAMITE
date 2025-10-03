@@ -1,14 +1,14 @@
-#include "runge_kutta.hpp"
-#include "globals.hpp"
-#include "config.hpp"
-#include "math_ops.hpp"
-#include "vector_utils.hpp"
-#include "convolution.hpp"
-#include "compute_utils.hpp"
-#include "time_steps.hpp"
-#include "interpolation_core.hpp"
-#include "device_utils.cuh"
-#include "math_sigma.hpp"
+#include "EOMs/runge_kutta.hpp"
+#include "core/globals.hpp"
+#include "core/config.hpp"
+#include "math/math_ops.hpp"
+#include "core/vector_utils.hpp"
+#include "convolution/convolution.hpp"
+#include "core/compute_utils.hpp"
+#include "EOMs/time_steps.hpp"
+#include "interpolation/interpolation_core.hpp"
+#include "core/device_utils.cuh"
+#include "math/math_sigma.hpp"
 #include <cuda_runtime.h>
 #include <thrust/device_vector.h>
 #include <thrust/transform.h>
@@ -66,243 +66,6 @@ __global__ void computeError(
     }
 }
 
-// CPU Runge-Kutta Methods
-double SSPRK104()
-{
-    const size_t stages = 10;
-    const double amat[stages][stages] = {
-        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 6, 1.0 / 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 1.0 / 6, 0.0, 0.0, 0.0},
-        {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0, 0.0},
-        {1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 15, 1.0 / 6, 1.0 / 6, 1.0 / 6, 1.0 / 6, 0.0}
-    };
-    const double bvec[stages] = { 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10, 1.0 / 10 };
-    const double b2vec[stages] = { 0., 2.0 / 9, 0, 0, 5.0 / 18, 1.0 / 3, 0., 0., 0., 1.0 / 6 };
-
-    // Initialize variables
-    vector<vector<double>> gKvec(stages + 1, vector<double>(config.len, 0.0));
-    gKvec[0] = getLastLenEntries(sim->h_QKv, config.len);
-    vector<vector<double>> gRvec(stages + 1, vector<double>(config.len, 0.0));
-    gRvec[0] = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> gtvec(stages + 1, 0.0);
-    gtvec[0] = sim->h_t1grid.back();
-
-    vector<double> gKe(config.len, 0.0);
-    vector<double> gRe(config.len, 0.0);
-    double gte = 0.0;
-
-    vector<vector<double>> hKvec(stages, vector<double>(config.len, 0.0));
-    vector<vector<double>> hRvec(stages, vector<double>(config.len, 0.0));
-    vector<double> htvec(stages, 0.0);
-
-    vector<vector<double>> posB1xvec(3, vector<double>(config.len, 0.0));
-    vector<vector<double>> posB2xvec(3, vector<double>(config.len * config.len, 0.0));
-    double dr = 0.0;
-
-    // Loop over stages
-    for (size_t n = 0; n < stages; ++n) {
-        // Interpolation
-    if (sim->h_QKv.size() == config.len || n != 0) {
-            interpolate(
-                (n == 0 ? vector<double>{} : (n == 5 ? posB1xvec[0] : (n == 6 ? posB1xvec[1] : (n == 7 ? posB1xvec[2] : sim->h_posB1xOld)))),
-                (n == 0 ? vector<double>{} : (n == 5 ? posB2xvec[0] : (n == 6 ? posB2xvec[1] : (n == 7 ? posB2xvec[2] : sim->h_posB2xOld)))),
-                (n == 5 || n == 6 || n == 7)
-            );
-        }
-
-        // Update position vectors
-        if (n == 2) {
-            posB1xvec[0] = sim->h_posB1xOld;
-            posB2xvec[0] = sim->h_posB2xOld;
-        }
-        else if (n == 3) {
-            posB1xvec[1] = sim->h_posB1xOld;
-            posB2xvec[1] = sim->h_posB2xOld;
-        }
-        else if (n == 4) {
-            posB1xvec[2] = sim->h_posB1xOld;
-            posB2xvec[2] = sim->h_posB2xOld;
-        }
-
-        hKvec[n] = QKstep();
-        hRvec[n] = QRstep();
-        htvec[n] = 1.0;
-
-        // Update g and dr
-        if (n == 0) {
-            vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-            vector<double> lastQRv = getLastLenEntries(sim->h_QRv, config.len);
-            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->h_t1grid.back());
-            gKvec[n + 1] = gKvec[0] + hKvec[0] * (config.delta_t * amat[1][0]);
-            gRvec[n + 1] = gRvec[0] + hRvec[0] * (config.delta_t * amat[1][0]);
-            gtvec[n + 1] = gtvec[0] + config.delta_t * amat[1][0] * htvec[0];
-            appendAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); //Append Update
-
-        }
-        else if (n == stages - 1) {
-            gKvec[n + 1] = gKvec[0];
-            gRvec[n + 1] = gRvec[0];
-            gtvec[n + 1] = gtvec[0];
-            for (size_t j = 0; j < stages; ++j) {
-                gKvec[n + 1] += hKvec[j] * (config.delta_t * bvec[j]);
-                gRvec[n + 1] += hRvec[j] * (config.delta_t * bvec[j]);
-                gtvec[n + 1] += config.delta_t * bvec[j] * htvec[j];
-            }
-            replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
-        }
-        else {
-            gKvec[n + 1] = gKvec[0];
-            gRvec[n + 1] = gRvec[0];
-            gtvec[n + 1] = gtvec[0];
-            for (size_t j = 0; j < n + 1; ++j) {
-                gKvec[n + 1] += hKvec[j] * (config.delta_t * amat[n + 1][j]);
-                gRvec[n + 1] += hRvec[j] * (config.delta_t * amat[n + 1][j]);
-                gtvec[n + 1] += config.delta_t * amat[n + 1][j] * htvec[j];
-            }
-            replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
-        }
-    }
-
-    // Final interpolation
-    interpolate(sim->h_posB1xOld, sim->h_posB2xOld);
-
-    // Compute ge
-    gKe = gKvec[0];
-    gRe = gRvec[0];
-    gte = gtvec[0];
-    for (size_t j = 0; j < stages; ++j) {
-        gKe += hKvec[j] * (config.delta_t * b2vec[j]);
-        gRe += hRvec[j] * (config.delta_t * b2vec[j]);
-        gte += config.delta_t * b2vec[j] * htvec[j];
-    }
-
-    // Compute error estimate
-    double error = 0.0;
-    for (size_t i = 0; i < gKvec[stages].size(); ++i) {
-        error += abs(gKvec[stages][i] - gKe[i]);
-    }
-    for (size_t i = 0; i < gRvec[stages].size(); ++i) {
-        error += abs(gRvec[stages][i] - gRe[i]);
-    }
-    error += abs(gtvec[stages] - gte);
-
-    return error;
-}
-
-double RK54()
-{
-    const size_t stages = 7;
-    const double amat[stages][stages] = {
-        {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {1.0 / 5, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {3.0 / 40, 9.0 / 40, 0.0, 0.0, 0.0, 0.0, 0.0},
-        {44.0 / 45, -56.0 / 15, 32.0 / 9, 0.0, 0.0, 0.0, 0.0},
-        {19372.0/6561, -25360.0/2187, 64448.0/6561, -212.0/729, 0.0, 0.0, 0.0},
-        {9017.0/3168, -355.0/33, 46732.0/5247, 49.0/176, -5103.0/18656, 0.0, 0.0},
-        {35.0/384, 0.0, 500.0/1113, 125.0/192, -2187.0/6784, 11.0/84, 0.0}
-    };
-    const double bvec[stages] = { 35.0/384, 0.0, 500.0/1113, 125.0/192, -2187.0/6784, 11.0/84, 0.0 };
-    const double b2vec[stages] = { 5179.0/57600, 0.0, 7571.0/16695, 393.0/640, -92097.0/339200, 187.0/2100, 1.0/40 };
-
-    // Initialize variables
-    vector<vector<double>> gKvec(stages + 1, vector<double>(config.len, 0.0));
-    gKvec[0] = getLastLenEntries(sim->h_QKv, config.len);
-    vector<vector<double>> gRvec(stages + 1, vector<double>(config.len, 0.0));
-    gRvec[0] = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> gtvec(stages + 1, 0.0);
-    gtvec[0] = sim->h_t1grid.back();
-
-    vector<double> gKe(config.len, 0.0);
-    vector<double> gRe(config.len, 0.0);
-    double gte = 0.0;
-
-    vector<vector<double>> hKvec(stages, vector<double>(config.len, 0.0));
-    vector<vector<double>> hRvec(stages, vector<double>(config.len, 0.0));
-    vector<double> htvec(stages, 0.0);
-
-    double dr = 0.0;
-
-    // Loop over stages
-    for (size_t n = 0; n < stages; ++n) {
-        // Interpolation
-        if (sim->h_QKv.size() == config.len || n != 0) {
-            interpolate(
-                (n == 0 ? vector<double>{} : sim->h_posB1xOld),
-                (n == 0 ? vector<double>{} : sim->h_posB2xOld),
-                false
-            );
-        }
-
-        hKvec[n] = QKstep();
-        hRvec[n] = QRstep();
-        htvec[n] = 1.0;
-
-        // Update g and dr
-        if (n == 0) {
-            vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-            vector<double> lastQRv = getLastLenEntries(sim->h_QRv, config.len);
-            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->h_t1grid.back());
-            gKvec[n + 1] = gKvec[0] + hKvec[0] * (config.delta_t * amat[1][0]);
-            gRvec[n + 1] = gRvec[0] + hRvec[0] * (config.delta_t * amat[1][0]);
-            gtvec[n + 1] = gtvec[0] + config.delta_t * amat[1][0] * htvec[0];
-            appendAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); //Append Update
-        }
-        else if (n == stages - 1) {
-            gKvec[n + 1] = gKvec[0];
-            gRvec[n + 1] = gRvec[0];
-            gtvec[n + 1] = gtvec[0];
-            for (size_t j = 0; j < stages; ++j) {
-                gKvec[n + 1] += hKvec[j] * (config.delta_t * bvec[j]);
-                gRvec[n + 1] += hRvec[j] * (config.delta_t * bvec[j]);
-                gtvec[n + 1] += config.delta_t * bvec[j] * htvec[j];
-            }
-            replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
-        }
-        else {
-            gKvec[n + 1] = gKvec[0];
-            gRvec[n + 1] = gRvec[0];
-            gtvec[n + 1] = gtvec[0];
-            for (size_t j = 0; j < n + 1; ++j) {
-                gKvec[n + 1] += hKvec[j] * (config.delta_t * amat[n + 1][j]);
-                gRvec[n + 1] += hRvec[j] * (config.delta_t * amat[n + 1][j]);
-                gtvec[n + 1] += config.delta_t * amat[n + 1][j] * htvec[j];
-            }
-            replaceAll(gKvec[n + 1], gRvec[n + 1], hKvec[0], hRvec[0], htvec[0] * dr, gtvec[n + 1]); // Replace Update
-        }
-    }
-
-    // Final interpolation
-    interpolate(sim->h_posB1xOld, sim->h_posB2xOld, true);
-
-    // Compute ge
-    gKe = gKvec[0];
-    gRe = gRvec[0];
-    gte = gtvec[0];
-    for (size_t j = 0; j < stages; ++j) {
-        gKe += hKvec[j] * (config.delta_t * b2vec[j]);
-        gRe += hRvec[j] * (config.delta_t * b2vec[j]);
-        gte += config.delta_t * b2vec[j] * htvec[j];
-    }
-
-    // Compute error estimate
-    double error = 0.0;
-    for (size_t i = 0; i < gKvec[stages].size(); ++i) {
-        error += abs(gKvec[stages][i] - gKe[i]);
-    }
-    for (size_t i = 0; i < gRvec[stages].size(); ++i) {
-        error += abs(gRvec[stages][i] - gRe[i]);
-    }
-    error += abs(gtvec[stages] - gte);
-
-    return error;
-}
-
 // GPU Runge-Kutta initialization functions
 void init_RK54GPU() {
     rk->init = 1;
@@ -335,6 +98,15 @@ void init_RK54GPU() {
     rk->hR.resize(config.len * rk->stages, 0.0);
     rk->hK0.resize(config.len, 0.0);
     rk->hR0.resize(config.len, 0.0);
+
+    if (config.debug) {
+        // Basic size sanity inits
+        const size_t expected = static_cast<size_t>(config.len) * static_cast<size_t>(rk->stages);
+        if (rk->hK.size() != expected) {
+            fprintf(stderr, "RK54GPU init: hK size mismatch (%zu vs %zu)\n", rk->hK.size(), expected);
+            abort();
+        }
+    }
 }
 
 void init_SSPRK104GPU() {
@@ -372,6 +144,14 @@ void init_SSPRK104GPU() {
     rk->hR.resize(config.len, 0.0);
     rk->hK0.resize(config.len, 0.0);
     rk->hR0.resize(config.len, 0.0);
+
+    if (config.debug) {
+        const size_t expected = static_cast<size_t>(config.len);
+        if (rk->hK.size() != expected) {
+            fprintf(stderr, "SSPRK104GPU init: hK size mismatch (%zu vs %zu)\n", rk->hK.size(), expected);
+            abort();
+        }
+    }
 }
 
 // Chebyshev polynomial of the first kind T_n(x) with long double precision
@@ -555,14 +335,20 @@ double RK54GPU(StreamPool* pool) {
             rk->hK0.assign(rk->hK.begin(), rk->hK.begin() + config.len);
             rk->hR0.assign(rk->hR.begin(), rk->hR.begin() + config.len);
             computeWeightedSum<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK0.data()), thrust::raw_pointer_cast(rk->hK.data()), thrust::raw_pointer_cast(rk->d_avec.data()), thrust::raw_pointer_cast(rk->gK.data()), config.delta_t, n + 1, config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeWeightedSum gK0");
             computeWeightedSum<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gR0.data()), thrust::raw_pointer_cast(rk->hR.data()), thrust::raw_pointer_cast(rk->d_avec.data()), thrust::raw_pointer_cast(rk->gR.data()), config.delta_t, n + 1, config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeWeightedSum gR0");
             if(rk->bvec[n] != 0.0) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKfinal.data()), thrust::raw_pointer_cast(rk->hK.data()) + n * config.len, config.delta_t * rk->bvec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeMA gKfinal");
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRfinal.data()), thrust::raw_pointer_cast(rk->hR.data()) + n * config.len, config.delta_t * rk->bvec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeMA gRfinal");
             }
             if(rk->b2vec[n] != 0.0) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKe.data()), thrust::raw_pointer_cast(rk->hK.data()) + n * config.len, config.delta_t * rk->b2vec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeMA gKe");
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRe.data()), thrust::raw_pointer_cast(rk->hR.data()) + n * config.len, config.delta_t * rk->b2vec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeMA gRe");
             }
             rk->gt = rk->gt0 + config.delta_t * rk->cvec[n] * rk->ht;
             dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK0.data(), rk->hR0.data(), sim->d_t1grid.back(), config.T0, *pool);
@@ -599,6 +385,7 @@ double RK54GPU(StreamPool* pool) {
         thrust::raw_pointer_cast(sim->error_result.data()),
         config.len
     );
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeError");
 
     double error = sim->error_result[0];
     error += abs(rk->gtfinal - rk->gte);
@@ -648,10 +435,14 @@ double SERK2GPU(int q, StreamPool* pool){
             rk->hK0.assign(rk->hK.begin(), rk->hK.begin() + config.len);
             rk->hR0.assign(rk->hR.begin(), rk->hR.begin() + config.len);
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK.data()), thrust::raw_pointer_cast(rk->hK.data()) + n * config.len, config.delta_t * alpha, config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeMA gK");
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gR.data()), thrust::raw_pointer_cast(rk->hR.data()) + n * config.len, config.delta_t * alpha, config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeMA gR");
             if(rk->bvec[n + 1] != 0.0) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKfinal.data()), thrust::raw_pointer_cast(rk->gK.data()), rk->bvec[n + 1], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeMA gKfinal");
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRfinal.data()), thrust::raw_pointer_cast(rk->gR.data()), rk->bvec[n + 1], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeMA gRfinal");
             }
             rk->gt = rk->gt0 + config.delta_t * alpha * rk->ht;
             dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK0.data(), rk->hR0.data(), sim->d_t1grid.back(), config.T0, *pool);
@@ -686,6 +477,7 @@ double SERK2GPU(int q, StreamPool* pool){
         thrust::raw_pointer_cast(sim->error_result.data()),
         config.len
     );
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeError");
 
     double error = sim->error_result[0];
     error += abs(rk->gtfinal - rk->gt);
@@ -748,12 +540,18 @@ double SSPRK104GPU(StreamPool* pool) {
             rk->hK0 = rk->hK;
             rk->hR0 = rk->hR;
             computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK.data()), thrust::raw_pointer_cast(rk->hK.data()), config.delta_t * rk->avec[n], config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gK");
             computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gR.data()), thrust::raw_pointer_cast(rk->hR.data()), config.delta_t * rk->avec[n], config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gR");
             computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKfinal.data()), thrust::raw_pointer_cast(rk->hK.data()), config.delta_t * rk->bvec[n], config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gKfinal");
             computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRfinal.data()), thrust::raw_pointer_cast(rk->hR.data()), config.delta_t * rk->bvec[n], config.len);
+            if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gRfinal");
             if(rk->b2vec[n] != 0.0) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKe.data()), thrust::raw_pointer_cast(rk->hK.data()), config.delta_t * rk->b2vec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gKe");
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRe.data()), thrust::raw_pointer_cast(rk->hR.data()), config.delta_t * rk->b2vec[n], config.len);
+                if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gRe");
             }
             rk->gt += config.delta_t * rk->avec[n] * rk->ht;
             dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK.data(), rk->hR.data(), t_current, config.T0, *pool);
@@ -796,6 +594,7 @@ double SSPRK104GPU(StreamPool* pool) {
         thrust::raw_pointer_cast(sim->error_result.data()),
         config.len
     );
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeError");
 
     double error = sim->error_result[0];
     error += abs(rk->gtfinal - rk->gte);
@@ -803,15 +602,7 @@ double SSPRK104GPU(StreamPool* pool) {
     return error;
 }
 
-// Method selection functions
-double update() {
-    if (rk->init == 1) {
-        return RK54();
-    } else {
-        return SSPRK104();
-    }  
-}
-
+// GPU method selection function
 double updateGPU(StreamPool* pool) {
     if (rk->init == 1) {
         return RK54GPU(pool);

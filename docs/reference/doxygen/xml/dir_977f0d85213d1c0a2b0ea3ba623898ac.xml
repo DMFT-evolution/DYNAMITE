@@ -1,0 +1,12 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="dir_977f0d85213d1c0a2b0ea3ba623898ac" kind="dir">
+    <compoundname>src/convolution</compoundname>
+    <innerfile refid="convolution_8cpp">convolution.cpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/convolution/"/>
+  </compounddef>
+</doxygen>

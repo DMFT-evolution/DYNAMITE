@@ -1,5 +1,5 @@
-#include "search_utils.hpp"
-#include "config.hpp"
+#include "search/search_utils.hpp"
+#include "core/config.hpp"
 #include <thrust/transform.h>
 #include <thrust/binary_search.h>
 #include <thrust/iterator/counting_iterator.h>

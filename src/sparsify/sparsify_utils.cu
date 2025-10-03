@@ -1,7 +1,7 @@
-#include "sparsify_utils.hpp"
-#include "config.hpp"
-#include "simulation_data.hpp"
-#include "host_device_utils.hpp"
+#include "sparsify/sparsify_utils.hpp"
+#include "core/config.hpp"
+#include "simulation/simulation_data.hpp"
+#include "core/host_device_utils.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>

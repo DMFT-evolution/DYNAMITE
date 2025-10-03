@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="dir_68267d1309a1af8e8297ef4c3efbcdba" kind="dir">
+    <compoundname>src</compoundname>
+    <innerdir refid="dir_977f0d85213d1c0a2b0ea3ba623898ac">src/convolution</innerdir>
+    <innerdir refid="dir_aebb8dcc11953d78e620bbef0b9e2183">src/core</innerdir>
+    <innerdir refid="dir_e6a5e5db728316b1a4b09925952320c7">src/EOMs</innerdir>
+    <innerdir refid="dir_264890e5c091f8c8d7fe1f842870c25e">src/interpolation</innerdir>
+    <innerdir refid="dir_c184e51c84f2c3f0345bbc8a0d75d3e1">src/io</innerdir>
+    <innerdir refid="dir_ae9a93452e2a84339148a16bcf2eb561">src/math</innerdir>
+    <innerdir refid="dir_5e53e25df8c865d23c4f0f620d3a69fb">src/search</innerdir>
+    <innerdir refid="dir_d73d1ee04cc237a5854777ea99c55872">src/simulation</innerdir>
+    <innerdir refid="dir_4bac3dea29742ccc5665dc2f2e1074c7">src/sparsify</innerdir>
+    <innerdir refid="dir_f208d550dbffb9fb7a9061b68ff675d7">src/version</innerdir>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="src/"/>
+  </compounddef>
+</doxygen>

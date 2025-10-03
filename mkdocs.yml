@@ -1,0 +1,82 @@
+site_name: DMFE Docs
+site_url: https://dmft-evolution.github.io/DMFE/
+repo_url: https://github.com/DMFT-evolution/DMFE
+repo_name: DMFT-evolution/DMFE
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - content.code.copy
+    - content.footnote.tooltips
+    - search.suggest
+    - search.highlight
+  palette:
+    - scheme: default
+      primary: blue
+      accent: indigo
+    - scheme: slate
+      primary: blue
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+markdown_extensions:
+  - admonition
+  - footnotes
+  - codehilite
+  - toc:
+      permalink: true
+  - def_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.critic
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.arithmatex:
+      generic: true
+
+plugins:
+  - search
+  - exclude:
+      glob:
+        - reference/api/**
+        - reference/doxygen/**
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Usage: usage.md
+  - Tutorials:
+    - First run: tutorials/first-run.md
+    - CPU-only: tutorials/cpu-only.md
+    - Cluster portable build: tutorials/cluster-portable-build.md
+    - Parameter sweep: tutorials/parameter-sweep.md
+    - Reading outputs: tutorials/reading-outputs.md
+  - Concepts:
+      - Algorithm: concepts/algorithm.md
+      - Architecture: concepts/architecture.md
+      - EOMs and observables: concepts/eoms-and-observables.md
+      - Interpolation grids: concepts/interpolation-grids.md
+      - Time integration: concepts/time-integration.md
+      - Sparsification: concepts/sparsification.md
+      - Version compatibility: concepts/version-compatibility.md
+  - How-to:
+    - Add new observable: howto/add-new-observable.md
+    - Add new kernel: howto/add-new-kernel.md
+    - Add new IO format: howto/add-new-io-format.md
+  - Reference:
+    - Overview: reference/index.md
+  - Developer:
+    - Contributing: dev/contributing.md
+    - Testing: dev/testing.md
+    - Release: dev/release.md

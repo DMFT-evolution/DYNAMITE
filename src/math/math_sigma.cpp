@@ -1,5 +1,5 @@
-#include "math_sigma.hpp"
-#include "math_ops.hpp"
+#include "math/math_sigma.hpp"
+#include "math/math_ops.hpp"
 #include <vector>
 #include <omp.h>
 

@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="structVersionAnalysis" kind="struct" language="C++" prot="public">
+    <compoundname>VersionAnalysis</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structVersionAnalysis_1a4cdf4f2c82283f10103012dd9dbc5160" prot="public" static="no" mutable="no">
+        <type>VersionCompatibility</type>
+        <definition>VersionCompatibility VersionAnalysis::level</definition>
+        <argsstring></argsstring>
+        <name>level</name>
+        <qualifiedname>VersionAnalysis::level</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="27" column="26" bodyfile="include/version/version_info.hpp" bodystart="27" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionAnalysis_1a0ef3a5671f5f2a8df77b5d8df9f601c6" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionAnalysis::file_version</definition>
+        <argsstring></argsstring>
+        <name>file_version</name>
+        <qualifiedname>VersionAnalysis::file_version</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="28" column="17" bodyfile="include/version/version_info.hpp" bodystart="28" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionAnalysis_1aa95cb56503d5fe3ee0b45e278d35614c" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionAnalysis::current_version</definition>
+        <argsstring></argsstring>
+        <name>current_version</name>
+        <qualifiedname>VersionAnalysis::current_version</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="29" column="17" bodyfile="include/version/version_info.hpp" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionAnalysis_1a196344f2c176a5a8c9a9b1c448600cdb" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; std::string &gt;</type>
+        <definition>std::vector&lt;std::string&gt; VersionAnalysis::warnings</definition>
+        <argsstring></argsstring>
+        <name>warnings</name>
+        <qualifiedname>VersionAnalysis::warnings</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="30" column="17" bodyfile="include/version/version_info.hpp" bodystart="30" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionAnalysis_1a59996ba429ece5bb803c335e875dc0b0" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; std::string &gt;</type>
+        <definition>std::vector&lt;std::string&gt; VersionAnalysis::errors</definition>
+        <argsstring></argsstring>
+        <name>errors</name>
+        <qualifiedname>VersionAnalysis::errors</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="31" column="17" bodyfile="include/version/version_info.hpp" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/version/version_info.hpp" line="26" column="1" bodyfile="include/version/version_info.hpp" bodystart="26" bodyend="32"/>
+    <listofallmembers>
+      <member refid="structVersionAnalysis_1aa95cb56503d5fe3ee0b45e278d35614c" prot="public" virt="non-virtual"><scope>VersionAnalysis</scope><name>current_version</name></member>
+      <member refid="structVersionAnalysis_1a59996ba429ece5bb803c335e875dc0b0" prot="public" virt="non-virtual"><scope>VersionAnalysis</scope><name>errors</name></member>
+      <member refid="structVersionAnalysis_1a0ef3a5671f5f2a8df77b5d8df9f601c6" prot="public" virt="non-virtual"><scope>VersionAnalysis</scope><name>file_version</name></member>
+      <member refid="structVersionAnalysis_1a4cdf4f2c82283f10103012dd9dbc5160" prot="public" virt="non-virtual"><scope>VersionAnalysis</scope><name>level</name></member>
+      <member refid="structVersionAnalysis_1a196344f2c176a5a8c9a9b1c448600cdb" prot="public" virt="non-virtual"><scope>VersionAnalysis</scope><name>warnings</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

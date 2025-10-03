@@ -1,5 +1,5 @@
-#include "convolution.hpp"
-#include "globals.hpp"
+#include "convolution/convolution.hpp"
+#include "core/globals.hpp"
 #include <omp.h>
 
 std::vector<double> ConvA(const std::vector<double>& f, const std::vector<double>& g, const double t)

@@ -1,0 +1,182 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="structVersionInfo" kind="struct" language="C++" prot="public">
+    <compoundname>VersionInfo</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structVersionInfo_1aaae85b6eb7ee5bfa48539bc689d9b6f4" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::git_hash</definition>
+        <argsstring></argsstring>
+        <name>git_hash</name>
+        <qualifiedname>VersionInfo::git_hash</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="6" column="17" bodyfile="include/version/version_info.hpp" bodystart="6" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1a2819a990f499bd82cc7bc4987a9435ce" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::git_branch</definition>
+        <argsstring></argsstring>
+        <name>git_branch</name>
+        <qualifiedname>VersionInfo::git_branch</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="7" column="17" bodyfile="include/version/version_info.hpp" bodystart="7" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1aadefa3bf7d5693632b0b1a5fcc7093a3" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::git_tag</definition>
+        <argsstring></argsstring>
+        <name>git_tag</name>
+        <qualifiedname>VersionInfo::git_tag</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="8" column="17" bodyfile="include/version/version_info.hpp" bodystart="8" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1ab8f11fca5cc3040829911c5889dcaaa0" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool VersionInfo::git_dirty</definition>
+        <argsstring></argsstring>
+        <name>git_dirty</name>
+        <qualifiedname>VersionInfo::git_dirty</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="9" column="10" bodyfile="include/version/version_info.hpp" bodystart="9" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1a451890c2446bc11e94d55c6d5df5ef55" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::build_date</definition>
+        <argsstring></argsstring>
+        <name>build_date</name>
+        <qualifiedname>VersionInfo::build_date</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="10" column="17" bodyfile="include/version/version_info.hpp" bodystart="10" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1acfc07b491906b743e25fdb6b698806af" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::build_time</definition>
+        <argsstring></argsstring>
+        <name>build_time</name>
+        <qualifiedname>VersionInfo::build_time</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="11" column="17" bodyfile="include/version/version_info.hpp" bodystart="11" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1ab04ce2cb6e5a6e45e093891b92b57b71" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::compiler_version</definition>
+        <argsstring></argsstring>
+        <name>compiler_version</name>
+        <qualifiedname>VersionInfo::compiler_version</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="12" column="17" bodyfile="include/version/version_info.hpp" bodystart="12" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1a608ba806e9568199e4ef993d1e3f2b49" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::cuda_version</definition>
+        <argsstring></argsstring>
+        <name>cuda_version</name>
+        <qualifiedname>VersionInfo::cuda_version</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="13" column="17" bodyfile="include/version/version_info.hpp" bodystart="13" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structVersionInfo_1a57d862f62351ea01681d2d720ce0fa51" prot="public" static="no" mutable="no">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::code_version</definition>
+        <argsstring></argsstring>
+        <name>code_version</name>
+        <qualifiedname>VersionInfo::code_version</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="14" column="17" bodyfile="include/version/version_info.hpp" bodystart="14" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="public-func">
+      <memberdef kind="function" id="structVersionInfo_1ad0e2cc9f19dd56befca4aeaf54e77c7d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>VersionInfo::VersionInfo</definition>
+        <argsstring>()</argsstring>
+        <name>VersionInfo</name>
+        <qualifiedname>VersionInfo::VersionInfo</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="15" column="5" bodyfile="src/version/version_info.cpp" bodystart="23" bodyend="63"/>
+      </memberdef>
+      <memberdef kind="function" id="structVersionInfo_1a4658ffcc6cab47c3285931379d4e4c56" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
+        <type>std::string</type>
+        <definition>std::string VersionInfo::toString</definition>
+        <argsstring>() const</argsstring>
+        <name>toString</name>
+        <qualifiedname>VersionInfo::toString</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/version/version_info.hpp" line="16" column="17" bodyfile="src/version/version_info.cpp" bodystart="65" bodyend="78"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/version/version_info.hpp" line="5" column="1" bodyfile="include/version/version_info.hpp" bodystart="5" bodyend="17"/>
+    <listofallmembers>
+      <member refid="structVersionInfo_1a451890c2446bc11e94d55c6d5df5ef55" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>build_date</name></member>
+      <member refid="structVersionInfo_1acfc07b491906b743e25fdb6b698806af" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>build_time</name></member>
+      <member refid="structVersionInfo_1a57d862f62351ea01681d2d720ce0fa51" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>code_version</name></member>
+      <member refid="structVersionInfo_1ab04ce2cb6e5a6e45e093891b92b57b71" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>compiler_version</name></member>
+      <member refid="structVersionInfo_1a608ba806e9568199e4ef993d1e3f2b49" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>cuda_version</name></member>
+      <member refid="structVersionInfo_1a2819a990f499bd82cc7bc4987a9435ce" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>git_branch</name></member>
+      <member refid="structVersionInfo_1ab8f11fca5cc3040829911c5889dcaaa0" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>git_dirty</name></member>
+      <member refid="structVersionInfo_1aaae85b6eb7ee5bfa48539bc689d9b6f4" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>git_hash</name></member>
+      <member refid="structVersionInfo_1aadefa3bf7d5693632b0b1a5fcc7093a3" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>git_tag</name></member>
+      <member refid="structVersionInfo_1a4658ffcc6cab47c3285931379d4e4c56" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>toString</name></member>
+      <member refid="structVersionInfo_1ad0e2cc9f19dd56befca4aeaf54e77c7d" prot="public" virt="non-virtual"><scope>VersionInfo</scope><name>VersionInfo</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

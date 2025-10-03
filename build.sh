@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ./build.sh [name-or-path] [--clean]
+# Usage: ./build.sh [name-or-path] [--clean] [--cuda=auto|on|off]
 # By default, build directories are created under ./build
 # Examples:
-#   ./build.sh                -> ./build
+#   ./build.sh                -> ./build (CUDA auto-detected)
+#   ./build.sh --cuda=off     -> ./build (CPU-only)
+#   ./build.sh --cuda=on      -> ./build (CUDA required)
 #   ./build.sh nvhpc          -> ./build/nvhpc
 #   ./build.sh build-foo      -> ./build/build-foo
 #   ./build.sh build/foo      -> ./build/foo
@@ -16,10 +18,13 @@ ROOT_BUILD_DIR="build"
 
 # Parse arguments: optional build dir + flags
 CLEAN=0
+CUDA_MODE="auto"  # auto, on, or off
 for arg in "$@"; do
   case "$arg" in
     --clean)
       CLEAN=1 ;;
+    --cuda=auto|--cuda=on|--cuda=off)
+      CUDA_MODE="${arg#--cuda=}" ;;
     --)
       shift; break ;;
     -*) ;;
@@ -43,9 +48,40 @@ if [[ $CLEAN -eq 1 ]]; then
   rm -rf "$BDIR"
 fi
 
-# Try to load NVHPC module if system uses Environment Modules and nvc++ is missing
+# Detect CUDA availability if in auto mode
+CUDA_AVAILABLE=0
+if [[ "$CUDA_MODE" == "auto" || "$CUDA_MODE" == "on" ]]; then
+  if command -v nvcc >/dev/null 2>&1 || command -v nvc++ >/dev/null 2>&1; then
+    CUDA_AVAILABLE=1
+    echo "[detect] CUDA toolchain detected" >&2
+  else
+    echo "[detect] CUDA toolchain not found" >&2
+  fi
+fi
+
+# Determine whether to enable CUDA
+ENABLE_CUDA=0
+if [[ "$CUDA_MODE" == "on" ]]; then
+  ENABLE_CUDA=1
+  if [[ $CUDA_AVAILABLE -eq 0 ]]; then
+    echo "[error] --cuda=on specified but CUDA toolchain not found" >&2
+    exit 1
+  fi
+elif [[ "$CUDA_MODE" == "off" ]]; then
+  ENABLE_CUDA=0
+  echo "[config] Building CPU-only version (--cuda=off)" >&2
+elif [[ "$CUDA_MODE" == "auto" ]]; then
+  ENABLE_CUDA=$CUDA_AVAILABLE
+  if [[ $ENABLE_CUDA -eq 1 ]]; then
+    echo "[config] Auto-detected CUDA: enabling GPU support" >&2
+  else
+    echo "[config] CUDA not detected: building CPU-only version" >&2
+  fi
+fi
+
+# Try to load NVHPC module if CUDA is enabled and nvc++ is missing
 detected_toolchain=""
-if ! command -v nvc++ >/dev/null 2>&1; then
+if [[ $ENABLE_CUDA -eq 1 ]] && ! command -v nvc++ >/dev/null 2>&1; then
   # Initialize modules if available
   if [[ -f /etc/profile.d/modules.sh ]]; then
     # shellcheck disable=SC1091
@@ -80,8 +116,19 @@ fi
 # Decide compilers to pass to CMake
 cmake_args=( -S "$SCRIPT_DIR" -B "$BDIR" )
 
-# If not explicitly set, try to pick a reasonable CUDA arch for the current GPU
-if [[ -z "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
+# Set CUDA mode
+if [[ $ENABLE_CUDA -eq 1 ]]; then
+  cmake_args+=( -DDMFE_WITH_CUDA=ON )
+  # Explicitly set CUDA compiler if nvcc is available
+  if command -v nvcc >/dev/null 2>&1; then
+    cmake_args+=( -DCMAKE_CUDA_COMPILER="$(command -v nvcc)" )
+  fi
+else
+  cmake_args+=( -DDMFE_WITH_CUDA=OFF )
+fi
+
+# If not explicitly set and CUDA is enabled, try to pick a reasonable CUDA arch for the current GPU
+if [[ $ENABLE_CUDA -eq 1 ]] && [[ -z "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
   gpu_arch=""
   if command -v nvidia-smi >/dev/null 2>&1; then
     gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 | tr 'A-Z' 'a-z') || true
@@ -101,59 +148,79 @@ if [[ -z "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
   fi
 fi
 
-if command -v nvc++ >/dev/null 2>&1; then
+# Compiler selection (only matters when CUDA is enabled or for C/C++ in CPU-only mode)
+if [[ $ENABLE_CUDA -eq 1 ]] && command -v nvc++ >/dev/null 2>&1; then
   # Prefer NVHPC if present (works well as CUDA host and for C/C++)
   echo "[toolchain] Using NVHPC compilers (nvc, nvc++, nvfortran if needed)" >&2
   cmake_args+=(
     -DCMAKE_C_COMPILER=nvc
     -DCMAKE_CXX_COMPILER=nvc++
-    -DCMAKE_CUDA_HOST_COMPILER=nvc++
   )
+  if [[ $ENABLE_CUDA -eq 1 ]]; then
+    cmake_args+=( -DCMAKE_CUDA_HOST_COMPILER=nvc++ )
+  fi
 else
   # Fallback: use system defaults; CMakeLists.txt may prefer clang++-14 if present
   echo "[toolchain] Using system default compilers (with CUDA host fallback if needed)" >&2
-  # Prefer a GCC known to work with the installed CUDA version
-  cuda_ver=""
-  if command -v nvcc >/dev/null 2>&1; then
-    cuda_ver=$(nvcc --version 2>/dev/null | sed -n 's/^.*release \([0-9][0-9]*\)\.\([0-9][0-9]*\).*$/\1.\2/p' | head -n1)
-  fi
-  echo "[detect] CUDA version: ${cuda_ver:-unknown}" >&2
-
-  pick_list=()
-  case "$cuda_ver" in
-    11.*)
-      # CUDA 11.x supports GCC up to 11
-      pick_list=(11 10 9 8)
-      ;;
-    12.*)
-      # CUDA 12.x supports newer GCC; prefer 12 then 11
-      pick_list=(12 11 10)
-      ;;
-    *)
-      pick_list=(11 10 12 9)
-      ;;
-  esac
-
-  for v in "${pick_list[@]}"; do
-    if command -v g++-$v >/dev/null 2>&1 && command -v gcc-$v >/dev/null 2>&1; then
-      echo "[toolchain] Selecting GCC $v toolchain for CUDA host compiler" >&2
-      cmake_args+=(
-        -DCMAKE_C_COMPILER=gcc-$v
-        -DCMAKE_CXX_COMPILER=g++-$v
-        -DCMAKE_CUDA_HOST_COMPILER=g++-$v
-      )
-      detected_toolchain="gcc-$v"
-      break
+  
+  if [[ $ENABLE_CUDA -eq 1 ]]; then
+    # Prefer a host compiler known to work with the installed CUDA version
+    cuda_ver=""
+    if command -v nvcc >/dev/null 2>&1; then
+      cuda_ver=$(nvcc --version 2>/dev/null | sed -n 's/^.*release \([0-9][0-9]*\)\.\([0-9][0-9]*\).*$/\1.\2/p' | head -n1)
     fi
-  done
-  if [[ -z "$detected_toolchain" ]] && command -v clang++-14 >/dev/null 2>&1 && command -v clang-14 >/dev/null 2>&1; then
-    echo "[toolchain] Selecting Clang 14 toolchain for CUDA host compiler (per nvcc hint)" >&2
-    cmake_args+=(
-      -DCMAKE_C_COMPILER=clang-14
-      -DCMAKE_CXX_COMPILER=clang++-14
-      -DCMAKE_CUDA_HOST_COMPILER=clang++-14
-    )
-    detected_toolchain="clang-14"
+    echo "[detect] CUDA version: ${cuda_ver:-unknown}" >&2
+
+    # For CUDA 11.x, prefer clang++-14 as nvcc host to avoid GCC12/libstdc++ locale issues
+    if [[ "$cuda_ver" == 11.* ]] && command -v clang++-14 >/dev/null 2>&1 && command -v clang-14 >/dev/null 2>&1; then
+      echo "[toolchain] Selecting Clang 14 toolchain for CUDA 11.x host compiler" >&2
+      cmake_args+=(
+        -DCMAKE_C_COMPILER=clang-14
+        -DCMAKE_CXX_COMPILER=clang++-14
+        -DCMAKE_CUDA_HOST_COMPILER=clang++-14
+      )
+      detected_toolchain="clang-14"
+    fi
+
+    if [[ -z "$detected_toolchain" ]]; then
+      pick_list=()
+      case "$cuda_ver" in
+        11.*)
+          # CUDA 11.x supports GCC up to 11
+          pick_list=(11 10 9 8)
+          ;;
+        12.*)
+          # CUDA 12.x supports newer GCC; prefer 12 then 11
+          pick_list=(12 11 10)
+          ;;
+        *)
+          pick_list=(11 10 12 9)
+          ;;
+      esac
+
+      for v in "${pick_list[@]}"; do
+        if command -v g++-$v >/dev/null 2>&1 && command -v gcc-$v >/dev/null 2>&1; then
+          echo "[toolchain] Selecting GCC $v toolchain for CUDA host compiler" >&2
+          cmake_args+=(
+            -DCMAKE_C_COMPILER=gcc-$v
+            -DCMAKE_CXX_COMPILER=g++-$v
+            -DCMAKE_CUDA_HOST_COMPILER=g++-$v
+          )
+          detected_toolchain="gcc-$v"
+          break
+        fi
+      done
+    fi
+
+    if [[ -z "$detected_toolchain" ]] && command -v clang++-14 >/dev/null 2>&1 && command -v clang-14 >/dev/null 2>&1; then
+      echo "[toolchain] Selecting Clang 14 toolchain for CUDA host compiler (fallback)" >&2
+      cmake_args+=(
+        -DCMAKE_C_COMPILER=clang-14
+        -DCMAKE_CXX_COMPILER=clang++-14
+        -DCMAKE_CUDA_HOST_COMPILER=clang++-14
+      )
+      detected_toolchain="clang-14"
+    fi
   fi
 fi
 

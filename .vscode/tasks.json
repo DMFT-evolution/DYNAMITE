@@ -34,6 +34,55 @@
 				"$gcc"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Build DMFE with CMake",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build DMFE with CMake",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build DMFE with CMake",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Rebuild after macro fixes",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Clean build to verify warnings fixed",
+			"type": "shell",
+			"command": "bash",
+			"args": [
+				"-lc",
+				"./build.sh --clean && ./build.sh | sed -n '1,220p'"
+			]
 		}
 	]
 }

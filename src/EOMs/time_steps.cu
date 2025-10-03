@@ -1,13 +1,13 @@
-#include "time_steps.hpp"
-#include "globals.hpp"
-#include "config.hpp"
-#include "math_ops.hpp"
-#include "vector_utils.hpp"
-#include "convolution.hpp"
-#include "compute_utils.hpp"
-#include "math_sigma.hpp"
-#include "io_utils.hpp"
-#include "device_utils.cuh"
+#include "EOMs/time_steps.hpp"
+#include "core/globals.hpp"
+#include "core/config.hpp"
+#include "math/math_ops.hpp"
+#include "core/vector_utils.hpp"
+#include "convolution/convolution.hpp"
+#include "core/compute_utils.hpp"
+#include "math/math_sigma.hpp"
+#include "io/io_utils.hpp"
+#include "core/device_utils.cuh"
 #include <thrust/transform.h>
 #include <thrust/reduce.h>
 #include <thrust/for_each.h>
@@ -22,14 +22,7 @@ using namespace std;
 // External declaration for global config variable
 extern SimulationConfig config;
 
-// Utility functions for extracting last entries
-vector<double> getLastLenEntries(const vector<double>& vec, size_t len) {
-    if (len > vec.size()) {
-        throw invalid_argument("len is greater than the size of the vector.");
-    }
-    return vector<double>(vec.end() - len, vec.end());
-}
-
+// GPU-specific utility function for extracting last entries
 thrust::device_vector<double> getLastLenEntriesGPU(const thrust::device_vector<double>& vec, size_t len) {
     if (len > vec.size()) {
         throw std::invalid_argument("len is greater than the size of the vector.");
@@ -200,72 +193,7 @@ __global__ void replace4Kernel(
     dQRv[offset + i] = dqR[i] * dt;
 }
 
-// CPU time-step functions
-vector<double> QKstep()
-{
-    vector<double> temp(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
-        temp[i / config.len] = sim->h_QKB1int[i];
-    }
-    vector<double> d1qK = (temp* (Dflambda(sim->h_QKv[sim->h_QKv.size() - config.len]) / config.T0)) + (qK * (-sim->h_rInt.back())) + 
-    ConvR(sim->h_SigmaRA2int, sim->h_QKB2int, sim->h_t1grid.back()) + ConvA(sim->h_SigmaRA1int, sim->h_QKB1int, sim->h_t1grid.back()) + 
-    ConvA(sim->h_SigmaKA1int, sim->h_QRB1int, sim->h_t1grid.back());
-    for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
-        temp[i / config.len] = Dflambda(sim->h_QKB1int[i]);
-    }
-    vector<double> d2qK = (temp * (sim->h_QKv[sim->h_QKv.size() - config.len] / config.T0)) + (qR * (2 * config.Gamma)) + 
-    ConvR(sim->h_QRA2int, sim->h_SigmaKB2int, sim->h_t1grid.back()) + ConvA(sim->h_QRA1int, sim->h_SigmaKB1int, sim->h_t1grid.back()) + 
-    ConvA(sim->h_QKA1int, sim->h_SigmaRB1int, sim->h_t1grid.back()) - (qK * sim->h_rInt);
-    return d1qK + (d2qK * sim->h_theta);
-}
-
-vector<double> QRstep()
-{
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> d1qR = (qR * (-sim->h_rInt.back())) + ConvR(sim->h_SigmaRA2int, sim->h_QRB2int, sim->h_t1grid.back());
-    vector<double> d2qR = (qR * sim->h_rInt) - ConvR(sim->h_QRA2int, sim->h_SigmaRB2int, sim->h_t1grid.back());
-    return d1qR + (d2qR * sim->h_theta);
-}
-
-double rstep()
-{
-    vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    const double t = sim->h_t1grid.back();
-    SigmaK(qK, sigmaK);
-    SigmaR(qK, qR, sigmaR);
-    return config.Gamma + ConvA(sigmaR, qK, t)[0] + ConvA(sigmaK, qR, t)[0] + sigmaK[0] * qK[0] / config.T0;
-}
-
-double drstep()
-{
-    vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0), dsigmaK(config.len, 0.0), dsigmaR(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> dqK = getLastLenEntries(sim->h_dQKv, config.len);
-    vector<double> dqR = getLastLenEntries(sim->h_dQRv, config.len);
-    const double t = sim->h_t1grid.back();
-    SigmaK(qK, sigmaK);
-    SigmaR(qK, qR, sigmaR);
-    dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
-    dsigmaR = (SigmaR10(qK, qR) * dqK) + (SigmaR01(qK, qR) * dqR);
-    return ConvA(sigmaR, qK, 1)[0] + ConvA(sigmaK, qR, 1)[0] + ConvA(dsigmaR, qK, t)[0] + ConvA(dsigmaK, qR, t)[0] + ConvA(sigmaR, dqK, t)[0] + ConvA(sigmaK, dqR, t)[0] + (dsigmaK[0] * qK[0] + sigmaK[0] * dqK[0]) / config.T0;
-}
-
-double drstep2(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double t)
-{
-    vector<double> sigmaK(qK.size(), 0.0), sigmaR(qK.size(), 0.0), dsigmaK(qK.size(), 0.0), dsigmaR(qK.size(), 0.0);
-    SigmaK(qK, sigmaK);
-    SigmaR(qK, qR, sigmaR);
-    dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
-    dsigmaR = (SigmaR10(qK, qR)* dqK) + (SigmaR01(qK, qR) * dqR);
-    return ConvA(sigmaR, qK, 1)[0] + ConvA(sigmaK, qR, 1)[0] + ConvA(dsigmaR, qK, t)[0] + ConvA(dsigmaK, qR, t)[0] + ConvA(sigmaR, dqK, t)[0] + ConvA(sigmaK, dqR, t)[0] + (dsigmaK[0] * qK[0] + sigmaK[0] * dqK[0]) / config.T0;
-}
-
-// GPU time-step functions
+// GPU time-step functions (CPU versions are in time_steps.cpp)
 void QRstepFused(const thrust::device_ptr<double>& qR,
                  const thrust::device_vector<double>& theta,
                  const thrust::device_vector<double>& conv1,
@@ -336,9 +264,13 @@ thrust::device_vector<double> QKstepGPU(
 
     // Step 1: Run reductions
     ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->convA1_1, sim->temp8, integ, theta, pool[0]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 1");
     ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->convA2_1, sim->temp8, integ, theta, pool[1]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 2");
     ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->convA1_2, sim->temp8, integ, theta, pool[2]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 3");
     ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->convA2_2, sim->temp8, integ, theta, pool[3]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 4");
     ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->convR_1, sim->temp8, integ, theta, pool[4]);
     ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->convR_2, sim->temp8, integ, theta, pool[5]);
 
@@ -353,13 +285,17 @@ thrust::device_vector<double> QKstepGPU(
 
     // Step 3: Fuse everything
     FusedUpdate(thrust::device_pointer_cast(sim->temp0.data()), qK, sim->temp2, thrust::raw_pointer_cast(sim->temp4.data()), thrust::raw_pointer_cast(sim->temp6.data()), nullptr, &sim->convR_1, &sim->convA1_1, &sim->convA2_1, nullptr, pool[7]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::FusedUpdate K");
 
     // Compute d2qK
     FusedUpdate(thrust::device_pointer_cast(sim->temp1.data()), qR, sim->temp3, thrust::raw_pointer_cast(sim->temp5.data()), thrust::raw_pointer_cast(sim->temp7.data()), &rInt, &sim->convR_2, &sim->convA1_2, &sim->convA2_2, qK, pool[8]);
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::FusedUpdate R");
 
     // Combine d1qK and d2qK
     computeProduct<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->temp3.data()),thrust::raw_pointer_cast(theta.data()),theta.size());
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::computeProduct");
     computeSum<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->temp2.data()),thrust::raw_pointer_cast(sim->temp3.data()),theta.size());
+    if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::computeSum");
 
     return sim->temp2;
 }
@@ -712,44 +648,7 @@ double energyGPU(
     return move(result);
 }
 
-// Append/Replace functions
-void appendAll(const vector<double>& qK,
-    const vector<double>& qR,
-    const vector<double>& dqK,
-    const vector<double>& dqR,
-    const double dr,
-    const double t)
-{
-    size_t length = qK.size();
-    if (length != qR.size() || length != dqK.size() || length != dqR.size()) {
-        throw invalid_argument("All input vectors must have the same size.");
-    }
-
-    // 1) update t1grid and delta_t_ratio
-    sim->h_t1grid.push_back(t);
-    size_t idx = sim->h_t1grid.size() - 1;
-    double tdiff = sim->h_t1grid[idx] - sim->h_t1grid[idx - 1];
-    if (idx > 1) {
-        double prev = sim->h_t1grid[idx - 1] - sim->h_t1grid[idx - 2];
-        sim->h_delta_t_ratio.push_back(tdiff / prev);
-    }
-    else {
-        sim->h_delta_t_ratio.push_back(0.0);
-    }
-
-    for (size_t i = 0; i < length; i++)
-    {
-        sim->h_QKv.push_back(qK[i]);
-        sim->h_QRv.push_back(qR[i]);
-        sim->h_dQKv.push_back(tdiff * dqK[i]);
-        sim->h_dQRv.push_back(tdiff * dqR[i]);
-    }
-
-    // 2) finally update drvec and rvec
-    sim->h_drvec.push_back(tdiff * dr);
-    sim->h_rvec.push_back(rstep());
-}
-
+// GPU append/replace functions (CPU versions are in time_steps.cpp)
 void appendGPU(thrust::device_vector<double>& dest,
                                         const thrust::device_vector<double>& src, double scale) {
     size_t required_size = dest.size() + src.size();
@@ -902,39 +801,6 @@ void appendAllGPU_ptr(
     // Compute r(t) and store it in d_rvec[idx]
     const double r_now = rstepGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
     sim->d_rvec[idx] = r_now;
-}
-
-void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double dr, const double t)
-{
-    // Replace the existing values in the vectors with the new values
-    size_t replaceLength = qK.size();
-    size_t length = sim->h_QKv.size() - replaceLength;
-    if (replaceLength != qR.size() || replaceLength != dqK.size() || replaceLength != dqR.size()) {
-        throw invalid_argument("All input vectors must have the same size.");
-    }
-    {
-        sim->h_t1grid.back() = t;
-        double tdiff = (sim->h_t1grid[sim->h_t1grid.size() - 1] - sim->h_t1grid[sim->h_t1grid.size() - 2]);
-
-        if (sim->h_t1grid.size() > 2) {
-            sim->h_delta_t_ratio.back() = tdiff /
-                (sim->h_t1grid[sim->h_t1grid.size() - 2] - sim->h_t1grid[sim->h_t1grid.size() - 3]);
-        }
-        else {
-            sim->h_delta_t_ratio.back() = 0.0;
-        }
-
-        for (size_t i = 0; i < replaceLength; i++)
-        {
-            sim->h_QKv[length + i] = qK[i];
-            sim->h_QRv[length + i] = qR[i];
-            sim->h_dQKv[length + i] = tdiff * dqK[i];
-            sim->h_dQRv[length + i] = tdiff * dqR[i];
-        }
-
-        sim->h_drvec.back() = tdiff * dr;
-        sim->h_rvec.back() = rstep();
-    }
 }
 
 void replaceAllGPU(

@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="dir_83be10f670bb840c41694965c43f3a32" kind="dir">
+    <compoundname>include/EOMs</compoundname>
+    <innerfile refid="rk__data_8hpp">rk_data.hpp</innerfile>
+    <innerfile refid="runge__kutta_8hpp">runge_kutta.hpp</innerfile>
+    <innerfile refid="time__steps_8hpp">time_steps.hpp</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/EOMs/"/>
+  </compounddef>
+</doxygen>

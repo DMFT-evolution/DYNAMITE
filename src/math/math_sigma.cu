@@ -1,6 +1,6 @@
- #include "math_sigma.hpp"
- #include "device_utils.cuh"
- #include "math_ops.hpp"
+ #include "math/math_sigma.hpp"
+ #include "core/device_utils.cuh"
+ #include "math/math_ops.hpp"
  #include <vector>
  #include <thrust/device_vector.h>
  #include <thrust/transform.h>
@@ -20,7 +20,7 @@ __device__ __forceinline__ double fast_pow_int(double x, int n) {
 }
 
 // Device constants used by sigma computations
-#include "device_constants.hpp"
+#include "core/device_constants.hpp"
 
 // Device inline: evaluate SigmaK and SigmaR contributions
 

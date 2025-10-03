@@ -1,0 +1,36 @@
+# Doxygen configuration for DMFE
+
+PROJECT_NAME           = DMFE
+OUTPUT_DIRECTORY       = docs/reference/doxygen
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = xml
+RECURSIVE              = YES
+INPUT                  = include src
+EXCLUDE_PATTERNS       = */build/* */.git/* */RegressionRuns/* */Grid_data/*
+EXTRACT_ALL            = NO
+EXTRACT_STATIC         = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_PACKAGE        = NO
+EXTRACT_LOCAL_CLASSES  = NO
+JAVADOC_AUTOBRIEF      = YES
+QT_AUTOBRIEF           = YES
+ALIASES                =
+HIDE_UNDOC_MEMBERS     = YES
+HIDE_UNDOC_CLASSES     = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_AS_ERROR          = NO
+WARN_LOGFILE           = docs/reference/doxygen/warnings.log
+HAVE_DOT               = YES
+CALL_GRAPH             = NO
+CALLER_GRAPH           = NO
+DOT_IMAGE_FORMAT       = svg
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = .
+GENERATE_TREEVIEW      = NO
+OPTIMIZE_OUTPUT_FOR_C  = NO
+OPTIMIZE_OUTPUT_JAVA   = NO
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_VHDL   = NO
+MULTILINE_CPP_IS_BRIEF = YES

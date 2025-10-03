@@ -1,0 +1,23 @@
+name: Link Check
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lychee:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install lychee
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >
+            --verbose
+            --no-progress
+            --exclude-mail
+            --accept 200,429
+            --scheme https
+            --max-redirects 5
+            --timeout 20
+            .

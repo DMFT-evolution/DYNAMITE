@@ -1,6 +1,6 @@
-#include "gpu_memory_utils.hpp"
-#include "simulation_data.hpp"
-#include "device_constants.hpp"
+#include "core/gpu_memory_utils.hpp"
+#include "simulation/simulation_data.hpp"
+#include "core/device_constants.hpp"
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <iostream>

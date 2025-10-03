@@ -1,6 +1,6 @@
-#include "index_mat.hpp"
-#include "config.hpp"
-#include "simulation_data.hpp"
+#include "interpolation/index_mat.hpp"
+#include "core/config.hpp"
+#include "simulation/simulation_data.hpp"
 #include <algorithm>
 #include <numeric>
 // #include <thrust/execution_policy.h>

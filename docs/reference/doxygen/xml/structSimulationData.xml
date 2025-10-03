@@ -1,0 +1,945 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="structSimulationData" kind="struct" language="C++" prot="public">
+    <compoundname>SimulationData</compoundname>
+      <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structSimulationData_1ab10d931b8a21cf9a126a4f33a362be6a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_theta</definition>
+        <argsstring></argsstring>
+        <name>h_theta</name>
+        <qualifiedname>SimulationData::h_theta</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a57adf039dc5e841edf74ad6928ee9fb0" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_phi1</definition>
+        <argsstring></argsstring>
+        <name>h_phi1</name>
+        <qualifiedname>SimulationData::h_phi1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="25" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a01c4eb89fd08043979561e3903eb43c0" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_phi2</definition>
+        <argsstring></argsstring>
+        <name>h_phi2</name>
+        <qualifiedname>SimulationData::h_phi2</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="32" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1acc2ae98d14f0ce2d96fd3bb74904c700" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_posA1y</definition>
+        <argsstring></argsstring>
+        <name>h_posA1y</name>
+        <qualifiedname>SimulationData::h_posA1y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="39" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a18d9ca5e028f8991a68a3c71c58c9976" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_posA2y</definition>
+        <argsstring></argsstring>
+        <name>h_posA2y</name>
+        <qualifiedname>SimulationData::h_posA2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="48" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a0b628921322666aace45ec1c8aa5593a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_posB2y</definition>
+        <argsstring></argsstring>
+        <name>h_posB2y</name>
+        <qualifiedname>SimulationData::h_posB2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="57" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1afdc0cb02d17eb68025557ef06d8855bc" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_weightsA1y</definition>
+        <argsstring></argsstring>
+        <name>h_weightsA1y</name>
+        <qualifiedname>SimulationData::h_weightsA1y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="66" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1abe9fd46382b72284aeff319bf42d88f1" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_weightsA2y</definition>
+        <argsstring></argsstring>
+        <name>h_weightsA2y</name>
+        <qualifiedname>SimulationData::h_weightsA2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="79" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1aa3a79d3135b5fdab4686f1c5e1a5d3e8" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_weightsB2y</definition>
+        <argsstring></argsstring>
+        <name>h_weightsB2y</name>
+        <qualifiedname>SimulationData::h_weightsB2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="92" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a7b2486abf474779c4923996d3760841c" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_posB1xOld</definition>
+        <argsstring></argsstring>
+        <name>h_posB1xOld</name>
+        <qualifiedname>SimulationData::h_posB1xOld</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="105" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a0b15c36176e08311374f16acacc5e937" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_posB2xOld</definition>
+        <argsstring></argsstring>
+        <name>h_posB2xOld</name>
+        <qualifiedname>SimulationData::h_posB2xOld</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="117" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1abe2eeccc37aa4be0378db7ece2ada364" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_integ</definition>
+        <argsstring></argsstring>
+        <name>h_integ</name>
+        <qualifiedname>SimulationData::h_integ</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="34" column="129" bodyfile="include/simulation/simulation_data.hpp" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a4a456f2dc3beeb0f89a59188a74f9f0f" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt;size_t&gt; SimulationData::h_indsA1y</definition>
+        <argsstring></argsstring>
+        <name>h_indsA1y</name>
+        <qualifiedname>SimulationData::h_indsA1y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="35" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a32ea3582d5eb06554be1f8500148b734" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt;size_t&gt; SimulationData::h_indsA2y</definition>
+        <argsstring></argsstring>
+        <name>h_indsA2y</name>
+        <qualifiedname>SimulationData::h_indsA2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="35" column="27" bodyfile="include/simulation/simulation_data.hpp" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a9b9a9c59a09485a0d0b23db70bbee9d2" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt;size_t&gt; SimulationData::h_indsB2y</definition>
+        <argsstring></argsstring>
+        <name>h_indsB2y</name>
+        <qualifiedname>SimulationData::h_indsB2y</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="35" column="37" bodyfile="include/simulation/simulation_data.hpp" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a4680a35c12b1247bd2f14f72538479b3" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_t1grid</definition>
+        <argsstring></argsstring>
+        <name>h_t1grid</name>
+        <qualifiedname>SimulationData::h_t1grid</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="37" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a65e8be16e5b27d4bf8dfaa489e9f6005" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_delta_t_ratio</definition>
+        <argsstring></argsstring>
+        <name>h_delta_t_ratio</name>
+        <qualifiedname>SimulationData::h_delta_t_ratio</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="37" column="26" bodyfile="include/simulation/simulation_data.hpp" bodystart="37" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a84438bb33ecbf567ba1803174cd3e9b4" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QKv</definition>
+        <argsstring></argsstring>
+        <name>h_QKv</name>
+        <qualifiedname>SimulationData::h_QKv</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ae484b4a50807db443004806cf3137e12" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QRv</definition>
+        <argsstring></argsstring>
+        <name>h_QRv</name>
+        <qualifiedname>SimulationData::h_QRv</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="23" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1afece7f36ecbc2edae943a8a1cc37f8cc" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_dQKv</definition>
+        <argsstring></argsstring>
+        <name>h_dQKv</name>
+        <qualifiedname>SimulationData::h_dQKv</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="29" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a34ef98a8aea7bcf16f3be16b6954a0a6" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_dQRv</definition>
+        <argsstring></argsstring>
+        <name>h_dQRv</name>
+        <qualifiedname>SimulationData::h_dQRv</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="36" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a6cade1d66770e0658562c820e89e4030" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_rInt</definition>
+        <argsstring></argsstring>
+        <name>h_rInt</name>
+        <qualifiedname>SimulationData::h_rInt</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="43" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a87b93d98387d8b9321c06c332296534c" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_drInt</definition>
+        <argsstring></argsstring>
+        <name>h_drInt</name>
+        <qualifiedname>SimulationData::h_drInt</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="50" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ae0e5b167fc1d1f11c0c6e50f3a78362b" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_rvec</definition>
+        <argsstring></argsstring>
+        <name>h_rvec</name>
+        <qualifiedname>SimulationData::h_rvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="58" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a4b206cc33a2589b50dfef2f7e1ebc3df" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_drvec</definition>
+        <argsstring></argsstring>
+        <name>h_drvec</name>
+        <qualifiedname>SimulationData::h_drvec</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="39" column="65" bodyfile="include/simulation/simulation_data.hpp" bodystart="39" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a9b1a81bab3ea8b7b88d0605d03e0401f" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaKA1int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaKA1int</name>
+        <qualifiedname>SimulationData::h_SigmaKA1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a2f1129b7a9f94dcb70d4faae8a981e1d" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaRA1int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaRA1int</name>
+        <qualifiedname>SimulationData::h_SigmaRA1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="31" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a012a0980f274df6c13d2f5ca5f0f78dc" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaKB1int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaKB1int</name>
+        <qualifiedname>SimulationData::h_SigmaKB1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="45" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a2d85cfb3ed6358f2f412cc8202f3d8c3" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaRB1int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaRB1int</name>
+        <qualifiedname>SimulationData::h_SigmaRB1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="59" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a46b5e0d63c95659a42063a2436a83816" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaKA2int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaKA2int</name>
+        <qualifiedname>SimulationData::h_SigmaKA2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="73" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ad4eb6d55f2decca6f5d3dfd88bdcb929" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaRA2int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaRA2int</name>
+        <qualifiedname>SimulationData::h_SigmaRA2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="87" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a273b22315fa254f9a2eb711d28872562" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaKB2int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaKB2int</name>
+        <qualifiedname>SimulationData::h_SigmaKB2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="101" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1af4b655dfcf72857f077df50dcaffdc71" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_SigmaRB2int</definition>
+        <argsstring></argsstring>
+        <name>h_SigmaRB2int</name>
+        <qualifiedname>SimulationData::h_SigmaRB2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="41" column="115" bodyfile="include/simulation/simulation_data.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a93fd31644846f6f2cc70ba6d669b3b3e" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QKA1int</definition>
+        <argsstring></argsstring>
+        <name>h_QKA1int</name>
+        <qualifiedname>SimulationData::h_QKA1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ae319597eb47f54fadda96e07acb16af6" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QRA1int</definition>
+        <argsstring></argsstring>
+        <name>h_QRA1int</name>
+        <qualifiedname>SimulationData::h_QRA1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="27" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1af081f3e8b138528c4271c9c03b83b0d1" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QKB1int</definition>
+        <argsstring></argsstring>
+        <name>h_QKB1int</name>
+        <qualifiedname>SimulationData::h_QKB1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="37" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ad0613ad2329a4606741e96ab81b9a6fb" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QRB1int</definition>
+        <argsstring></argsstring>
+        <name>h_QRB1int</name>
+        <qualifiedname>SimulationData::h_QRB1int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="47" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a0cab8ec6f73080861ca9a30c0143aa5b" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QKA2int</definition>
+        <argsstring></argsstring>
+        <name>h_QKA2int</name>
+        <qualifiedname>SimulationData::h_QKA2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="57" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a68d0cf244c320a6929fdb3b0354f9375" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QRA2int</definition>
+        <argsstring></argsstring>
+        <name>h_QRA2int</name>
+        <qualifiedname>SimulationData::h_QRA2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="67" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a515f4eda452d31a906b956d904d7897a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QKB2int</definition>
+        <argsstring></argsstring>
+        <name>h_QKB2int</name>
+        <qualifiedname>SimulationData::h_QKB2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="77" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a1e58018c3f46b90583fb0df429ce3c9e" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_QRB2int</definition>
+        <argsstring></argsstring>
+        <name>h_QRB2int</name>
+        <qualifiedname>SimulationData::h_QRB2int</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="42" column="87" bodyfile="include/simulation/simulation_data.hpp" bodystart="42" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a9b9bbf178e9344b3f3e98633412e6000" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convA1_1</definition>
+        <argsstring></argsstring>
+        <name>h_convA1_1</name>
+        <qualifiedname>SimulationData::h_convA1_1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1abd7091c68ec33ac6da48398f2aa53726" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convA2_1</definition>
+        <argsstring></argsstring>
+        <name>h_convA2_1</name>
+        <qualifiedname>SimulationData::h_convA2_1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="28" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1abb65beb97fe01a3b1d021174a1f09a03" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convA1_2</definition>
+        <argsstring></argsstring>
+        <name>h_convA1_2</name>
+        <qualifiedname>SimulationData::h_convA1_2</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="39" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a96ac9f0b3566c7b4c4e8d6db6006b182" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convA2_2</definition>
+        <argsstring></argsstring>
+        <name>h_convA2_2</name>
+        <qualifiedname>SimulationData::h_convA2_2</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="50" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a8ec838b790428633984d083bba9cff66" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convR_1</definition>
+        <argsstring></argsstring>
+        <name>h_convR_1</name>
+        <qualifiedname>SimulationData::h_convR_1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="61" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a46c8365010e9a91c4d1d8de6e27abc14" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convR_2</definition>
+        <argsstring></argsstring>
+        <name>h_convR_2</name>
+        <qualifiedname>SimulationData::h_convR_2</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="71" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1afec7c06d7ac95bff10fc283e3d5d3ac1" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convR_3</definition>
+        <argsstring></argsstring>
+        <name>h_convR_3</name>
+        <qualifiedname>SimulationData::h_convR_3</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="81" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a6bcd803a7105ca3d9775b94c4ddded36" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_convR_4</definition>
+        <argsstring></argsstring>
+        <name>h_convR_4</name>
+        <qualifiedname>SimulationData::h_convR_4</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="43" column="91" bodyfile="include/simulation/simulation_data.hpp" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ac208f9665ed27bce4866d17dab1e6886" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp0</definition>
+        <argsstring></argsstring>
+        <name>h_temp0</name>
+        <qualifiedname>SimulationData::h_temp0</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1acf52175c719ecbb2b756a45dabd25c9d" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp1</definition>
+        <argsstring></argsstring>
+        <name>h_temp1</name>
+        <qualifiedname>SimulationData::h_temp1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="25" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a7bfea8c62c29ece8518a62f22cb5274a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp2</definition>
+        <argsstring></argsstring>
+        <name>h_temp2</name>
+        <qualifiedname>SimulationData::h_temp2</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="33" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a026f30f5cf31a0bc666eaf8cf3855051" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp3</definition>
+        <argsstring></argsstring>
+        <name>h_temp3</name>
+        <qualifiedname>SimulationData::h_temp3</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="41" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a003c62164365b5e0b16d0a9ec3d15ea0" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp4</definition>
+        <argsstring></argsstring>
+        <name>h_temp4</name>
+        <qualifiedname>SimulationData::h_temp4</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="49" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1abaace6bc111ca23cf12d562c65ac3cd2" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp5</definition>
+        <argsstring></argsstring>
+        <name>h_temp5</name>
+        <qualifiedname>SimulationData::h_temp5</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="57" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1addffdad502e7a3356f7c7c8ca156daeb" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp6</definition>
+        <argsstring></argsstring>
+        <name>h_temp6</name>
+        <qualifiedname>SimulationData::h_temp6</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="65" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1add02f82397f3e9dd98da72ca79811397" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp7</definition>
+        <argsstring></argsstring>
+        <name>h_temp7</name>
+        <qualifiedname>SimulationData::h_temp7</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="73" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1af7bb1d7a4b6a2711e8257191fbf6580c" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp8</definition>
+        <argsstring></argsstring>
+        <name>h_temp8</name>
+        <qualifiedname>SimulationData::h_temp8</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="81" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a68f7ebf3dd17c67a2274b36a8eafa03a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_temp9</definition>
+        <argsstring></argsstring>
+        <name>h_temp9</name>
+        <qualifiedname>SimulationData::h_temp9</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="45" column="89" bodyfile="include/simulation/simulation_data.hpp" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1ae791d0d20204f503a420c670cb911d7b" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt;size_t&gt; SimulationData::h_Stemp0</definition>
+        <argsstring></argsstring>
+        <name>h_Stemp0</name>
+        <qualifiedname>SimulationData::h_Stemp0</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="47" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1a96c0fa396e09c8d99ef5700d11be21d9" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; size_t &gt;</type>
+        <definition>std::vector&lt;size_t&gt; SimulationData::h_Stemp1</definition>
+        <argsstring></argsstring>
+        <name>h_Stemp1</name>
+        <qualifiedname>SimulationData::h_Stemp1</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="47" column="26" bodyfile="include/simulation/simulation_data.hpp" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structSimulationData_1aee8a0d56aaccec4e32d01b5abae51e1a" prot="public" static="no" mutable="no">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt;double&gt; SimulationData::h_error_result</definition>
+        <argsstring></argsstring>
+        <name>h_error_result</name>
+        <qualifiedname>SimulationData::h_error_result</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/simulation/simulation_data.hpp" line="49" column="17" bodyfile="include/simulation/simulation_data.hpp" bodystart="49" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/simulation/simulation_data.hpp" line="12" column="1" bodyfile="include/simulation/simulation_data.hpp" bodystart="12" bodyend="50"/>
+    <listofallmembers>
+      <member refid="structSimulationData_1a9b9bbf178e9344b3f3e98633412e6000" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convA1_1</name></member>
+      <member refid="structSimulationData_1abb65beb97fe01a3b1d021174a1f09a03" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convA1_2</name></member>
+      <member refid="structSimulationData_1abd7091c68ec33ac6da48398f2aa53726" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convA2_1</name></member>
+      <member refid="structSimulationData_1a96ac9f0b3566c7b4c4e8d6db6006b182" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convA2_2</name></member>
+      <member refid="structSimulationData_1a8ec838b790428633984d083bba9cff66" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convR_1</name></member>
+      <member refid="structSimulationData_1a46c8365010e9a91c4d1d8de6e27abc14" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convR_2</name></member>
+      <member refid="structSimulationData_1afec7c06d7ac95bff10fc283e3d5d3ac1" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convR_3</name></member>
+      <member refid="structSimulationData_1a6bcd803a7105ca3d9775b94c4ddded36" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_convR_4</name></member>
+      <member refid="structSimulationData_1a65e8be16e5b27d4bf8dfaa489e9f6005" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_delta_t_ratio</name></member>
+      <member refid="structSimulationData_1afece7f36ecbc2edae943a8a1cc37f8cc" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_dQKv</name></member>
+      <member refid="structSimulationData_1a34ef98a8aea7bcf16f3be16b6954a0a6" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_dQRv</name></member>
+      <member refid="structSimulationData_1a87b93d98387d8b9321c06c332296534c" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_drInt</name></member>
+      <member refid="structSimulationData_1a4b206cc33a2589b50dfef2f7e1ebc3df" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_drvec</name></member>
+      <member refid="structSimulationData_1aee8a0d56aaccec4e32d01b5abae51e1a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_error_result</name></member>
+      <member refid="structSimulationData_1a4a456f2dc3beeb0f89a59188a74f9f0f" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_indsA1y</name></member>
+      <member refid="structSimulationData_1a32ea3582d5eb06554be1f8500148b734" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_indsA2y</name></member>
+      <member refid="structSimulationData_1a9b9a9c59a09485a0d0b23db70bbee9d2" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_indsB2y</name></member>
+      <member refid="structSimulationData_1abe2eeccc37aa4be0378db7ece2ada364" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_integ</name></member>
+      <member refid="structSimulationData_1a57adf039dc5e841edf74ad6928ee9fb0" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_phi1</name></member>
+      <member refid="structSimulationData_1a01c4eb89fd08043979561e3903eb43c0" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_phi2</name></member>
+      <member refid="structSimulationData_1acc2ae98d14f0ce2d96fd3bb74904c700" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_posA1y</name></member>
+      <member refid="structSimulationData_1a18d9ca5e028f8991a68a3c71c58c9976" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_posA2y</name></member>
+      <member refid="structSimulationData_1a7b2486abf474779c4923996d3760841c" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_posB1xOld</name></member>
+      <member refid="structSimulationData_1a0b15c36176e08311374f16acacc5e937" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_posB2xOld</name></member>
+      <member refid="structSimulationData_1a0b628921322666aace45ec1c8aa5593a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_posB2y</name></member>
+      <member refid="structSimulationData_1a93fd31644846f6f2cc70ba6d669b3b3e" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QKA1int</name></member>
+      <member refid="structSimulationData_1a0cab8ec6f73080861ca9a30c0143aa5b" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QKA2int</name></member>
+      <member refid="structSimulationData_1af081f3e8b138528c4271c9c03b83b0d1" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QKB1int</name></member>
+      <member refid="structSimulationData_1a515f4eda452d31a906b956d904d7897a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QKB2int</name></member>
+      <member refid="structSimulationData_1a84438bb33ecbf567ba1803174cd3e9b4" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QKv</name></member>
+      <member refid="structSimulationData_1ae319597eb47f54fadda96e07acb16af6" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QRA1int</name></member>
+      <member refid="structSimulationData_1a68d0cf244c320a6929fdb3b0354f9375" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QRA2int</name></member>
+      <member refid="structSimulationData_1ad0613ad2329a4606741e96ab81b9a6fb" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QRB1int</name></member>
+      <member refid="structSimulationData_1a1e58018c3f46b90583fb0df429ce3c9e" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QRB2int</name></member>
+      <member refid="structSimulationData_1ae484b4a50807db443004806cf3137e12" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_QRv</name></member>
+      <member refid="structSimulationData_1a6cade1d66770e0658562c820e89e4030" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_rInt</name></member>
+      <member refid="structSimulationData_1ae0e5b167fc1d1f11c0c6e50f3a78362b" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_rvec</name></member>
+      <member refid="structSimulationData_1a9b1a81bab3ea8b7b88d0605d03e0401f" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaKA1int</name></member>
+      <member refid="structSimulationData_1a46b5e0d63c95659a42063a2436a83816" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaKA2int</name></member>
+      <member refid="structSimulationData_1a012a0980f274df6c13d2f5ca5f0f78dc" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaKB1int</name></member>
+      <member refid="structSimulationData_1a273b22315fa254f9a2eb711d28872562" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaKB2int</name></member>
+      <member refid="structSimulationData_1a2f1129b7a9f94dcb70d4faae8a981e1d" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaRA1int</name></member>
+      <member refid="structSimulationData_1ad4eb6d55f2decca6f5d3dfd88bdcb929" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaRA2int</name></member>
+      <member refid="structSimulationData_1a2d85cfb3ed6358f2f412cc8202f3d8c3" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaRB1int</name></member>
+      <member refid="structSimulationData_1af4b655dfcf72857f077df50dcaffdc71" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_SigmaRB2int</name></member>
+      <member refid="structSimulationData_1ae791d0d20204f503a420c670cb911d7b" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_Stemp0</name></member>
+      <member refid="structSimulationData_1a96c0fa396e09c8d99ef5700d11be21d9" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_Stemp1</name></member>
+      <member refid="structSimulationData_1a4680a35c12b1247bd2f14f72538479b3" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_t1grid</name></member>
+      <member refid="structSimulationData_1ac208f9665ed27bce4866d17dab1e6886" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp0</name></member>
+      <member refid="structSimulationData_1acf52175c719ecbb2b756a45dabd25c9d" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp1</name></member>
+      <member refid="structSimulationData_1a7bfea8c62c29ece8518a62f22cb5274a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp2</name></member>
+      <member refid="structSimulationData_1a026f30f5cf31a0bc666eaf8cf3855051" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp3</name></member>
+      <member refid="structSimulationData_1a003c62164365b5e0b16d0a9ec3d15ea0" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp4</name></member>
+      <member refid="structSimulationData_1abaace6bc111ca23cf12d562c65ac3cd2" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp5</name></member>
+      <member refid="structSimulationData_1addffdad502e7a3356f7c7c8ca156daeb" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp6</name></member>
+      <member refid="structSimulationData_1add02f82397f3e9dd98da72ca79811397" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp7</name></member>
+      <member refid="structSimulationData_1af7bb1d7a4b6a2711e8257191fbf6580c" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp8</name></member>
+      <member refid="structSimulationData_1a68f7ebf3dd17c67a2274b36a8eafa03a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_temp9</name></member>
+      <member refid="structSimulationData_1ab10d931b8a21cf9a126a4f33a362be6a" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_theta</name></member>
+      <member refid="structSimulationData_1afdc0cb02d17eb68025557ef06d8855bc" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_weightsA1y</name></member>
+      <member refid="structSimulationData_1abe9fd46382b72284aeff319bf42d88f1" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_weightsA2y</name></member>
+      <member refid="structSimulationData_1aa3a79d3135b5fdab4686f1c5e1a5d3e8" prot="public" virt="non-virtual"><scope>SimulationData</scope><name>h_weightsB2y</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

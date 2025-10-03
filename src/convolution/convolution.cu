@@ -1,5 +1,5 @@
-#include "convolution.hpp"
-#include "globals.hpp"
+#include "convolution/convolution.hpp"
+#include "core/globals.hpp"
 #include <thrust/for_each.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/execution_policy.h>

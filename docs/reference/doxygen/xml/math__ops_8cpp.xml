@@ -1,0 +1,197 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="math__ops_8cpp" kind="file" language="C++">
+    <compoundname>math_ops.cpp</compoundname>
+    <includes refid="math__ops_8hpp" local="yes">math/math_ops.hpp</includes>
+    <includes refid="config_8hpp" local="yes">core/config.hpp</includes>
+    <incdepgraph>
+      <node id="5">
+        <label>core/config.hpp</label>
+        <link refid="config_8hpp_source"/>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>core/config_build.hpp</label>
+        <link refid="config__build_8hpp_source"/>
+      </node>
+      <node id="2">
+        <label>math/math_ops.hpp</label>
+        <link refid="math__ops_8hpp_source"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>src/math/math_ops.cpp</label>
+        <link refid="math__ops_8cpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>cstddef</label>
+      </node>
+      <node id="6">
+        <label>string</label>
+      </node>
+      <node id="7">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="var">
+      <memberdef kind="variable" id="math__ops_8cpp_1a1842d4a46f92faf25254230519ec1e6a" prot="public" static="no" mutable="no">
+        <type>SimulationConfig</type>
+        <definition>SimulationConfig config</definition>
+        <argsstring></argsstring>
+        <name>config</name>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="5" column="25" declfile="src/math/math_ops.cpp" declline="5" declcolumn="25"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="math__ops_8cpp_1a3e2e1e81efc0a2b9f389be2f9bf3be21" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double pow_int</definition>
+        <argsstring>(double base, int exp)</argsstring>
+        <name>pow_int</name>
+        <param>
+          <type>double</type>
+          <declname>base</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>exp</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="7" column="8" bodyfile="src/math/math_ops.cpp" bodystart="7" bodyend="21"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8cpp_1a763996575d19bfd277b9cbc1cc41bbc6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double flambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>flambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="23" column="8" bodyfile="src/math/math_ops.cpp" bodystart="23" bodyend="25"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8cpp_1aee49334157b8c2e47de4a9936c95cf02" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double Dflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>Dflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="27" column="8" bodyfile="src/math/math_ops.cpp" bodystart="27" bodyend="29"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8cpp_1a54600d1c5b4eb515c86f1908f58a6dae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double DDflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>DDflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="31" column="8" bodyfile="src/math/math_ops.cpp" bodystart="31" bodyend="33"/>
+      </memberdef>
+      <memberdef kind="function" id="math__ops_8cpp_1a1549ac7e2f2fed6278ba44af83106e91" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>double</type>
+        <definition>double DDDflambda</definition>
+        <argsstring>(double q)</argsstring>
+        <name>DDDflambda</name>
+        <param>
+          <type>double</type>
+          <declname>q</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/math/math_ops.cpp" line="35" column="8" bodyfile="src/math/math_ops.cpp" bodystart="35" bodyend="37"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#include<sp/>&quot;math/math_ops.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/config.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Access<sp/>runtime-configured<sp/>parameters<sp/>via<sp/>global<sp/>config</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="keyword">extern</highlight><highlight class="normal"><sp/>SimulationConfig<sp/>config;</highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>pow_int(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>base,<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>exp)<sp/>{</highlight></codeline>
+<codeline lineno="8"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>==<sp/>0)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>1.0;</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>==<sp/>1)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>base;</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>==<sp/>2)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>base<sp/>*<sp/>base;</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>==<sp/>3)<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>base<sp/>*<sp/>base<sp/>*<sp/>base;</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>==<sp/>4)<sp/>{<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>sq<sp/>=<sp/>base<sp/>*<sp/>base;<sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>sq<sp/>*<sp/>sq;<sp/>}</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>result<sp/>=<sp/>1.0;</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>current<sp/>=<sp/>base;</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">while</highlight><highlight class="normal"><sp/>(exp<sp/>&gt;<sp/>0)<sp/>{</highlight></codeline>
+<codeline lineno="16"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">if</highlight><highlight class="normal"><sp/>(exp<sp/>&amp;<sp/>1)<sp/>result<sp/>*=<sp/>current;</highlight></codeline>
+<codeline lineno="17"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>current<sp/>*=<sp/>current;</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>exp<sp/>&gt;&gt;=<sp/>1;</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/>}</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>result;</highlight></codeline>
+<codeline lineno="21"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>flambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight></codeline>
+<codeline lineno="24"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>config.lambda<sp/>*<sp/>pow_int(q,<sp/>config.p)<sp/>+<sp/>(1<sp/>-<sp/>config.lambda)<sp/>*<sp/>pow_int(q,<sp/>config.p2);<sp/></highlight></codeline>
+<codeline lineno="25"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="26"><highlight class="normal"></highlight></codeline>
+<codeline lineno="27"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>Dflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight></codeline>
+<codeline lineno="28"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>config.lambda<sp/>*<sp/>config.p<sp/>*<sp/>pow_int(q,<sp/>config.p<sp/>-<sp/>1)<sp/>+<sp/>(1<sp/>-<sp/>config.lambda)<sp/>*<sp/>config.p2<sp/>*<sp/>pow_int(q,<sp/>config.p2<sp/>-<sp/>1);<sp/></highlight></codeline>
+<codeline lineno="29"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="30"><highlight class="normal"></highlight></codeline>
+<codeline lineno="31"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight></codeline>
+<codeline lineno="32"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>config.lambda<sp/>*<sp/>config.p<sp/>*<sp/>(config.p<sp/>-<sp/>1)<sp/>*<sp/>pow_int(q,<sp/>config.p<sp/>-<sp/>2)<sp/>+<sp/>(1<sp/>-<sp/>config.lambda)<sp/>*<sp/>config.p2<sp/>*<sp/>(config.p2<sp/>-<sp/>1)<sp/>*<sp/>pow_int(q,<sp/>config.p2<sp/>-<sp/>2);<sp/></highlight></codeline>
+<codeline lineno="33"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="34"><highlight class="normal"></highlight></codeline>
+<codeline lineno="35"><highlight class="normal"></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>DDDflambda(</highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>q)<sp/>{<sp/></highlight></codeline>
+<codeline lineno="36"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keywordflow">return</highlight><highlight class="normal"><sp/>config.lambda<sp/>*<sp/>config.p<sp/>*<sp/>(config.p<sp/>-<sp/>1)<sp/>*<sp/>(config.p<sp/>-<sp/>2)<sp/>*<sp/>pow_int(q,<sp/>config.p<sp/>-<sp/>3)<sp/>+<sp/>(1<sp/>-<sp/>config.lambda)<sp/>*<sp/>config.p2<sp/>*<sp/>(config.p2<sp/>-<sp/>1)<sp/>*<sp/>(config.p2<sp/>-<sp/>2)<sp/>*<sp/>pow_int(q,<sp/>config.p2<sp/>-<sp/>3);<sp/></highlight></codeline>
+<codeline lineno="37"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="src/math/math_ops.cpp"/>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,196 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="math__sigma_8hpp" kind="file" language="C++">
+    <compoundname>math_sigma.hpp</compoundname>
+    <includes refid="config__build_8hpp" local="yes">core/config_build.hpp</includes>
+    <includes local="no">cstddef</includes>
+    <includes local="no">vector</includes>
+    <includedby refid="time__steps_8cpp" local="yes">src/EOMs/time_steps.cpp</includedby>
+    <includedby refid="interpolation__core_8cpp" local="yes">src/interpolation/interpolation_core.cpp</includedby>
+    <includedby refid="io__input_8cpp" local="yes">src/io/io_input.cpp</includedby>
+    <includedby refid="io__output_8cpp" local="yes">src/io/io_output.cpp</includedby>
+    <includedby refid="io__utils_8cpp" local="yes">src/io/io_utils.cpp</includedby>
+    <includedby refid="math__sigma_8cpp" local="yes">src/math/math_sigma.cpp</includedby>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="2">
+        <label>core/config_build.hpp</label>
+        <link refid="config__build_8hpp_source"/>
+      </node>
+      <node id="1">
+        <label>include/math/math_sigma.hpp</label>
+        <link refid="math__sigma_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>cstddef</label>
+      </node>
+      <node id="4">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="math__sigma_8hpp_1a9cc127e2ea539d6caa6e2ece45ca9e33" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void SigmaK</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk, std::vector&lt; double &gt; &amp;result)</argsstring>
+        <name>SigmaK</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; double &gt; &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="22" column="6" bodyfile="src/math/math_sigma.cpp" bodystart="56" bodyend="62" declfile="include/math/math_sigma.hpp" declline="22" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="math__sigma_8hpp_1a336cd9f4ed0489d6d8eb8b0b71fe30f4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void SigmaR</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk, const std::vector&lt; double &gt; &amp;qr, std::vector&lt; double &gt; &amp;result)</argsstring>
+        <name>SigmaR</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qr</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; double &gt; &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="23" column="6" bodyfile="src/math/math_sigma.cpp" bodystart="7" bodyend="13" declfile="include/math/math_sigma.hpp" declline="23" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="math__sigma_8hpp_1a53befaace59309f21053ab3e3bb2706c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; SigmaK10</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk)</argsstring>
+        <name>SigmaK10</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="24" column="13" bodyfile="src/math/math_sigma.cpp" bodystart="15" bodyend="23" declfile="include/math/math_sigma.hpp" declline="24" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="math__sigma_8hpp_1a3668a78ac7a06a25846536d9f387bfce" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; SigmaR10</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk, const std::vector&lt; double &gt; &amp;qr)</argsstring>
+        <name>SigmaR10</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="25" column="13" bodyfile="src/math/math_sigma.cpp" bodystart="25" bodyend="33" declfile="include/math/math_sigma.hpp" declline="25" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="math__sigma_8hpp_1ab0032a8cb38e530334f10f60c12e27ea" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; SigmaK01</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk)</argsstring>
+        <name>SigmaK01</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="26" column="13" bodyfile="src/math/math_sigma.cpp" bodystart="35" bodyend="43" declfile="include/math/math_sigma.hpp" declline="26" declcolumn="13"/>
+      </memberdef>
+      <memberdef kind="function" id="math__sigma_8hpp_1acee63f89c53e0ab66abfd5c5482594ae" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>std::vector&lt; double &gt;</type>
+        <definition>std::vector&lt; double &gt; SigmaR01</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;qk, const std::vector&lt; double &gt; &amp;qr)</argsstring>
+        <name>SigmaR01</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qk</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>qr</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/math/math_sigma.hpp" line="27" column="13" bodyfile="src/math/math_sigma.cpp" bodystart="45" bodyend="53" declfile="include/math/math_sigma.hpp" declline="27" declcolumn="13"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;core/config_build.hpp&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstddef&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#if<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;thrust/device_vector.h&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>GPU<sp/>kernel<sp/>and<sp/>host<sp/>wrappers<sp/>for<sp/>SigmaK/SigmaR<sp/>evaluations</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal">__global__<sp/></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>computeSigmaKandRKernel(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>qK,</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>qR,</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>sigmaK,</highlight></codeline>
+<codeline lineno="13"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal">*<sp/>__restrict__<sp/>sigmaR,</highlight></codeline>
+<codeline lineno="14"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/>len);</highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight></codeline>
+<codeline lineno="16"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Sigma<sp/>GPU<sp/>function<sp/>declarations</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>SigmaKGPU(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>thrust::device_vector&lt;double&gt;&amp;<sp/>qk,<sp/>thrust::device_vector&lt;double&gt;&amp;<sp/>result,<sp/>cudaStream_t<sp/>stream<sp/>=<sp/>0);</highlight></codeline>
+<codeline lineno="18"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>SigmaRGPU(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>thrust::device_vector&lt;double&gt;&amp;<sp/>qk,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>thrust::device_vector&lt;double&gt;&amp;<sp/>qr,<sp/>thrust::device_vector&lt;double&gt;&amp;<sp/>result,<sp/>cudaStream_t<sp/>stream<sp/>=<sp/>0);</highlight></codeline>
+<codeline lineno="19"><highlight class="normal"></highlight><highlight class="preprocessor">#endif<sp/></highlight><highlight class="comment">//<sp/>DMFE_WITH_CUDA</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="21"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Sigma<sp/>CPU<sp/>function<sp/>declarations</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="22"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>SigmaK(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk,<sp/>std::vector&lt;double&gt;&amp;<sp/>result);</highlight></codeline>
+<codeline lineno="23"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>SigmaR(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qr,<sp/>std::vector&lt;double&gt;&amp;<sp/>result);</highlight></codeline>
+<codeline lineno="24"><highlight class="normal">std::vector&lt;double&gt;<sp/>SigmaK10(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk);</highlight></codeline>
+<codeline lineno="25"><highlight class="normal">std::vector&lt;double&gt;<sp/>SigmaR10(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qr);</highlight></codeline>
+<codeline lineno="26"><highlight class="normal">std::vector&lt;double&gt;<sp/>SigmaK01(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk);</highlight></codeline>
+<codeline lineno="27"><highlight class="normal">std::vector&lt;double&gt;<sp/>SigmaR01(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qk,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>qr);</highlight></codeline>
+    </programlisting>
+    <location file="include/math/math_sigma.hpp"/>
+  </compounddef>
+</doxygen>

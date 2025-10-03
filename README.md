@@ -41,6 +41,20 @@ Show help and defaults:
 ./RG-Evo -h
 ```
 
+## Documentation
+
+- User & Developer Docs (MkDocs): see `docs/` and `mkdocs.yml`.
+- API Reference: generated under `docs/reference/api/` via `./docs/gen_api.sh`.
+- Quick links:
+  - Install: `docs/install.md`
+  - Usage: `docs/usage.md`
+  - Tutorials: `docs/tutorials/`
+  - Concepts & Architecture: `docs/concepts/`
+
+## Contributing
+
+See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. Update docs when changing public behavior and run `./docs/gen_api.sh` after header changes.
+
 ## Build options
 
 Pass options to CMake at configure time (either via `./build.sh ...` or directly with `cmake -S . -B build ...`). Defaults shown in parentheses.

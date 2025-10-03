@@ -1,0 +1,631 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygenindex xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="index.xsd" version="1.9.4" xml:lang="en-US">
+  <compound refid="structLoadedStateParams" kind="struct"><name>LoadedStateParams</name>
+    <member refid="structLoadedStateParams_1a432c8ca59409887e4385f2f2a2ffc3cb" kind="variable"><name>delta</name></member>
+    <member refid="structLoadedStateParams_1a9c8344dc4702b6d3a5b5a2c923bbea80" kind="variable"><name>delta_t</name></member>
+    <member refid="structLoadedStateParams_1a450f5fc493728433f1f8b57170c8b955" kind="variable"><name>loop</name></member>
+  </compound>
+  <compound refid="structRKData" kind="struct"><name>RKData</name>
+    <member refid="structRKData_1ad3c374acae163d51f975bd6b93805812" kind="variable"><name>stages</name></member>
+    <member refid="structRKData_1a845fc530e05d2b6cabc07711b0870d64" kind="variable"><name>posCount</name></member>
+    <member refid="structRKData_1abf1d956e5771f1d05dbfb25a6e93428c" kind="variable"><name>init</name></member>
+    <member refid="structRKData_1aba482daa0c71eeb32d8298c4f36cd1c7" kind="variable"><name>avec</name></member>
+    <member refid="structRKData_1a31b16ee398aedb4a21f9513261fd91fb" kind="variable"><name>bvec</name></member>
+    <member refid="structRKData_1a94eea2cf5e43c2b555fac1602ed1b7ad" kind="variable"><name>b2vec</name></member>
+    <member refid="structRKData_1a6baeb0a560d8d72c2b5635cf43cc355a" kind="variable"><name>cvec</name></member>
+    <member refid="structRKData_1aba9b8b9032993b167ad3a5d4174d4c2c" kind="variable"><name>gt</name></member>
+    <member refid="structRKData_1a9ce8e20a9d027acdcb776bd8acf0f88f" kind="variable"><name>gtfinal</name></member>
+    <member refid="structRKData_1a4b8f1303dcb930d52e93aa61d9c476a6" kind="variable"><name>gte</name></member>
+    <member refid="structRKData_1ad2a24350d3f48054593f23135e772706" kind="variable"><name>ht</name></member>
+    <member refid="structRKData_1acc6e3009ed400ea0363c98280ceb55fc" kind="variable"><name>gt0</name></member>
+    <member refid="structRKData_1ae401d3f3b355f055ccdb579d0fa6e16b" kind="variable"><name>gK</name></member>
+    <member refid="structRKData_1afcc683a1afd14177e97bde02a1441b26" kind="variable"><name>gR</name></member>
+    <member refid="structRKData_1aa5e146278920771856e4333eb00010fa" kind="variable"><name>gRfinal</name></member>
+    <member refid="structRKData_1a86825ea7d1c2177e602388eda7cb2f44" kind="variable"><name>gKfinal</name></member>
+    <member refid="structRKData_1a3c31fa2c73a0dbc1a514abd0de971de1" kind="variable"><name>gKe</name></member>
+    <member refid="structRKData_1adca7fe5cc2cc2f5583a0033595b88963" kind="variable"><name>gRe</name></member>
+    <member refid="structRKData_1a9e41ae22281810409f8fbc4a76f7ab28" kind="variable"><name>gK0</name></member>
+    <member refid="structRKData_1a5aba04b0fc3b20e598c09cdc0dcdf3cc" kind="variable"><name>gR0</name></member>
+    <member refid="structRKData_1a5a8efc795aa0da3aa8d9dcfffd2f0886" kind="variable"><name>posB1xvec</name></member>
+    <member refid="structRKData_1ac8a7ada38ea3c3cfddbd875b1a9e8791" kind="variable"><name>posB2xvec</name></member>
+    <member refid="structRKData_1a13b527ed9918bd7bfc416ed7e52c099b" kind="variable"><name>hK</name></member>
+    <member refid="structRKData_1a0bc54b5da76bbac755b071da05886ac4" kind="variable"><name>hR</name></member>
+    <member refid="structRKData_1ab57c4cb7ef13d62733955fa17c40bf16" kind="variable"><name>hK0</name></member>
+    <member refid="structRKData_1a2e1faf00bd035e044cea814c8b86260e" kind="variable"><name>hR0</name></member>
+    <member refid="structRKData_1abd905304616130ec4e77f1b6d5e231da" kind="variable"><name>d_avec</name></member>
+  </compound>
+  <compound refid="structSimulationConfig" kind="struct"><name>SimulationConfig</name>
+    <member refid="structSimulationConfig_1ae5d528c6fc4d3827aa1ec753859643ff" kind="variable"><name>p</name></member>
+    <member refid="structSimulationConfig_1ad75f4ed9b1216e8e11233718e9243896" kind="variable"><name>p2</name></member>
+    <member refid="structSimulationConfig_1a37677bcc40999674b0a25bbdd1e611ba" kind="variable"><name>lambda</name></member>
+    <member refid="structSimulationConfig_1abab5da13a74d9aeb7e3a2d1a4668e57b" kind="variable"><name>TMCT</name></member>
+    <member refid="structSimulationConfig_1a2117a127813d7b5b28e3e96e1c8a5136" kind="variable"><name>T0</name></member>
+    <member refid="structSimulationConfig_1a810d7e8ba5828869e60ae0f4faff523b" kind="variable"><name>Gamma</name></member>
+    <member refid="structSimulationConfig_1a17cb31db288e6ea5b90c5ade11a00dd4" kind="variable"><name>maxLoop</name></member>
+    <member refid="structSimulationConfig_1a84235e635864074013d8040fe3a7a258" kind="variable"><name>resultsDir</name></member>
+    <member refid="structSimulationConfig_1a99620dbe6db960951637af9fdc238d65" kind="variable"><name>outputDir</name></member>
+    <member refid="structSimulationConfig_1a927fc253077f4794036a13b42d77f366" kind="variable"><name>debug</name></member>
+    <member refid="structSimulationConfig_1a0360b4702210f45c2064fe6572807de2" kind="variable"><name>save_output</name></member>
+    <member refid="structSimulationConfig_1a3b0d087fc8c7f19a6d0ea14da4c33275" kind="variable"><name>tmax</name></member>
+    <member refid="structSimulationConfig_1ab76bf7f4d53e0286de915d373f2c0287" kind="variable"><name>delta_t_min</name></member>
+    <member refid="structSimulationConfig_1aa236f5b4195d797208cc7afe8f30bd9f" kind="variable"><name>delta_max</name></member>
+    <member refid="structSimulationConfig_1a602368deca293cefd0338d53c56d8029" kind="variable"><name>rmax</name></member>
+    <member refid="structSimulationConfig_1a7d97caee48205f61e47145e1e402ed6e" kind="variable"><name>delta</name></member>
+    <member refid="structSimulationConfig_1a17fea0f5f9024d3418b6138b175025a8" kind="variable"><name>delta_old</name></member>
+    <member refid="structSimulationConfig_1af6bd12c11b7f738b582bb0408b30bd96" kind="variable"><name>loop</name></member>
+    <member refid="structSimulationConfig_1a9b4b9fa2dc3d4c4633be52bf5bafbf82" kind="variable"><name>specRad</name></member>
+    <member refid="structSimulationConfig_1a4f8c8476225022a684fb81e6cd597179" kind="variable"><name>delta_t</name></member>
+    <member refid="structSimulationConfig_1ac79e31c8bb55adbbfc61136943901ca9" kind="variable"><name>len</name></member>
+    <member refid="structSimulationConfig_1a37a17f5ba555b821d235d0279a350352" kind="variable"><name>ord</name></member>
+    <member refid="structSimulationConfig_1a718b7aada1681718861a78d1fc5427ae" kind="variable"><name>gpu</name></member>
+    <member refid="structSimulationConfig_1a141ca3c5ac650df4d89ba663f2bafb06" kind="variable"><name>use_serk2</name></member>
+    <member refid="structSimulationConfig_1af7a478f986cb930daf456ce62ff1d3a9" kind="variable"><name>sparsify_sweeps</name></member>
+    <member refid="structSimulationConfig_1ab6cd2cf201a4b75cfdbc728ae0ec12f7" kind="variable"><name>aggressive_sparsify</name></member>
+    <member refid="structSimulationConfig_1aff7c5056364dd051f652dc27184190c2" kind="variable"><name>async_export</name></member>
+    <member refid="structSimulationConfig_1ad5ede8ca63dfbaef08f60b54084b2898" kind="variable"><name>command_line_args</name></member>
+    <member refid="structSimulationConfig_1a962e1ba50accf8fd8748e9af30771d07" kind="variable"><name>loaded</name></member>
+    <member refid="structSimulationConfig_1a228e211e779ccad918f5845045703fe2" kind="variable"><name>paramDir</name></member>
+    <member refid="structSimulationConfig_1a1d81dc8dc31daea465f76557f8acb509" kind="variable"><name>allow_incompatible_versions</name></member>
+  </compound>
+  <compound refid="structSimulationData" kind="struct"><name>SimulationData</name>
+    <member refid="structSimulationData_1ab10d931b8a21cf9a126a4f33a362be6a" kind="variable"><name>h_theta</name></member>
+    <member refid="structSimulationData_1a57adf039dc5e841edf74ad6928ee9fb0" kind="variable"><name>h_phi1</name></member>
+    <member refid="structSimulationData_1a01c4eb89fd08043979561e3903eb43c0" kind="variable"><name>h_phi2</name></member>
+    <member refid="structSimulationData_1acc2ae98d14f0ce2d96fd3bb74904c700" kind="variable"><name>h_posA1y</name></member>
+    <member refid="structSimulationData_1a18d9ca5e028f8991a68a3c71c58c9976" kind="variable"><name>h_posA2y</name></member>
+    <member refid="structSimulationData_1a0b628921322666aace45ec1c8aa5593a" kind="variable"><name>h_posB2y</name></member>
+    <member refid="structSimulationData_1afdc0cb02d17eb68025557ef06d8855bc" kind="variable"><name>h_weightsA1y</name></member>
+    <member refid="structSimulationData_1abe9fd46382b72284aeff319bf42d88f1" kind="variable"><name>h_weightsA2y</name></member>
+    <member refid="structSimulationData_1aa3a79d3135b5fdab4686f1c5e1a5d3e8" kind="variable"><name>h_weightsB2y</name></member>
+    <member refid="structSimulationData_1a7b2486abf474779c4923996d3760841c" kind="variable"><name>h_posB1xOld</name></member>
+    <member refid="structSimulationData_1a0b15c36176e08311374f16acacc5e937" kind="variable"><name>h_posB2xOld</name></member>
+    <member refid="structSimulationData_1abe2eeccc37aa4be0378db7ece2ada364" kind="variable"><name>h_integ</name></member>
+    <member refid="structSimulationData_1a4a456f2dc3beeb0f89a59188a74f9f0f" kind="variable"><name>h_indsA1y</name></member>
+    <member refid="structSimulationData_1a32ea3582d5eb06554be1f8500148b734" kind="variable"><name>h_indsA2y</name></member>
+    <member refid="structSimulationData_1a9b9a9c59a09485a0d0b23db70bbee9d2" kind="variable"><name>h_indsB2y</name></member>
+    <member refid="structSimulationData_1a4680a35c12b1247bd2f14f72538479b3" kind="variable"><name>h_t1grid</name></member>
+    <member refid="structSimulationData_1a65e8be16e5b27d4bf8dfaa489e9f6005" kind="variable"><name>h_delta_t_ratio</name></member>
+    <member refid="structSimulationData_1a84438bb33ecbf567ba1803174cd3e9b4" kind="variable"><name>h_QKv</name></member>
+    <member refid="structSimulationData_1ae484b4a50807db443004806cf3137e12" kind="variable"><name>h_QRv</name></member>
+    <member refid="structSimulationData_1afece7f36ecbc2edae943a8a1cc37f8cc" kind="variable"><name>h_dQKv</name></member>
+    <member refid="structSimulationData_1a34ef98a8aea7bcf16f3be16b6954a0a6" kind="variable"><name>h_dQRv</name></member>
+    <member refid="structSimulationData_1a6cade1d66770e0658562c820e89e4030" kind="variable"><name>h_rInt</name></member>
+    <member refid="structSimulationData_1a87b93d98387d8b9321c06c332296534c" kind="variable"><name>h_drInt</name></member>
+    <member refid="structSimulationData_1ae0e5b167fc1d1f11c0c6e50f3a78362b" kind="variable"><name>h_rvec</name></member>
+    <member refid="structSimulationData_1a4b206cc33a2589b50dfef2f7e1ebc3df" kind="variable"><name>h_drvec</name></member>
+    <member refid="structSimulationData_1a9b1a81bab3ea8b7b88d0605d03e0401f" kind="variable"><name>h_SigmaKA1int</name></member>
+    <member refid="structSimulationData_1a2f1129b7a9f94dcb70d4faae8a981e1d" kind="variable"><name>h_SigmaRA1int</name></member>
+    <member refid="structSimulationData_1a012a0980f274df6c13d2f5ca5f0f78dc" kind="variable"><name>h_SigmaKB1int</name></member>
+    <member refid="structSimulationData_1a2d85cfb3ed6358f2f412cc8202f3d8c3" kind="variable"><name>h_SigmaRB1int</name></member>
+    <member refid="structSimulationData_1a46b5e0d63c95659a42063a2436a83816" kind="variable"><name>h_SigmaKA2int</name></member>
+    <member refid="structSimulationData_1ad4eb6d55f2decca6f5d3dfd88bdcb929" kind="variable"><name>h_SigmaRA2int</name></member>
+    <member refid="structSimulationData_1a273b22315fa254f9a2eb711d28872562" kind="variable"><name>h_SigmaKB2int</name></member>
+    <member refid="structSimulationData_1af4b655dfcf72857f077df50dcaffdc71" kind="variable"><name>h_SigmaRB2int</name></member>
+    <member refid="structSimulationData_1a93fd31644846f6f2cc70ba6d669b3b3e" kind="variable"><name>h_QKA1int</name></member>
+    <member refid="structSimulationData_1ae319597eb47f54fadda96e07acb16af6" kind="variable"><name>h_QRA1int</name></member>
+    <member refid="structSimulationData_1af081f3e8b138528c4271c9c03b83b0d1" kind="variable"><name>h_QKB1int</name></member>
+    <member refid="structSimulationData_1ad0613ad2329a4606741e96ab81b9a6fb" kind="variable"><name>h_QRB1int</name></member>
+    <member refid="structSimulationData_1a0cab8ec6f73080861ca9a30c0143aa5b" kind="variable"><name>h_QKA2int</name></member>
+    <member refid="structSimulationData_1a68d0cf244c320a6929fdb3b0354f9375" kind="variable"><name>h_QRA2int</name></member>
+    <member refid="structSimulationData_1a515f4eda452d31a906b956d904d7897a" kind="variable"><name>h_QKB2int</name></member>
+    <member refid="structSimulationData_1a1e58018c3f46b90583fb0df429ce3c9e" kind="variable"><name>h_QRB2int</name></member>
+    <member refid="structSimulationData_1a9b9bbf178e9344b3f3e98633412e6000" kind="variable"><name>h_convA1_1</name></member>
+    <member refid="structSimulationData_1abd7091c68ec33ac6da48398f2aa53726" kind="variable"><name>h_convA2_1</name></member>
+    <member refid="structSimulationData_1abb65beb97fe01a3b1d021174a1f09a03" kind="variable"><name>h_convA1_2</name></member>
+    <member refid="structSimulationData_1a96ac9f0b3566c7b4c4e8d6db6006b182" kind="variable"><name>h_convA2_2</name></member>
+    <member refid="structSimulationData_1a8ec838b790428633984d083bba9cff66" kind="variable"><name>h_convR_1</name></member>
+    <member refid="structSimulationData_1a46c8365010e9a91c4d1d8de6e27abc14" kind="variable"><name>h_convR_2</name></member>
+    <member refid="structSimulationData_1afec7c06d7ac95bff10fc283e3d5d3ac1" kind="variable"><name>h_convR_3</name></member>
+    <member refid="structSimulationData_1a6bcd803a7105ca3d9775b94c4ddded36" kind="variable"><name>h_convR_4</name></member>
+    <member refid="structSimulationData_1ac208f9665ed27bce4866d17dab1e6886" kind="variable"><name>h_temp0</name></member>
+    <member refid="structSimulationData_1acf52175c719ecbb2b756a45dabd25c9d" kind="variable"><name>h_temp1</name></member>
+    <member refid="structSimulationData_1a7bfea8c62c29ece8518a62f22cb5274a" kind="variable"><name>h_temp2</name></member>
+    <member refid="structSimulationData_1a026f30f5cf31a0bc666eaf8cf3855051" kind="variable"><name>h_temp3</name></member>
+    <member refid="structSimulationData_1a003c62164365b5e0b16d0a9ec3d15ea0" kind="variable"><name>h_temp4</name></member>
+    <member refid="structSimulationData_1abaace6bc111ca23cf12d562c65ac3cd2" kind="variable"><name>h_temp5</name></member>
+    <member refid="structSimulationData_1addffdad502e7a3356f7c7c8ca156daeb" kind="variable"><name>h_temp6</name></member>
+    <member refid="structSimulationData_1add02f82397f3e9dd98da72ca79811397" kind="variable"><name>h_temp7</name></member>
+    <member refid="structSimulationData_1af7bb1d7a4b6a2711e8257191fbf6580c" kind="variable"><name>h_temp8</name></member>
+    <member refid="structSimulationData_1a68f7ebf3dd17c67a2274b36a8eafa03a" kind="variable"><name>h_temp9</name></member>
+    <member refid="structSimulationData_1ae791d0d20204f503a420c670cb911d7b" kind="variable"><name>h_Stemp0</name></member>
+    <member refid="structSimulationData_1a96c0fa396e09c8d99ef5700d11be21d9" kind="variable"><name>h_Stemp1</name></member>
+    <member refid="structSimulationData_1aee8a0d56aaccec4e32d01b5abae51e1a" kind="variable"><name>h_error_result</name></member>
+  </compound>
+  <compound refid="structSimulationDataSnapshot" kind="struct"><name>SimulationDataSnapshot</name>
+    <member refid="structSimulationDataSnapshot_1ad131719a9e80fa1f6bfd36b4d3cdaf23" kind="variable"><name>QKv</name></member>
+    <member refid="structSimulationDataSnapshot_1a1631011f7b9e1a383161efae783135d8" kind="variable"><name>QRv</name></member>
+    <member refid="structSimulationDataSnapshot_1a3e79830a197caca0a02c15cb46d5c7b6" kind="variable"><name>dQKv</name></member>
+    <member refid="structSimulationDataSnapshot_1ae0cce585ba6461cfc84fddeb16405079" kind="variable"><name>dQRv</name></member>
+    <member refid="structSimulationDataSnapshot_1a926f5583c403c49e944c433b3b751a8a" kind="variable"><name>t1grid</name></member>
+    <member refid="structSimulationDataSnapshot_1aa9d099878e81520ae9e0986204b33b6b" kind="variable"><name>rvec</name></member>
+    <member refid="structSimulationDataSnapshot_1a193d4f87e2a134374a558eb2fe2ec786" kind="variable"><name>drvec</name></member>
+    <member refid="structSimulationDataSnapshot_1ac7aa9f94def3846e6f4c2e2c5f1a3fe1" kind="variable"><name>QKB1int</name></member>
+    <member refid="structSimulationDataSnapshot_1aea9b24394fbbed3529fa1ff0de9602a9" kind="variable"><name>QRB1int</name></member>
+    <member refid="structSimulationDataSnapshot_1a62a6b110f526b0e1c989227933ec817c" kind="variable"><name>theta</name></member>
+    <member refid="structSimulationDataSnapshot_1afebd6e115d54de78bd35f5d7bcd6ec04" kind="variable"><name>energy</name></member>
+    <member refid="structSimulationDataSnapshot_1a89490b758c35f8675dd944476ffd738c" kind="variable"><name>t_current</name></member>
+    <member refid="structSimulationDataSnapshot_1a0addf3a5ff06f1220d6fef6702f5292c" kind="variable"><name>current_len</name></member>
+    <member refid="structSimulationDataSnapshot_1a1a987441806cef59c0f0b83cfc8224fe" kind="variable"><name>current_loop</name></member>
+    <member refid="structSimulationDataSnapshot_1ad45c283e1d65079918102705405f2858" kind="variable"><name>config_snapshot</name></member>
+    <member refid="structSimulationDataSnapshot_1abed62c8994809a0aeac46bd7768added" kind="variable"><name>code_version</name></member>
+    <member refid="structSimulationDataSnapshot_1a7dd037da07c07097a2c4e0634d5e648d" kind="variable"><name>git_hash</name></member>
+    <member refid="structSimulationDataSnapshot_1aeba2ca6fdceb9a03e444824ae4a39439" kind="variable"><name>git_branch</name></member>
+    <member refid="structSimulationDataSnapshot_1a4b51ae55b9191d709bc8cf99f6459407" kind="variable"><name>git_tag</name></member>
+    <member refid="structSimulationDataSnapshot_1ac68bdba709a91caf66f954a04513a446" kind="variable"><name>build_date</name></member>
+    <member refid="structSimulationDataSnapshot_1a424ac4646d7386a3da772c3022ab3b55" kind="variable"><name>build_time</name></member>
+    <member refid="structSimulationDataSnapshot_1a3cc5dd9cc28762b3b14beab54f69d278" kind="variable"><name>compiler_version</name></member>
+    <member refid="structSimulationDataSnapshot_1ab529aa765842dd6b224b3ef2eb154c41" kind="variable"><name>cuda_version</name></member>
+    <member refid="structSimulationDataSnapshot_1a88ef910f7754c1be46b33e2f286b708a" kind="variable"><name>git_dirty</name></member>
+    <member refid="structSimulationDataSnapshot_1ad19ddd4defa0417273c3736c6cc1995a" kind="variable"><name>peak_memory_kb_snapshot</name></member>
+    <member refid="structSimulationDataSnapshot_1a3a752e3da6ee95f32cefcc5f195c6519" kind="variable"><name>peak_gpu_memory_mb_snapshot</name></member>
+    <member refid="structSimulationDataSnapshot_1a18bd4a9b5a19a07dff85f418e9a85449" kind="variable"><name>program_start_time_snapshot</name></member>
+  </compound>
+  <compound refid="structVersionAnalysis" kind="struct"><name>VersionAnalysis</name>
+    <member refid="structVersionAnalysis_1a4cdf4f2c82283f10103012dd9dbc5160" kind="variable"><name>level</name></member>
+    <member refid="structVersionAnalysis_1a0ef3a5671f5f2a8df77b5d8df9f601c6" kind="variable"><name>file_version</name></member>
+    <member refid="structVersionAnalysis_1aa95cb56503d5fe3ee0b45e278d35614c" kind="variable"><name>current_version</name></member>
+    <member refid="structVersionAnalysis_1a196344f2c176a5a8c9a9b1c448600cdb" kind="variable"><name>warnings</name></member>
+    <member refid="structVersionAnalysis_1a59996ba429ece5bb803c335e875dc0b0" kind="variable"><name>errors</name></member>
+  </compound>
+  <compound refid="structVersionInfo" kind="struct"><name>VersionInfo</name>
+    <member refid="structVersionInfo_1aaae85b6eb7ee5bfa48539bc689d9b6f4" kind="variable"><name>git_hash</name></member>
+    <member refid="structVersionInfo_1a2819a990f499bd82cc7bc4987a9435ce" kind="variable"><name>git_branch</name></member>
+    <member refid="structVersionInfo_1aadefa3bf7d5693632b0b1a5fcc7093a3" kind="variable"><name>git_tag</name></member>
+    <member refid="structVersionInfo_1ab8f11fca5cc3040829911c5889dcaaa0" kind="variable"><name>git_dirty</name></member>
+    <member refid="structVersionInfo_1a451890c2446bc11e94d55c6d5df5ef55" kind="variable"><name>build_date</name></member>
+    <member refid="structVersionInfo_1acfc07b491906b743e25fdb6b698806af" kind="variable"><name>build_time</name></member>
+    <member refid="structVersionInfo_1ab04ce2cb6e5a6e45e093891b92b57b71" kind="variable"><name>compiler_version</name></member>
+    <member refid="structVersionInfo_1a608ba806e9568199e4ef993d1e3f2b49" kind="variable"><name>cuda_version</name></member>
+    <member refid="structVersionInfo_1a57d862f62351ea01681d2d720ce0fa51" kind="variable"><name>code_version</name></member>
+    <member refid="structVersionInfo_1ad0e2cc9f19dd56befca4aeaf54e77c7d" kind="function"><name>VersionInfo</name></member>
+    <member refid="structVersionInfo_1a4658ffcc6cab47c3285931379d4e4c56" kind="function"><name>toString</name></member>
+  </compound>
+  <compound refid="namespaceh5rt" kind="namespace"><name>h5rt</name>
+    <member refid="h5__runtime_8hpp_1a9b58a0eec29a346abff460a0b386f2c8" kind="typedef"><name>hid_t</name></member>
+    <member refid="h5__runtime_8hpp_1ae6d8991eb439b36ce3df70d2833d8ffd" kind="typedef"><name>herr_t</name></member>
+    <member refid="h5__runtime_8hpp_1a296c383082d979720d578d0be6e6ee51" kind="typedef"><name>hsize_t</name></member>
+    <member refid="h5__runtime_8hpp_1ad53f2fac4dd1d5176f8c9adee81b0f46" kind="function"><name>try_load</name></member>
+    <member refid="h5__runtime_8hpp_1aea1d045b87ea182985f1b48fbe470377" kind="function"><name>available</name></member>
+    <member refid="h5__runtime_8hpp_1aca2dc4ac7e6143d41b6dfde3fad8bdf0" kind="function"><name>unload</name></member>
+    <member refid="h5__runtime_8hpp_1aa953aef490cf6d35cb7e44883dd839e6" kind="function"><name>open_file_readonly</name></member>
+    <member refid="h5__runtime_8hpp_1a1de8b246486153675bd104052b1336a1" kind="function"><name>create_file_trunc</name></member>
+    <member refid="h5__runtime_8hpp_1ae4e8687063ff8ca95f26bc30a079712d" kind="function"><name>close_file</name></member>
+    <member refid="h5__runtime_8hpp_1aa0a6283ab15ef860b1190bff98a6d038" kind="function"><name>read_attr_double</name></member>
+    <member refid="h5__runtime_8hpp_1a8f9945dd9700ee14f5c25156bd9b45db" kind="function"><name>read_attr_int</name></member>
+    <member refid="h5__runtime_8hpp_1a216aa445558c5a2b239f0e0b49cd8e55" kind="function"><name>write_attr_double</name></member>
+    <member refid="h5__runtime_8hpp_1acb24b077accc370f611f73131d5d952f" kind="function"><name>write_attr_int</name></member>
+    <member refid="h5__runtime_8hpp_1aa0698114bdb9ed9335d00696e6ae8046" kind="function"><name>write_attr_string</name></member>
+    <member refid="h5__runtime_8hpp_1a68383c2fd5f65d274bae5b278dc62780" kind="function"><name>read_dataset_1d_double</name></member>
+    <member refid="h5__runtime_8hpp_1a8ef1db298122c233832d7f193d66749e" kind="function"><name>write_dataset_1d_double</name></member>
+    <member refid="h5__runtime_8hpp_1a486ea93bc5d94eb36750ebd0a4221344" kind="function"><name>dataset_length</name></member>
+  </compound>
+  <compound refid="namespaceh5rt_1_1_0d39" kind="namespace"><name>h5rt::@39</name>
+  </compound>
+  <compound refid="namespacestd" kind="namespace"><name>std</name>
+  </compound>
+  <compound refid="convolution_8hpp" kind="file"><name>convolution.hpp</name>
+    <member refid="convolution_8hpp_1a5a8da8d755ec533afc54bc7694a007c6" kind="function"><name>ConvA</name></member>
+    <member refid="convolution_8hpp_1a2f9f58df415cf7a22fe0880b73958249" kind="function"><name>ConvR</name></member>
+  </compound>
+  <compound refid="compute__utils_8hpp" kind="file"><name>compute_utils.hpp</name>
+  </compound>
+  <compound refid="config_8hpp" kind="file"><name>config.hpp</name>
+    <member refid="config_8hpp_1a87271b2bd0c7da201eff5cf8d413a249" kind="function"><name>parseCommandLineArguments</name></member>
+  </compound>
+  <compound refid="config__build_8hpp" kind="file"><name>config_build.hpp</name>
+    <member refid="config__build_8hpp_1aca96db020219e3812d047b7c54b584b2" kind="define"><name>DMFE_WITH_CUDA</name></member>
+    <member refid="config__build_8hpp_1afcac957850d81c585e744e5e073b4e3f" kind="define"><name>DMFE_DEVICE</name></member>
+    <member refid="config__build_8hpp_1a527ae09abfaf0f2d7fdd55c0bfe7a8d6" kind="define"><name>DMFE_HOST</name></member>
+    <member refid="config__build_8hpp_1ac82981ec376ab23bf48483de41f50525" kind="define"><name>DMFE_GLOBAL</name></member>
+    <member refid="config__build_8hpp_1a0d4cd2cc2b138293b1e31d2e7d38bf87" kind="define"><name>DMFE_HOST_DEVICE</name></member>
+  </compound>
+  <compound refid="device__constants_8hpp" kind="file"><name>device_constants.hpp</name>
+    <member refid="device__constants_8hpp_1a60371665d15f062cfb3e37ea17cd450c" kind="variable"><name>d_p</name></member>
+    <member refid="device__constants_8hpp_1aa5675a79c1ecb880894396a559ba8429" kind="variable"><name>d_p2</name></member>
+    <member refid="device__constants_8hpp_1aaf0f2b3f901a02b7ec0c589ba426db02" kind="variable"><name>d_lambda</name></member>
+  </compound>
+  <compound refid="globals_8hpp" kind="file"><name>globals.hpp</name>
+    <member refid="globals_8hpp_1a533391314665d6bf1b5575e9a9cd8552" kind="variable"><name>p</name></member>
+    <member refid="globals_8hpp_1a2fbbf5056a49832e7d5e73a15ae2ee05" kind="variable"><name>p2</name></member>
+    <member refid="globals_8hpp_1a3db359547eed8cfd48ca821d95f577af" kind="variable"><name>lambda</name></member>
+    <member refid="globals_8hpp_1a1e2619d2ecd49e1f23752c58d8afd78d" kind="variable"><name>TMCT</name></member>
+    <member refid="globals_8hpp_1aba4220058003f271df0152d8662d3a6d" kind="variable"><name>T0</name></member>
+    <member refid="globals_8hpp_1a1a0cbbb118b67bb2a3f1f682c0dad85b" kind="variable"><name>Gamma</name></member>
+    <member refid="globals_8hpp_1afa35e8f9048f2670170f4811febe339d" kind="variable"><name>maxLoop</name></member>
+    <member refid="globals_8hpp_1a43ae19b38898eb210d6c4a85fa9d66bf" kind="variable"><name>resultsDir</name></member>
+    <member refid="globals_8hpp_1a22615816f65048b646e4451c167f747a" kind="variable"><name>outputDir</name></member>
+    <member refid="globals_8hpp_1a398527b3e9e358c345c5047b16871957" kind="variable"><name>debug</name></member>
+    <member refid="globals_8hpp_1a883c18cdb18f3c36a226a7cf83e6bae0" kind="variable"><name>save_output</name></member>
+    <member refid="globals_8hpp_1abb35e1061ebe407930e0f8325712d6fc" kind="variable"><name>tmax</name></member>
+    <member refid="globals_8hpp_1a4dd00daeec1186d9c9ea341f2fe52160" kind="variable"><name>delta_t_min</name></member>
+    <member refid="globals_8hpp_1a22404f3f77d50ed8487e7ba6da3937c9" kind="variable"><name>delta_max</name></member>
+    <member refid="globals_8hpp_1ad953a2ae451a345ae3a80383bc2a889d" kind="variable"><name>rmax</name></member>
+    <member refid="globals_8hpp_1a9ea1a8f5ef3e6d20b362385e1288c72c" kind="variable"><name>delta</name></member>
+    <member refid="globals_8hpp_1af0cfea67c075ced255c9ab4cddfc035b" kind="variable"><name>delta_old</name></member>
+    <member refid="globals_8hpp_1ad667f040f2932c8097435492fbd10d76" kind="variable"><name>loop</name></member>
+    <member refid="globals_8hpp_1a31abbd12abe134e46ba4981b1bc84b60" kind="variable"><name>specRad</name></member>
+    <member refid="globals_8hpp_1a4cfc079302fe9a34fe24637c4e44303a" kind="variable"><name>delta_t</name></member>
+    <member refid="globals_8hpp_1a7360b55975153b822efc5217b7734e6a" kind="variable"><name>len</name></member>
+    <member refid="globals_8hpp_1a58b41a56981bfd3377d51592c8bf4b68" kind="variable"><name>ord</name></member>
+    <member refid="globals_8hpp_1a374c9049920d56cfb1ef13f06d45aa4a" kind="variable"><name>gpu</name></member>
+    <member refid="globals_8hpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="globals_8hpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+  </compound>
+  <compound refid="gpu__memory__utils_8hpp" kind="file"><name>gpu_memory_utils.hpp</name>
+    <member refid="gpu__memory__utils_8hpp_1a94959bb9786a1624f931a54a08375eaf" kind="function"><name>copyVectorsToGPU</name></member>
+    <member refid="gpu__memory__utils_8hpp_1ae4113e199d2856131aa8b98743cfd8b7" kind="function"><name>copyVectorsToCPU</name></member>
+    <member refid="gpu__memory__utils_8hpp_1a010ff7dffaee1cc245c55a95f6b01630" kind="function"><name>clearAllDeviceVectors</name></member>
+    <member refid="gpu__memory__utils_8hpp_1a579d92e29c35408a350f5c341fe82123" kind="function"><name>clearAllHostVectors</name></member>
+  </compound>
+  <compound refid="host__device__utils_8hpp" kind="file"><name>host_device_utils.hpp</name>
+    <member refid="host__device__utils_8hpp_1ab1adf401f552d2a5e638ea512a9e0596" kind="function"><name>Product</name></member>
+    <member refid="host__device__utils_8hpp_1a81619d7bb66aad76fb09928e5fcaf902" kind="function"><name>scaleVec</name></member>
+    <member refid="host__device__utils_8hpp_1a63f9ce3a7073b39af1bde0d93d9c0254" kind="function"><name>printVectorDifference</name></member>
+    <member refid="host__device__utils_8hpp_1aa8b9765aa613bcad813ce6ea5b47c183" kind="function"><name>SubtractGPU</name></member>
+    <member refid="host__device__utils_8hpp_1a063ee9c4c021abb2890e053c09e46501" kind="function"><name>scalarMultiply</name></member>
+    <member refid="host__device__utils_8hpp_1a68b6bdbd06731e5da8727ce73e74c762" kind="function"><name>scalarMultiply_ptr</name></member>
+    <member refid="host__device__utils_8hpp_1a3337130ca07ef82431d81ac4ef97dba9" kind="function"><name>AddSubtractGPU</name></member>
+    <member refid="host__device__utils_8hpp_1aec475cd393cc963ea24db2c1f9564a54" kind="function"><name>FusedUpdate</name></member>
+  </compound>
+  <compound refid="host__utils_8hpp" kind="file"><name>host_utils.hpp</name>
+    <member refid="host__utils_8hpp_1a8e1f544f1a0946d6c6a1a577b268c671" kind="function"><name>Product</name></member>
+    <member refid="host__utils_8hpp_1ad8a7c6065f7f925de1cde863b9a6a836" kind="function"><name>scaleVec</name></member>
+    <member refid="host__utils_8hpp_1a63f9ce3a7073b39af1bde0d93d9c0254" kind="function"><name>printVectorDifference</name></member>
+  </compound>
+  <compound refid="initialization_8hpp" kind="file"><name>initialization.hpp</name>
+    <member refid="initialization_8hpp_1a02fd73d861ef2e4aabb38c0c9ff82947" kind="function"><name>init</name></member>
+  </compound>
+  <compound refid="stream__pool_8hpp" kind="file"><name>stream_pool.hpp</name>
+  </compound>
+  <compound refid="vector__utils_8hpp" kind="file"><name>vector_utils.hpp</name>
+    <member refid="vector__utils_8hpp_1a763ef0b41074a61bb784c80fded87465" kind="function"><name>operator+=</name></member>
+    <member refid="vector__utils_8hpp_1ad2db6cb36e2e4457d4eeb284031eac91" kind="function"><name>operator+</name></member>
+    <member refid="vector__utils_8hpp_1a2ec220a686d1089d40359d67ba5b99f8" kind="function"><name>operator-</name></member>
+    <member refid="vector__utils_8hpp_1ac1da7606a329c502be75b4ec475e24d5" kind="function"><name>operator*</name></member>
+    <member refid="vector__utils_8hpp_1a30a0abc9a8b1490d3b3dd582e8bafad6" kind="function"><name>operator*</name></member>
+    <member refid="vector__utils_8hpp_1ad4e69a37c5a2618104bfb072f1353f9f" kind="function"><name>operator*</name></member>
+  </compound>
+  <compound refid="rk__data_8hpp" kind="file"><name>rk_data.hpp</name>
+  </compound>
+  <compound refid="runge__kutta_8hpp" kind="file"><name>runge_kutta.hpp</name>
+    <member refid="runge__kutta_8hpp_1ab3480cdcca7a81c6d16ea21aea9554c9" kind="function"><name>SSPRK104</name></member>
+    <member refid="runge__kutta_8hpp_1a7224fa30b1c84cbf6dea3029aff80008" kind="function"><name>RK54</name></member>
+    <member refid="runge__kutta_8hpp_1a425bfbdcecbf020d76e6637828cc93c5" kind="function"><name>init_RK54GPU</name></member>
+    <member refid="runge__kutta_8hpp_1af81aa065bd73762369930fab5d59bdda" kind="function"><name>init_SSPRK104GPU</name></member>
+    <member refid="runge__kutta_8hpp_1aad08cc6f145833cdf2c260d85d8659ea" kind="function"><name>init_SERK2</name></member>
+    <member refid="runge__kutta_8hpp_1ac82fb1d81d9506a9d2600d3f9714733a" kind="function"><name>update</name></member>
+    <member refid="runge__kutta_8hpp_1a07758e288e5b8c7e7a74bb2cc3df7891" kind="function"><name>chebyshevT_ld</name></member>
+    <member refid="runge__kutta_8hpp_1ab0ce48b63b564d3b5f904ae6acec7023" kind="function"><name>chebyshevU_ld</name></member>
+    <member refid="runge__kutta_8hpp_1af8ce9fe7aa8fb804edda6b7815961111" kind="function"><name>gaussianElimination_ld</name></member>
+    <member refid="runge__kutta_8hpp_1a75f4533ff9103c374ef30eb3e2e267dd" kind="function"><name>SERKcoeffs</name></member>
+  </compound>
+  <compound refid="time__steps_8hpp" kind="file"><name>time_steps.hpp</name>
+    <member refid="time__steps_8hpp_1a575f905f1d8ee87e24b11c982ab65b5c" kind="function"><name>getLastLenEntries</name></member>
+    <member refid="time__steps_8hpp_1a4bedc4d9c4efa0e27a390a2f52f9d39d" kind="function"><name>QKstep</name></member>
+    <member refid="time__steps_8hpp_1a434d8e032bda49451ee9d20db67aa535" kind="function"><name>QRstep</name></member>
+    <member refid="time__steps_8hpp_1a621a6dceccc3e8fd7e0f5f1b3901f4a7" kind="function"><name>rstep</name></member>
+    <member refid="time__steps_8hpp_1a08c33f5c32dbcfe386e9832b8f904af2" kind="function"><name>drstep</name></member>
+    <member refid="time__steps_8hpp_1a0ab2db8c2c3072a6dbc9e5ee66e7e3e0" kind="function"><name>drstep2</name></member>
+    <member refid="time__steps_8hpp_1a78181fb4f87d12060bbb6b5c62845044" kind="function"><name>appendAll</name></member>
+    <member refid="time__steps_8hpp_1a297ad4cad28f40e3793d1957d9f3b280" kind="function"><name>replaceAll</name></member>
+  </compound>
+  <compound refid="index__mat_8hpp" kind="file"><name>index_mat.hpp</name>
+    <member refid="index__mat_8hpp_1ab5e4182d53515a2ca6299f8a22d047fb" kind="function"><name>indexMatAll</name></member>
+  </compound>
+  <compound refid="index__vec_8hpp" kind="file"><name>index_vec.hpp</name>
+    <member refid="index__vec_8hpp_1a1cdcf5dbe245dada57dd84e9c573642c" kind="function"><name>indexVecLN3</name></member>
+    <member refid="index__vec_8hpp_1a70b2236bd0d0886b1461b3f4f967cddf" kind="function"><name>indexVecN</name></member>
+    <member refid="index__vec_8hpp_1a7f53b6c52016e8bd437e13e2fbd5256b" kind="function"><name>indexVecR2</name></member>
+  </compound>
+  <compound refid="interpolation__core_8hpp" kind="file"><name>interpolation_core.hpp</name>
+    <member refid="interpolation__core_8hpp_1aae07ee7c58613542f86b098386aaa10b" kind="function"><name>interpolate</name></member>
+  </compound>
+  <compound refid="h5__runtime_8hpp" kind="file"><name>h5_runtime.hpp</name>
+  </compound>
+  <compound refid="io__utils_8hpp" kind="file"><name>io_utils.hpp</name>
+    <member refid="io__utils_8hpp_1ab1800b463f048dab67db68b9a167b31b" kind="function"><name>importVectorFromFile</name></member>
+    <member refid="io__utils_8hpp_1ad98ae49f90c7868460b0f33d92dae61a" kind="function"><name>importIntVectorFromFile</name></member>
+    <member refid="io__utils_8hpp_1adb7eadc224c53307a8b7188fae9144e5" kind="function"><name>import</name></member>
+    <member refid="io__utils_8hpp_1a78867d3a05846f5b473da0d1a30c5f60" kind="function"><name>setupOutputDirectory</name></member>
+    <member refid="io__utils_8hpp_1af76ca3bd6e2f011b5be5d61a06a4ffb6" kind="function"><name>getParameterDirPath</name></member>
+    <member refid="io__utils_8hpp_1a69fad26b671fb107970b78f781f99446" kind="function"><name>findExistingParamDir</name></member>
+    <member refid="io__utils_8hpp_1a5e915d313aee03bba572d46606f392dd" kind="function"><name>ensureDirectoryExists</name></member>
+    <member refid="io__utils_8hpp_1add70673c288d5527012844a5aca9762d" kind="function"><name>getFilename</name></member>
+    <member refid="io__utils_8hpp_1afdd89841220a8b18e39e0844a833a18b" kind="function"><name>fileExists</name></member>
+    <member refid="io__utils_8hpp_1a42420a2540f8db50414747590f6915e4" kind="function"><name>loadSimulationStateBinary</name></member>
+    <member refid="io__utils_8hpp_1afb0cfc43ff866e2803613b52164f36e3" kind="function"><name>checkParametersMatch</name></member>
+    <member refid="io__utils_8hpp_1aff04b9e712d7b8aaa763fc64e451c15e" kind="function"><name>loadSimulationState</name></member>
+    <member refid="io__utils_8hpp_1a01ba35ea54b46b461017064224344424" kind="function"><name>saveHistory</name></member>
+    <member refid="io__utils_8hpp_1a2a088dc37e5b1f7406af33cae3133b08" kind="function"><name>saveParametersToFile</name></member>
+    <member refid="io__utils_8hpp_1ab9b417d6c536c2720e5cb63091025789" kind="function"><name>saveSimulationStateBinary</name></member>
+    <member refid="io__utils_8hpp_1a88c483abace85ae090be53f4300f59a4" kind="function"><name>saveSimulationState</name></member>
+    <member refid="io__utils_8hpp_1a40a571e7c3476875911262ca0ccdee08" kind="function"><name>saveCompressedData</name></member>
+    <member refid="io__utils_8hpp_1ae08c461a1ef939fbedc73ed901407141" kind="function"><name>waitForAsyncSavesToComplete</name></member>
+    <member refid="io__utils_8hpp_1ae87c00b45d604429e1d10c1fede26d63" kind="function"><name>createDataSnapshot</name></member>
+    <member refid="io__utils_8hpp_1af8888b29fd209bda13e43dcf7b96a76a" kind="function"><name>saveHistoryAsync</name></member>
+    <member refid="io__utils_8hpp_1aa977188403ea8ef1e17556ad62ee6703" kind="function"><name>saveCompressedDataAsync</name></member>
+    <member refid="io__utils_8hpp_1a96df0851c9cd89da0191e6457b0de548" kind="function"><name>getCurrentTimestamp</name></member>
+    <member refid="io__utils_8hpp_1aede64208104ba4d67f0feb645241a89d" kind="function"><name>getRuntimeSeconds</name></member>
+    <member refid="io__utils_8hpp_1a2e4474b035486c3f7feae2138f9331ff" kind="function"><name>formatDuration</name></member>
+    <member refid="io__utils_8hpp_1a64d74aaa2b6fe580417bcf5172bb65d1" kind="function"><name>getGPUInfo</name></member>
+    <member refid="io__utils_8hpp_1ae001c0d646c1766e529a07af244e7aa6" kind="function"><name>formatMemory</name></member>
+  </compound>
+  <compound refid="math__ops_8hpp" kind="file"><name>math_ops.hpp</name>
+    <member refid="math__ops_8hpp_1aa1edda9c37187adb0cd95ea9a0886c4c" kind="function"><name>pow_const</name></member>
+    <member refid="math__ops_8hpp_1a09897e0c3b121fb978b37ab27f738176" kind="function"><name>pow_const&lt; 0 &gt;</name></member>
+    <member refid="math__ops_8hpp_1a2d1d3b444f177ccaef51a81775a741f1" kind="function"><name>pow_const&lt;-1 &gt;</name></member>
+    <member refid="math__ops_8hpp_1a3e2e1e81efc0a2b9f389be2f9bf3be21" kind="function"><name>pow_int</name></member>
+    <member refid="math__ops_8hpp_1a181b9732c71543ab14ad8dc6082fe87a" kind="function"><name>max_device</name></member>
+    <member refid="math__ops_8hpp_1aea25d380589ccb1c154701f5d9cc2b2e" kind="function"><name>max_device</name></member>
+    <member refid="math__ops_8hpp_1ac0b6e876812f4958e6995246cda3474e" kind="function"><name>min_device</name></member>
+    <member refid="math__ops_8hpp_1aae1abfe8ee5068a1b4811694d5aaa555" kind="function"><name>min_device</name></member>
+    <member refid="math__ops_8hpp_1a763996575d19bfd277b9cbc1cc41bbc6" kind="function"><name>flambda</name></member>
+    <member refid="math__ops_8hpp_1aee49334157b8c2e47de4a9936c95cf02" kind="function"><name>Dflambda</name></member>
+    <member refid="math__ops_8hpp_1a54600d1c5b4eb515c86f1908f58a6dae" kind="function"><name>DDflambda</name></member>
+    <member refid="math__ops_8hpp_1a1549ac7e2f2fed6278ba44af83106e91" kind="function"><name>DDDflambda</name></member>
+  </compound>
+  <compound refid="math__sigma_8hpp" kind="file"><name>math_sigma.hpp</name>
+    <member refid="math__sigma_8hpp_1a9cc127e2ea539d6caa6e2ece45ca9e33" kind="function"><name>SigmaK</name></member>
+    <member refid="math__sigma_8hpp_1a336cd9f4ed0489d6d8eb8b0b71fe30f4" kind="function"><name>SigmaR</name></member>
+    <member refid="math__sigma_8hpp_1a53befaace59309f21053ab3e3bb2706c" kind="function"><name>SigmaK10</name></member>
+    <member refid="math__sigma_8hpp_1a3668a78ac7a06a25846536d9f387bfce" kind="function"><name>SigmaR10</name></member>
+    <member refid="math__sigma_8hpp_1ab0032a8cb38e530334f10f60c12e27ea" kind="function"><name>SigmaK01</name></member>
+    <member refid="math__sigma_8hpp_1acee63f89c53e0ab66abfd5c5482594ae" kind="function"><name>SigmaR01</name></member>
+  </compound>
+  <compound refid="search__utils_8hpp" kind="file"><name>search_utils.hpp</name>
+    <member refid="search__utils_8hpp_1a5ed7fcc9a27ec859bd085f427d14d863" kind="function"><name>bsearchPosSorted</name></member>
+    <member refid="search__utils_8hpp_1a8d744a49b67731d616b601785ff1b82f" kind="function"><name>isearchPosSortedInit</name></member>
+  </compound>
+  <compound refid="simulation__control_8hpp" kind="file"><name>simulation_control.hpp</name>
+    <member refid="simulation__control_8hpp_1a11f6e6cb4ee7b491ff8a76018fd16c06" kind="function"><name>rollbackState</name></member>
+  </compound>
+  <compound refid="simulation__data_8hpp" kind="file"><name>simulation_data.hpp</name>
+  </compound>
+  <compound refid="simulation__runner_8hpp" kind="file"><name>simulation_runner.hpp</name>
+    <member refid="simulation__runner_8hpp_1a83df0e9d228b8cff99357941a61d53ef" kind="variable"><name>program_start_time</name></member>
+    <member refid="simulation__runner_8hpp_1a98cf9ee72ba225d4b40136d2e8aabe1b" kind="function"><name>runSimulation</name></member>
+    <member refid="simulation__runner_8hpp_1a78dfd3f20c5db7f4c334e0453c72bf74" kind="function"><name>runPerformanceBenchmark</name></member>
+    <member refid="simulation__runner_8hpp_1abee230f1c24e778f25308945e623124f" kind="function"><name>runPerformanceBenchmarkCPU</name></member>
+  </compound>
+  <compound refid="sparsify__utils_8hpp" kind="file"><name>sparsify_utils.hpp</name>
+    <member refid="sparsify__utils_8hpp_1ab1d4f66d423f4ba92fb7e405242a19e4" kind="function"><name>sparsifyNscale</name></member>
+  </compound>
+  <compound refid="version__compat_8hpp" kind="file"><name>version_compat.hpp</name>
+    <member refid="version__compat_8hpp_1aeff2285f574a7072e12fa93a53d1638a" kind="function"><name>analyzeVersionCompatibility</name></member>
+    <member refid="version__compat_8hpp_1ac975f3ca4c44649f87d3509d9c610a96" kind="function"><name>checkVersionCompatibilityInteractive</name></member>
+    <member refid="version__compat_8hpp_1aa92b9183310e9563474c8ca5784e1a73" kind="function"><name>checkVersionCompatibility</name></member>
+    <member refid="version__compat_8hpp_1adfda93ccc133a489888ac542af9b29dd" kind="function"><name>checkVersionCompatibilityBasic</name></member>
+  </compound>
+  <compound refid="version__info_8hpp" kind="file"><name>version_info.hpp</name>
+    <member refid="version__info_8hpp_1a3e92eea191532fcc12951520ddf5360e" kind="enum"><name>VersionCompatibility</name></member>
+    <member refid="version__info_8hpp_1a3e92eea191532fcc12951520ddf5360ea7852bf96315765cb871ea033379014ad" kind="enumvalue"><name>IDENTICAL</name></member>
+    <member refid="version__info_8hpp_1a3e92eea191532fcc12951520ddf5360eacb9beb01da7f065f6ad47e2f3c3e0666" kind="enumvalue"><name>COMPATIBLE</name></member>
+    <member refid="version__info_8hpp_1a3e92eea191532fcc12951520ddf5360ea059e9861e0400dfbe05c98a841f3f96b" kind="enumvalue"><name>WARNING</name></member>
+    <member refid="version__info_8hpp_1a3e92eea191532fcc12951520ddf5360ea424d6b8018e601e0f5e1532db1741b91" kind="enumvalue"><name>INCOMPATIBLE</name></member>
+    <member refid="version__info_8hpp_1a94233969426ac50f7fcf53cc4f5851bb" kind="variable"><name>g_version_info</name></member>
+  </compound>
+  <compound refid="convolution_8cpp" kind="file"><name>convolution.cpp</name>
+    <member refid="convolution_8cpp_1a5a8da8d755ec533afc54bc7694a007c6" kind="function"><name>ConvA</name></member>
+    <member refid="convolution_8cpp_1a2f9f58df415cf7a22fe0880b73958249" kind="function"><name>ConvR</name></member>
+  </compound>
+  <compound refid="config_8cpp" kind="file"><name>config.cpp</name>
+    <member refid="config_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="config_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="config_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="config_8cpp_1a87271b2bd0c7da201eff5cf8d413a249" kind="function"><name>parseCommandLineArguments</name></member>
+  </compound>
+  <compound refid="device__utils_8cpp" kind="file"><name>device_utils.cpp</name>
+    <member refid="device__utils_8cpp_1a805d23e5d63db268809f0ea293527b45" kind="variable"><name>peak_memory_kb</name></member>
+    <member refid="device__utils_8cpp_1ab88f481fe2bb9611fd0f35cb47cbc2c7" kind="variable"><name>peak_gpu_memory_mb</name></member>
+    <member refid="device__utils_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="device__utils_8cpp_1a2a1684bed67377ecc499483079c9b880" kind="function"><name>isHDF5Available</name></member>
+    <member refid="device__utils_8cpp_1ac9836050d8b860cb584f2aa2c967bc65" kind="function"><name>getCurrentMemoryUsage</name></member>
+    <member refid="device__utils_8cpp_1a6d4cc5111d6601646003c865065e0235" kind="function"><name>getGPUMemoryUsage</name></member>
+    <member refid="device__utils_8cpp_1a3664344981c20603b198af6933e2b400" kind="function"><name>getAvailableGPUMemory</name></member>
+    <member refid="device__utils_8cpp_1a5cd5dcb14a6e92ab4ad7f586392e5674" kind="function"><name>getTotalGPUMemory</name></member>
+    <member refid="device__utils_8cpp_1a76b5734350d63610bfdbe5f0210bf040" kind="function"><name>updatePeakMemory</name></member>
+    <member refid="device__utils_8cpp_1a4eeeacba2fc1201c43d42a4f5145b825" kind="function"><name>getHostname</name></member>
+  </compound>
+  <compound refid="host__utils_8cpp" kind="file"><name>host_utils.cpp</name>
+    <member refid="host__utils_8cpp_1a6e5f60d9e844107c7237631ed895c7ca" kind="function"><name>Product</name></member>
+    <member refid="host__utils_8cpp_1a0f923e4305ea64fce29a7bc8723fe7d3" kind="function"><name>Sum</name></member>
+    <member refid="host__utils_8cpp_1a5a6ed17e5ecb64e88629d07d19e3b2d7" kind="function"><name>Subtract</name></member>
+    <member refid="host__utils_8cpp_1aa49f1879cb792455a28cabeecd188ffe" kind="function"><name>scaleVec</name></member>
+  </compound>
+  <compound refid="initialization_8cpp" kind="file"><name>initialization.cpp</name>
+    <member refid="initialization_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="initialization_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="initialization_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="initialization_8cpp_1a02fd73d861ef2e4aabb38c0c9ff82947" kind="function"><name>init</name></member>
+  </compound>
+  <compound refid="runge__kutta_8cpp" kind="file"><name>runge_kutta.cpp</name>
+    <member refid="runge__kutta_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="runge__kutta_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="runge__kutta_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="runge__kutta_8cpp_1ab3480cdcca7a81c6d16ea21aea9554c9" kind="function"><name>SSPRK104</name></member>
+    <member refid="runge__kutta_8cpp_1a7224fa30b1c84cbf6dea3029aff80008" kind="function"><name>RK54</name></member>
+    <member refid="runge__kutta_8cpp_1ac82fb1d81d9506a9d2600d3f9714733a" kind="function"><name>update</name></member>
+  </compound>
+  <compound refid="time__steps_8cpp" kind="file"><name>time_steps.cpp</name>
+    <member refid="time__steps_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="time__steps_8cpp_1aa9bf64a53864b4299ad7c3cd0572bb10" kind="function"><name>getLastLenEntries</name></member>
+    <member refid="time__steps_8cpp_1a9e96d19912e73043015644a45cc8d5ff" kind="function"><name>QKstep</name></member>
+    <member refid="time__steps_8cpp_1af9878997f2d07fce7589adeed60e8178" kind="function"><name>replaceAll</name></member>
+    <member refid="time__steps_8cpp_1a621a6dceccc3e8fd7e0f5f1b3901f4a7" kind="function"><name>rstep</name></member>
+    <member refid="time__steps_8cpp_1adfd06c33282dbfb311397ef2055f8726" kind="function"><name>QRstep</name></member>
+    <member refid="time__steps_8cpp_1a08c33f5c32dbcfe386e9832b8f904af2" kind="function"><name>drstep</name></member>
+    <member refid="time__steps_8cpp_1acdd369429f1a287851d850d5fa6b3645" kind="function"><name>drstep2</name></member>
+    <member refid="time__steps_8cpp_1a99a8c96756f11731469da3cef882f451" kind="function"><name>appendAll</name></member>
+  </compound>
+  <compound refid="index__mat_8cpp" kind="file"><name>index_mat.cpp</name>
+    <member refid="index__mat_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="index__mat_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="index__mat_8cpp_1ac5694d5892aac8186e2c952f80348b6d" kind="function"><name>indexMatAll</name></member>
+  </compound>
+  <compound refid="index__vec_8cpp" kind="file"><name>index_vec.cpp</name>
+    <member refid="index__vec_8cpp_1a1cdcf5dbe245dada57dd84e9c573642c" kind="function"><name>indexVecLN3</name></member>
+    <member refid="index__vec_8cpp_1a70b2236bd0d0886b1461b3f4f967cddf" kind="function"><name>indexVecN</name></member>
+    <member refid="index__vec_8cpp_1a7f53b6c52016e8bd437e13e2fbd5256b" kind="function"><name>indexVecR2</name></member>
+  </compound>
+  <compound refid="interpolation__core_8cpp" kind="file"><name>interpolation_core.cpp</name>
+    <member refid="interpolation__core_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="interpolation__core_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="interpolation__core_8cpp_1a3bab41cae037bef1f75fba0715a54068" kind="function"><name>interpolate</name></member>
+  </compound>
+  <compound refid="h5__runtime_8cpp" kind="file"><name>h5_runtime.cpp</name>
+  </compound>
+  <compound refid="io__input_8cpp" kind="file"><name>io_input.cpp</name>
+    <member refid="io__input_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="io__input_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="io__input_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="io__input_8cpp_1a805d23e5d63db268809f0ea293527b45" kind="variable"><name>peak_memory_kb</name></member>
+    <member refid="io__input_8cpp_1ab88f481fe2bb9611fd0f35cb47cbc2c7" kind="variable"><name>peak_gpu_memory_mb</name></member>
+    <member refid="io__input_8cpp_1a83df0e9d228b8cff99357941a61d53ef" kind="variable"><name>program_start_time</name></member>
+    <member refid="io__input_8cpp_1ac9a6fbdc326485ee2a3ad3271eca35d9" kind="variable"><name>saveMutex</name></member>
+    <member refid="io__input_8cpp_1a5ede90fca645e08e7126e828ef7ee491" kind="variable"><name>saveInProgress</name></member>
+    <member refid="io__input_8cpp_1ab68ba2545ddf61a5f6396e93343cf969" kind="variable"><name>saveCondition</name></member>
+    <member refid="io__input_8cpp_1ab1800b463f048dab67db68b9a167b31b" kind="function"><name>importVectorFromFile</name></member>
+    <member refid="io__input_8cpp_1ad98ae49f90c7868460b0f33d92dae61a" kind="function"><name>importIntVectorFromFile</name></member>
+    <member refid="io__input_8cpp_1adb7eadc224c53307a8b7188fae9144e5" kind="function"><name>import</name></member>
+    <member refid="io__input_8cpp_1a42420a2540f8db50414747590f6915e4" kind="function"><name>loadSimulationStateBinary</name></member>
+    <member refid="io__input_8cpp_1afb0cfc43ff866e2803613b52164f36e3" kind="function"><name>checkParametersMatch</name></member>
+    <member refid="io__input_8cpp_1aff04b9e712d7b8aaa763fc64e451c15e" kind="function"><name>loadSimulationState</name></member>
+  </compound>
+  <compound refid="io__output_8cpp" kind="file"><name>io_output.cpp</name>
+    <member refid="io__output_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="io__output_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="io__output_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="io__output_8cpp_1a805d23e5d63db268809f0ea293527b45" kind="variable"><name>peak_memory_kb</name></member>
+    <member refid="io__output_8cpp_1ab88f481fe2bb9611fd0f35cb47cbc2c7" kind="variable"><name>peak_gpu_memory_mb</name></member>
+    <member refid="io__output_8cpp_1a83df0e9d228b8cff99357941a61d53ef" kind="variable"><name>program_start_time</name></member>
+    <member refid="io__output_8cpp_1ac9a6fbdc326485ee2a3ad3271eca35d9" kind="variable"><name>saveMutex</name></member>
+    <member refid="io__output_8cpp_1a5ede90fca645e08e7126e828ef7ee491" kind="variable"><name>saveInProgress</name></member>
+    <member refid="io__output_8cpp_1ab68ba2545ddf61a5f6396e93343cf969" kind="variable"><name>saveCondition</name></member>
+    <member refid="io__output_8cpp_1a78867d3a05846f5b473da0d1a30c5f60" kind="function"><name>setupOutputDirectory</name></member>
+    <member refid="io__output_8cpp_1a2a088dc37e5b1f7406af33cae3133b08" kind="function"><name>saveParametersToFile</name></member>
+    <member refid="io__output_8cpp_1aba779e50413efb908972ae19343718ef" kind="function"><name>saveParametersToFileAsync</name></member>
+    <member refid="io__output_8cpp_1ab9b417d6c536c2720e5cb63091025789" kind="function"><name>saveSimulationStateBinary</name></member>
+    <member refid="io__output_8cpp_1a88c483abace85ae090be53f4300f59a4" kind="function"><name>saveSimulationState</name></member>
+    <member refid="io__output_8cpp_1a40a571e7c3476875911262ca0ccdee08" kind="function"><name>saveCompressedData</name></member>
+    <member refid="io__output_8cpp_1aa977188403ea8ef1e17556ad62ee6703" kind="function"><name>saveCompressedDataAsync</name></member>
+  </compound>
+  <compound refid="io__utils_8cpp" kind="file"><name>io_utils.cpp</name>
+    <member refid="io__utils_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="io__utils_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="io__utils_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="io__utils_8cpp_1a805d23e5d63db268809f0ea293527b45" kind="variable"><name>peak_memory_kb</name></member>
+    <member refid="io__utils_8cpp_1ab88f481fe2bb9611fd0f35cb47cbc2c7" kind="variable"><name>peak_gpu_memory_mb</name></member>
+    <member refid="io__utils_8cpp_1a83df0e9d228b8cff99357941a61d53ef" kind="variable"><name>program_start_time</name></member>
+    <member refid="io__utils_8cpp_1ac9a6fbdc326485ee2a3ad3271eca35d9" kind="variable"><name>saveMutex</name></member>
+    <member refid="io__utils_8cpp_1a5ede90fca645e08e7126e828ef7ee491" kind="variable"><name>saveInProgress</name></member>
+    <member refid="io__utils_8cpp_1ab68ba2545ddf61a5f6396e93343cf969" kind="variable"><name>saveCondition</name></member>
+    <member refid="io__utils_8cpp_1a69fad26b671fb107970b78f781f99446" kind="function"><name>findExistingParamDir</name></member>
+    <member refid="io__utils_8cpp_1af76ca3bd6e2f011b5be5d61a06a4ffb6" kind="function"><name>getParameterDirPath</name></member>
+    <member refid="io__utils_8cpp_1a5e915d313aee03bba572d46606f392dd" kind="function"><name>ensureDirectoryExists</name></member>
+    <member refid="io__utils_8cpp_1add70673c288d5527012844a5aca9762d" kind="function"><name>getFilename</name></member>
+    <member refid="io__utils_8cpp_1afdd89841220a8b18e39e0844a833a18b" kind="function"><name>fileExists</name></member>
+    <member refid="io__utils_8cpp_1a96df0851c9cd89da0191e6457b0de548" kind="function"><name>getCurrentTimestamp</name></member>
+    <member refid="io__utils_8cpp_1aede64208104ba4d67f0feb645241a89d" kind="function"><name>getRuntimeSeconds</name></member>
+    <member refid="io__utils_8cpp_1a2e4474b035486c3f7feae2138f9331ff" kind="function"><name>formatDuration</name></member>
+    <member refid="io__utils_8cpp_1a64d74aaa2b6fe580417bcf5172bb65d1" kind="function"><name>getGPUInfo</name></member>
+    <member refid="io__utils_8cpp_1ae001c0d646c1766e529a07af244e7aa6" kind="function"><name>formatMemory</name></member>
+    <member refid="io__utils_8cpp_1ae08c461a1ef939fbedc73ed901407141" kind="function"><name>waitForAsyncSavesToComplete</name></member>
+  </compound>
+  <compound refid="math__ops_8cpp" kind="file"><name>math_ops.cpp</name>
+    <member refid="math__ops_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="math__ops_8cpp_1a3e2e1e81efc0a2b9f389be2f9bf3be21" kind="function"><name>pow_int</name></member>
+    <member refid="math__ops_8cpp_1a763996575d19bfd277b9cbc1cc41bbc6" kind="function"><name>flambda</name></member>
+    <member refid="math__ops_8cpp_1aee49334157b8c2e47de4a9936c95cf02" kind="function"><name>Dflambda</name></member>
+    <member refid="math__ops_8cpp_1a54600d1c5b4eb515c86f1908f58a6dae" kind="function"><name>DDflambda</name></member>
+    <member refid="math__ops_8cpp_1a1549ac7e2f2fed6278ba44af83106e91" kind="function"><name>DDDflambda</name></member>
+  </compound>
+  <compound refid="math__sigma_8cpp" kind="file"><name>math_sigma.cpp</name>
+    <member refid="math__sigma_8cpp_1a336cd9f4ed0489d6d8eb8b0b71fe30f4" kind="function"><name>SigmaR</name></member>
+    <member refid="math__sigma_8cpp_1a53befaace59309f21053ab3e3bb2706c" kind="function"><name>SigmaK10</name></member>
+    <member refid="math__sigma_8cpp_1a3668a78ac7a06a25846536d9f387bfce" kind="function"><name>SigmaR10</name></member>
+    <member refid="math__sigma_8cpp_1ab0032a8cb38e530334f10f60c12e27ea" kind="function"><name>SigmaK01</name></member>
+    <member refid="math__sigma_8cpp_1acee63f89c53e0ab66abfd5c5482594ae" kind="function"><name>SigmaR01</name></member>
+    <member refid="math__sigma_8cpp_1a9cc127e2ea539d6caa6e2ece45ca9e33" kind="function"><name>SigmaK</name></member>
+  </compound>
+  <compound refid="search__utils_8cpp" kind="file"><name>search_utils.cpp</name>
+    <member refid="search__utils_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="search__utils_8cpp_1a77aa1f95a9e9635a5139ca7d49c70da8" kind="function"><name>bsearchPosSorted</name></member>
+    <member refid="search__utils_8cpp_1a48ecbddcce91cef72498c3257cdcee48" kind="function"><name>isearchPosSortedInit</name></member>
+  </compound>
+  <compound refid="simulation__control_8cpp" kind="file"><name>simulation_control.cpp</name>
+    <member refid="simulation__control_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="simulation__control_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="simulation__control_8cpp_1a11f6e6cb4ee7b491ff8a76018fd16c06" kind="function"><name>rollbackState</name></member>
+  </compound>
+  <compound refid="simulation__runner_8cpp" kind="file"><name>simulation_runner.cpp</name>
+    <member refid="simulation__runner_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="simulation__runner_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="simulation__runner_8cpp_1af4a17926086ec89a6c6fc5f5d71f4add" kind="variable"><name>rk</name></member>
+    <member refid="simulation__runner_8cpp_1a83df0e9d228b8cff99357941a61d53ef" kind="variable"><name>program_start_time</name></member>
+    <member refid="simulation__runner_8cpp_1a3f3b2c9e975492967a57518d9379b941" kind="variable"><name>last_rollback_loop</name></member>
+    <member refid="simulation__runner_8cpp_1a98cf9ee72ba225d4b40136d2e8aabe1b" kind="function"><name>runSimulation</name></member>
+    <member refid="simulation__runner_8cpp_1abee230f1c24e778f25308945e623124f" kind="function"><name>runPerformanceBenchmarkCPU</name></member>
+  </compound>
+  <compound refid="sparsify__utils_8cpp" kind="file"><name>sparsify_utils.cpp</name>
+    <member refid="sparsify__utils_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="sparsify__utils_8cpp_1afb8ad48f4f2efe85e08d42761ca726b8" kind="variable"><name>sim</name></member>
+    <member refid="sparsify__utils_8cpp_1ab1d4f66d423f4ba92fb7e405242a19e4" kind="function"><name>sparsifyNscale</name></member>
+  </compound>
+  <compound refid="version__compat_8cpp" kind="file"><name>version_compat.cpp</name>
+    <member refid="version__compat_8cpp_1a1842d4a46f92faf25254230519ec1e6a" kind="variable"><name>config</name></member>
+    <member refid="version__compat_8cpp_1a37b54d8f90c28fce1d145fa4454447cc" kind="function"><name>parseVersion</name></member>
+    <member refid="version__compat_8cpp_1ae24e5235ac3fcc15104f3072d926b905" kind="function"><name>areVersionsCompatible</name></member>
+    <member refid="version__compat_8cpp_1aeff2285f574a7072e12fa93a53d1638a" kind="function"><name>analyzeVersionCompatibility</name></member>
+    <member refid="version__compat_8cpp_1aa92b9183310e9563474c8ca5784e1a73" kind="function"><name>checkVersionCompatibility</name></member>
+    <member refid="version__compat_8cpp_1ac975f3ca4c44649f87d3509d9c610a96" kind="function"><name>checkVersionCompatibilityInteractive</name></member>
+    <member refid="version__compat_8cpp_1adfda93ccc133a489888ac542af9b29dd" kind="function"><name>checkVersionCompatibilityBasic</name></member>
+  </compound>
+  <compound refid="version__info_8cpp" kind="file"><name>version_info.cpp</name>
+    <member refid="version__info_8cpp_1a94233969426ac50f7fcf53cc4f5851bb" kind="variable"><name>g_version_info</name></member>
+    <member refid="version__info_8cpp_1a29008e6f5b7a1bff422addd31e7e552d" kind="function"><name>executeCommand</name></member>
+  </compound>
+  <compound refid="dir_0526376b7d705cfd18246583cc744400" kind="dir"><name>include/convolution</name>
+  </compound>
+  <compound refid="dir_977f0d85213d1c0a2b0ea3ba623898ac" kind="dir"><name>src/convolution</name>
+  </compound>
+  <compound refid="dir_3d69f64eaf81436fe2b22361382717e5" kind="dir"><name>include/core</name>
+  </compound>
+  <compound refid="dir_aebb8dcc11953d78e620bbef0b9e2183" kind="dir"><name>src/core</name>
+  </compound>
+  <compound refid="dir_83be10f670bb840c41694965c43f3a32" kind="dir"><name>include/EOMs</name>
+  </compound>
+  <compound refid="dir_e6a5e5db728316b1a4b09925952320c7" kind="dir"><name>src/EOMs</name>
+  </compound>
+  <compound refid="dir_d44c64559bbebec7f509842c48db8b23" kind="dir"><name>include</name>
+  </compound>
+  <compound refid="dir_ea83490dbd4389009a2a56ec983809d4" kind="dir"><name>include/interpolation</name>
+  </compound>
+  <compound refid="dir_264890e5c091f8c8d7fe1f842870c25e" kind="dir"><name>src/interpolation</name>
+  </compound>
+  <compound refid="dir_a00b633439466cbb1729245c7f66f564" kind="dir"><name>include/io</name>
+  </compound>
+  <compound refid="dir_c184e51c84f2c3f0345bbc8a0d75d3e1" kind="dir"><name>src/io</name>
+  </compound>
+  <compound refid="dir_fba38f648377aa56ae5d69782adf9e53" kind="dir"><name>include/math</name>
+  </compound>
+  <compound refid="dir_ae9a93452e2a84339148a16bcf2eb561" kind="dir"><name>src/math</name>
+  </compound>
+  <compound refid="dir_2ab7ad9e86ff0e4c92d707b7bffee438" kind="dir"><name>include/search</name>
+  </compound>
+  <compound refid="dir_5e53e25df8c865d23c4f0f620d3a69fb" kind="dir"><name>src/search</name>
+  </compound>
+  <compound refid="dir_5b4f22f4782ab9e132490b62f43f6146" kind="dir"><name>include/simulation</name>
+  </compound>
+  <compound refid="dir_d73d1ee04cc237a5854777ea99c55872" kind="dir"><name>src/simulation</name>
+  </compound>
+  <compound refid="dir_238e3a4ec86abaf09785f68dca201524" kind="dir"><name>include/sparsify</name>
+  </compound>
+  <compound refid="dir_4bac3dea29742ccc5665dc2f2e1074c7" kind="dir"><name>src/sparsify</name>
+  </compound>
+  <compound refid="dir_68267d1309a1af8e8297ef4c3efbcdba" kind="dir"><name>src</name>
+  </compound>
+  <compound refid="dir_476129e3082391e07f146eb5b309e711" kind="dir"><name>include/version</name>
+  </compound>
+  <compound refid="dir_f208d550dbffb9fb7a9061b68ff675d7" kind="dir"><name>src/version</name>
+  </compound>
+</doxygenindex>

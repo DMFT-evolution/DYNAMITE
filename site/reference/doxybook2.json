@@ -1,0 +1,23 @@
+{
+  "input": "docs/reference/doxygen/xml",
+  "output": "docs/reference/api",
+  "templates": "",
+  "prefixFileExtensions": false,
+  "indexInFolders": true,
+  "createTreeView": true,
+  "linkSuffix": ".md",
+  "fileExtension": ".md",
+  "singlePage": false,
+  "collapseSimpleNamespaces": true,
+  "collapseSimpleStructs": true,
+  "ignoreSymbols": [
+    "std::detail::*"
+  ],
+  "mainPage": "index.md",
+  "pageName": "API Reference",
+  "referencesSubdir": "references",
+  "summary": {
+    "enable": true,
+    "name": "Summary"
+  }
+}

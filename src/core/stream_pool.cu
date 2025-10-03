@@ -1,4 +1,4 @@
-#include "stream_pool.hpp"
+#include "core/stream_pool.hpp"
 #include <stdexcept>
 
 StreamPool::StreamPool(size_t N) {

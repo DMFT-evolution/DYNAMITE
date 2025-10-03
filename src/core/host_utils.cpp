@@ -1,4 +1,4 @@
-#include "host_utils.hpp"
+#include "core/host_utils.hpp"
 #include <omp.h>
 #include <iostream>
 #include <cmath>

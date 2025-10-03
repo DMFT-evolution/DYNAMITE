@@ -11,19 +11,19 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
-#include "include/simulation_data.hpp" // SimulationData definition
-#include "include/rk_data.hpp" // RKData definition
-#include "include/version_info.hpp" // versioning system
-#include "include/config.hpp" // simulation configuration struct
-#include "include/initialization.hpp" // main initialization function
-#include "include/simulation_runner.hpp" // main simulation loop
+#include "include/simulation/simulation_data.hpp" // SimulationData definition
+#include "include/EOMs/rk_data.hpp" // RKData definition
+#include "include/version/version_info.hpp" // versioning system
+#include "include/core/config.hpp" // simulation configuration struct
+#include "include/core/initialization.hpp" // main initialization function
+#include "include/simulation/simulation_runner.hpp" // main simulation loop
 
 using namespace std;
 
 // Global configuration and data structures
 SimulationConfig config;
 
-#include "include/device_constants.hpp" // centralized device constant declarations
+#include "include/core/device_constants.hpp" // centralized device constant declarations
 
 SimulationData* sim = nullptr;
 RKData* rk = nullptr;

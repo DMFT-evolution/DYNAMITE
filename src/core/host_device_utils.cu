@@ -1,4 +1,4 @@
-#include "host_device_utils.hpp"
+#include "core/host_device_utils.hpp"
 
 void Product(const std::vector<double>& a, const std::vector<double>& b, std::vector<double>& out) {
     if (a.size() != b.size()) throw std::invalid_argument("Product: size mismatch");

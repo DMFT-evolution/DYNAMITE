@@ -1,0 +1,112 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="host__utils_8hpp" kind="file" language="C++">
+    <compoundname>host_utils.hpp</compoundname>
+    <includes local="no">vector</includes>
+    <includedby refid="host__utils_8cpp" local="yes">src/core/host_utils.cpp</includedby>
+    <includedby refid="simulation__runner_8cpp" local="yes">src/simulation/simulation_runner.cpp</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>include/core/host_utils.hpp</label>
+        <link refid="host__utils_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>vector</label>
+      </node>
+    </incdepgraph>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="host__utils_8hpp_1a8e1f544f1a0946d6c6a1a577b268c671" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void Product</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;vec1, const std::vector&lt; double &gt; &amp;vec2, std::vector&lt; double &gt; &amp;result)</argsstring>
+        <name>Product</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>vec1</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>vec2</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; double &gt; &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/core/host_utils.hpp" line="8" column="6" declfile="include/core/host_utils.hpp" declline="8" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="host__utils_8hpp_1ad8a7c6065f7f925de1cde863b9a6a836" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void scaleVec</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;vec1, double real, std::vector&lt; double &gt; &amp;result)</argsstring>
+        <name>scaleVec</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>vec1</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>real</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; double &gt; &amp;</type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/core/host_utils.hpp" line="10" column="6" declfile="include/core/host_utils.hpp" declline="10" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="host__utils_8hpp_1a63f9ce3a7073b39af1bde0d93d9c0254" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void printVectorDifference</definition>
+        <argsstring>(const std::vector&lt; double &gt; &amp;a, const std::vector&lt; double &gt; &amp;b)</argsstring>
+        <name>printVectorDifference</name>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>a</declname>
+        </param>
+        <param>
+          <type>const std::vector&lt; double &gt; &amp;</type>
+          <declname>b</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/core/host_utils.hpp" line="12" column="6" declfile="include/core/host_utils.hpp" declline="12" declcolumn="6"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="comment">//<sp/>host_utils.hpp<sp/>-<sp/>Small<sp/>host-side<sp/>vector<sp/>helpers<sp/>used<sp/>across<sp/>the<sp/>project</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="3"><highlight class="normal"></highlight></codeline>
+<codeline lineno="4"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;vector&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Thrust<sp/>and<sp/>CUDA<sp/>types<sp/>are<sp/>not<sp/>required<sp/>for<sp/>these<sp/>host-only<sp/>declarations</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Component-wise<sp/>product:<sp/>result[i]<sp/>=<sp/>vec1[i]<sp/>*<sp/>vec2[i]</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>Product(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>vec1,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>vec2,<sp/>std::vector&lt;double&gt;&amp;<sp/>result);</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Scale:<sp/>result[i]<sp/>=<sp/>vec1[i]<sp/>*<sp/>real</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>scaleVec(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>vec1,<sp/></highlight><highlight class="keywordtype">double</highlight><highlight class="normal"><sp/>real,<sp/>std::vector&lt;double&gt;&amp;<sp/>result);</highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="comment">//<sp/>Print<sp/>per-index<sp/>absolute<sp/>differences<sp/>and<sp/>their<sp/>total</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="keywordtype">void</highlight><highlight class="normal"><sp/>printVectorDifference(</highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>a,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/>std::vector&lt;double&gt;&amp;<sp/>b);</highlight></codeline>
+    </programlisting>
+    <location file="include/core/host_utils.hpp"/>
+  </compounddef>
+</doxygen>

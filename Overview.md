@@ -38,7 +38,7 @@ Public headers are under `include/`, sources under `src/`:
   - EOMs: `time_steps.hpp`, `runge_kutta.hpp`, `rk_data.hpp`
   - search: `search_utils.hpp`
   - simulation: `simulation_control.hpp`, `simulation_runner.hpp`, `simulation_data.hpp`
-  - convolution: `convolution.hpp`
+  - convolution: `convolution/convolution.hpp`
   - versioning: `version_info.hpp`, `version_compat.hpp`
   - io runtime: `io/h5_runtime.hpp`
 - `src/` — implementations by module

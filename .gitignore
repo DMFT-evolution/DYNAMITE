@@ -24,6 +24,11 @@ Grid_data/2048/
 *.dll
 *.code-workspace
 
+# Python
+__pycache__/
+*.pyc
+.venv/
+
 # Ignore all pickle data files
 *.p
 

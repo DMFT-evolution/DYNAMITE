@@ -1,6 +1,6 @@
-#include "index_vec.hpp"
-#include "globals.hpp"
-#include "math_ops.hpp"
+#include "interpolation/index_vec.hpp"
+#include "core/globals.hpp"
+#include "math/math_ops.hpp"
 #include <vector>
 #include <omp.h>
 #include <numeric>

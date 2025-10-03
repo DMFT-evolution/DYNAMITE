@@ -1,5 +1,5 @@
-#include "device_utils.cuh"
-#include "config.hpp"
+#include "core/device_utils.cuh"
+#include "core/config.hpp"
 #include <sys/resource.h>
 #include <unistd.h>
 #include <chrono>
@@ -127,29 +127,10 @@ bool isCompatibleGPUInstalled() {
     return false;
 }
 
-// External global variables for peak memory tracking
-size_t peak_memory_kb = 0;
-size_t peak_gpu_memory_mb = 0;
-
-// External declaration for config global variable
+// External declarations
 extern SimulationConfig config;
-
-bool isHDF5Available() {
-#if defined(H5_RUNTIME_OPTIONAL)
-	return h5rt::available();
-#elif defined(USE_HDF5)
-	return true;
-#else
-	return false;
-#endif
-}
-
-// Function to get current memory usage in KB
-size_t getCurrentMemoryUsage() {
-    struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss; // Returns KB on Linux, bytes on macOS
-}
+extern size_t peak_memory_kb;
+extern size_t peak_gpu_memory_mb;
 
 // Function to get GPU memory usage in MB
 size_t getGPUMemoryUsage() {
@@ -196,14 +177,5 @@ void updatePeakMemory() {
             peak_gpu_memory_mb = current_gpu_mem;
         }
     }
-}
-
-// Function to get hostname
-std::string getHostname() {
-    char hostname[256];
-    if (gethostname(hostname, sizeof(hostname)) == 0) {
-        return std::string(hostname);
-    }
-    return "unknown";
 }
 

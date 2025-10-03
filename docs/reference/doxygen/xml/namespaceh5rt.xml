@@ -1,0 +1,371 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.4" xml:lang="en-US">
+  <compounddef id="namespaceh5rt" kind="namespace" language="C++">
+    <compoundname>h5rt</compoundname>
+      <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="h5__runtime_8hpp_1a9b58a0eec29a346abff460a0b386f2c8" prot="public" static="no">
+        <type>long long</type>
+        <definition>using h5rt::hid_t = typedef long long</definition>
+        <argsstring></argsstring>
+        <name>hid_t</name>
+        <qualifiedname>h5rt::hid_t</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/h5_runtime.hpp" line="11" column="1" bodyfile="include/io/h5_runtime.hpp" bodystart="11" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="h5__runtime_8hpp_1ae6d8991eb439b36ce3df70d2833d8ffd" prot="public" static="no">
+        <type>int</type>
+        <definition>using h5rt::herr_t = typedef int</definition>
+        <argsstring></argsstring>
+        <name>herr_t</name>
+        <qualifiedname>h5rt::herr_t</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/h5_runtime.hpp" line="12" column="1" bodyfile="include/io/h5_runtime.hpp" bodystart="12" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="h5__runtime_8hpp_1a296c383082d979720d578d0be6e6ee51" prot="public" static="no">
+        <type>unsigned long long</type>
+        <definition>using h5rt::hsize_t = typedef unsigned long long</definition>
+        <argsstring></argsstring>
+        <name>hsize_t</name>
+        <qualifiedname>h5rt::hsize_t</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="include/io/h5_runtime.hpp" line="13" column="1" bodyfile="include/io/h5_runtime.hpp" bodystart="13" bodyend="-1"/>
+      </memberdef>
+      </sectiondef>
+      <sectiondef kind="func">
+      <memberdef kind="function" id="h5__runtime_8hpp_1ad53f2fac4dd1d5176f8c9adee81b0f46" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::try_load</definition>
+        <argsstring>()</argsstring>
+        <name>try_load</name>
+        <qualifiedname>h5rt::try_load</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="250" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="250" bodyend="253" declfile="include/io/h5_runtime.hpp" declline="16" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1aea1d045b87ea182985f1b48fbe470377" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::available</definition>
+        <argsstring>()</argsstring>
+        <name>available</name>
+        <qualifiedname>h5rt::available</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="255" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="255" bodyend="258" declfile="include/io/h5_runtime.hpp" declline="17" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1aca2dc4ac7e6143d41b6dfde3fad8bdf0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void h5rt::unload</definition>
+        <argsstring>()</argsstring>
+        <name>unload</name>
+        <qualifiedname>h5rt::unload</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="260" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="260" bodyend="270" declfile="include/io/h5_runtime.hpp" declline="18" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1aa953aef490cf6d35cb7e44883dd839e6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>hid_t</type>
+        <definition>hid_t h5rt::open_file_readonly</definition>
+        <argsstring>(const char *path)</argsstring>
+        <name>open_file_readonly</name>
+        <qualifiedname>h5rt::open_file_readonly</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>path</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="272" column="7" bodyfile="src/io/h5_runtime.cpp" bodystart="272" bodyend="275" declfile="include/io/h5_runtime.hpp" declline="23" declcolumn="7"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a1de8b246486153675bd104052b1336a1" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>hid_t</type>
+        <definition>hid_t h5rt::create_file_trunc</definition>
+        <argsstring>(const char *path)</argsstring>
+        <name>create_file_trunc</name>
+        <qualifiedname>h5rt::create_file_trunc</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>path</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="277" column="7" bodyfile="src/io/h5_runtime.cpp" bodystart="277" bodyend="280" declfile="include/io/h5_runtime.hpp" declline="24" declcolumn="7"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1ae4e8687063ff8ca95f26bc30a079712d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void h5rt::close_file</definition>
+        <argsstring>(hid_t file)</argsstring>
+        <name>close_file</name>
+        <qualifiedname>h5rt::close_file</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="282" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="282" bodyend="284" declfile="include/io/h5_runtime.hpp" declline="25" declcolumn="7"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1aa0a6283ab15ef860b1190bff98a6d038" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::read_attr_double</definition>
+        <argsstring>(hid_t file, const char *name, double &amp;out)</argsstring>
+        <name>read_attr_double</name>
+        <qualifiedname>h5rt::read_attr_double</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>double &amp;</type>
+          <declname>out</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="286" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="286" bodyend="298" declfile="include/io/h5_runtime.hpp" declline="28" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a8f9945dd9700ee14f5c25156bd9b45db" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::read_attr_int</definition>
+        <argsstring>(hid_t file, const char *name, int &amp;out)</argsstring>
+        <name>read_attr_int</name>
+        <qualifiedname>h5rt::read_attr_int</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>int &amp;</type>
+          <declname>out</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="300" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="300" bodyend="312" declfile="include/io/h5_runtime.hpp" declline="29" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a216aa445558c5a2b239f0e0b49cd8e55" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::write_attr_double</definition>
+        <argsstring>(hid_t file, const char *name, double value)</argsstring>
+        <name>write_attr_double</name>
+        <qualifiedname>h5rt::write_attr_double</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>value</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="314" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="314" bodyend="328" declfile="include/io/h5_runtime.hpp" declline="30" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1acb24b077accc370f611f73131d5d952f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::write_attr_int</definition>
+        <argsstring>(hid_t file, const char *name, int value)</argsstring>
+        <name>write_attr_int</name>
+        <qualifiedname>h5rt::write_attr_int</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>value</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="330" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="330" bodyend="343" declfile="include/io/h5_runtime.hpp" declline="31" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1aa0698114bdb9ed9335d00696e6ae8046" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::write_attr_string</definition>
+        <argsstring>(hid_t file, const char *name, const std::string &amp;value)</argsstring>
+        <name>write_attr_string</name>
+        <qualifiedname>h5rt::write_attr_string</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>const std::string &amp;</type>
+          <declname>value</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="345" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="345" bodyend="366" declfile="include/io/h5_runtime.hpp" declline="32" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a68383c2fd5f65d274bae5b278dc62780" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::read_dataset_1d_double</definition>
+        <argsstring>(hid_t file, const char *name, std::vector&lt; double &gt; &amp;out)</argsstring>
+        <name>read_dataset_1d_double</name>
+        <qualifiedname>h5rt::read_dataset_1d_double</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>std::vector&lt; double &gt; &amp;</type>
+          <declname>out</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="368" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="368" bodyend="396" declfile="include/io/h5_runtime.hpp" declline="35" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a8ef1db298122c233832d7f193d66749e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool h5rt::write_dataset_1d_double</definition>
+        <argsstring>(hid_t file, const char *name, const double *data, size_t n, int compression_level=6, size_t chunk=4096)</argsstring>
+        <name>write_dataset_1d_double</name>
+        <qualifiedname>h5rt::write_dataset_1d_double</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <param>
+          <type>const double *</type>
+          <declname>data</declname>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>n</declname>
+        </param>
+        <param>
+          <type>int</type>
+          <declname>compression_level</declname>
+          <defval>6</defval>
+        </param>
+        <param>
+          <type>size_t</type>
+          <declname>chunk</declname>
+          <defval>4096</defval>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="398" column="6" bodyfile="src/io/h5_runtime.cpp" bodystart="398" bodyend="417" declfile="include/io/h5_runtime.hpp" declline="36" declcolumn="6"/>
+      </memberdef>
+      <memberdef kind="function" id="h5__runtime_8hpp_1a486ea93bc5d94eb36750ebd0a4221344" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>size_t</type>
+        <definition>size_t h5rt::dataset_length</definition>
+        <argsstring>(hid_t file, const char *name)</argsstring>
+        <name>dataset_length</name>
+        <qualifiedname>h5rt::dataset_length</qualifiedname>
+        <param>
+          <type>hid_t</type>
+          <declname>file</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>name</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="src/io/h5_runtime.cpp" line="419" column="8" bodyfile="src/io/h5_runtime.cpp" bodystart="419" bodyend="430" declfile="include/io/h5_runtime.hpp" declline="40" declcolumn="8"/>
+      </memberdef>
+      </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="include/io/h5_runtime.hpp" line="8" column="1"/>
+  </compounddef>
+</doxygen>
