@@ -28,6 +28,7 @@ Grid_data/2048/
 __pycache__/
 *.pyc
 .venv/
+.venv-docs/
 
 # Ignore all pickle data files
 *.p
