@@ -30,6 +30,9 @@ __pycache__/
 .venv/
 .venv-docs/
 
+# Ignore everything in .vscode by default
+.vscode/
+
 # Ignore all pickle data files
 *.p
 
