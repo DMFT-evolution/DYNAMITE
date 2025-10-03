@@ -38,3 +38,17 @@ __pycache__/
 # Ignore Windows .ini file
 *.ini
 
+
+# Documentation (generated artifacts)
+# MkDocs output
+site/
+
+# Doxygen HTML/XML output
+docs/reference/doxygen/
+
+# Doxybook2 generated API markdown
+docs/reference/api/
+
+# MkDocs local cache (if present)
+.cache/
+

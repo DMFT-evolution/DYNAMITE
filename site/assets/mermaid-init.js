@@ -1,5 +1,0 @@
-window.addEventListener('load', () => {
-  if (window.mermaid) {
-    mermaid.initialize({ startOnLoad: true, theme: 'default' });
-  }
-});
