@@ -1,4 +1,4 @@
-# Interpolation grids (paper-defined, non‑equidistant)
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
 DMFE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (arXiv:2504.06849). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
 

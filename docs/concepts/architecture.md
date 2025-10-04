@@ -1,4 +1,4 @@
-# Architecture
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/architecture.svg" alt="Architecture icon"/> Architecture
 
 The code mirrors physics operations:
 

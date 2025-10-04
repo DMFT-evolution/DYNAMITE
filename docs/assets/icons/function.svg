@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" role="img">
+  <title>Function</title>
+  <desc>Axes with a smooth curve representing a function f(x)</desc>
+  <!-- axes -->
+  <path d="M3 19.5V4.5"/>
+  <path d="M2.5 19H21.5"/>
+  <!-- curve -->
+  <path d="M4 16.5 C 7 6.5, 12 21, 20 7.5"/>
+</svg>

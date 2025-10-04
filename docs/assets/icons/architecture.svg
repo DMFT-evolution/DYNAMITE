@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" role="img">
+  <title>Architecture</title>
+  <desc>Stacked blocks with arrows to indicate layered architecture</desc>
+  <rect x="4" y="4" width="16" height="4" rx="1"/>
+  <rect x="4" y="10" width="16" height="4" rx="1"/>
+  <rect x="4" y="16" width="16" height="4" rx="1"/>
+  <path d="M12 8V10"/>
+  <path d="M12 14V16"/>
+</svg>

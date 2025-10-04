@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64" viewBox="0 0 160 64" role="img" aria-label="DMFE logo">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e88e5"/>
+      <stop offset="100%" stop-color="#5e35b1"/>
+    </linearGradient>
+    <style>
+      .word { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 700; letter-spacing: 0.5px; }
+      .mono { font-family: 'Fira Mono', 'SFMono-Regular', Menlo, Consolas, monospace; font-weight: 600; }
+    </style>
+  </defs>
+  <!-- Symbol: stylized 2D grid with a causal triangle -->
+  <g transform="translate(8,8)">
+    <rect x="0" y="0" width="48" height="48" rx="6" ry="6" fill="url(#g)" opacity="0.18"/>
+    <!-- grid -->
+    <g stroke="#5e35b1" stroke-width="1" opacity="0.45">
+      <path d="M8 8 H48 M8 20 H48 M8 32 H48"/>
+      <path d="M8 8 V48 M20 8 V48 M32 8 V48"/>
+    </g>
+    <!-- causal triangle -->
+    <path d="M8 8 L48 8 L8 48 Z" fill="#1e88e5" opacity="0.35"/>
+    <path d="M8 8 L48 8 L8 48 Z" fill="none" stroke="#1e88e5" stroke-width="2" opacity="0.9"/>
+  </g>
+  <!-- Wordmark -->
+  <g transform="translate(68,42)">
+    <text class="word" x="0" y="0" font-size="28" fill="#263238">DM</text>
+    <text class="word" x="56" y="0" font-size="28" fill="#1e88e5">F</text>
+    <text class="word" x="72" y="0" font-size="28" fill="#5e35b1">E</text>
+  </g>
+</svg>

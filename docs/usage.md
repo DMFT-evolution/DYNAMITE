@@ -1,4 +1,4 @@
-# Usage
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Usage icon"/> Usage
 
 Entry point: `./RG-Evo`. Show all options with `-h`.
 

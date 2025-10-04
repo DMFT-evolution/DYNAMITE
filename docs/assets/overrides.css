@@ -1,0 +1,51 @@
+/* Swap to high-contrast logo in dark (slate) scheme and when header bg reduces contrast */
+:root {
+  --dmfe-logo-default: url('../assets/logo-dmfe.svg');
+  --dmfe-logo-contrast: url('../assets/logo-dmfe-contrast.svg');
+}
+
+/* Material theme header logo element */
+.md-header__button.md-logo img {
+  content: var(--dmfe-logo-default);
+}
+
+/* Prefer contrast variant in dark mode */
+[data-md-color-scheme="slate"] .md-header__button.md-logo img {
+  content: var(--dmfe-logo-contrast);
+}
+
+/* Icon helpers */
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.2em;
+  display: inline-block;
+}
+.icon-sm { width: 1em; height: 1em; }
+.icon-lg { width: 1.5em; height: 1.5em; }
+.icon-xl { width: 2em; height: 2em; }
+
+/* Color helpers using Material CSS variables */
+.icon-primary { color: var(--md-primary-fg-color); }
+.icon-accent  { color: var(--md-accent-fg-color); }
+.icon-muted   { color: var(--md-default-fg-color--light); }
+
+/* Headline spacing for icons placed inside H1–H4 */
+.md-typeset :is(h1,h2,h3,h4) > img.icon {
+  margin-right: 0.35em;
+}
+
+/* Improve contrast of external <img src=...svg> icons in dark mode */
+[data-md-color-scheme="slate"] .md-typeset img.icon {
+  filter: invert(0.9) brightness(1.2);
+}
+
+/* Headline icons: spacing and dark-mode visibility for external SVGs via <img> */
+.md-typeset :is(h1,h2,h3) img.icon { margin-right: .35em; }
+[data-md-color-scheme="slate"] .md-typeset :is(h1,h2,h3) img.icon { filter: invert(1) brightness(1.2); }
+
+
+/* Optional: if header primary color is blue (low contrast), force contrast logo */
+[data-md-color-primary="blue"] .md-header__button.md-logo img {
+  content: var(--dmfe-logo-contrast);
+}

@@ -1,4 +1,4 @@
-# Contributing
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/file.svg" alt="Contributing icon"/> Contributing
 
 Thanks for your interest in contributing to DMFE!
 

@@ -12,6 +12,8 @@ theme:
     - content.footnote.tooltips
     - search.suggest
     - search.highlight
+  logo: assets/logo-dmfe.svg
+  favicon: assets/logo-dmfe.svg
   palette:
     - scheme: default
       primary: blue
@@ -35,6 +37,9 @@ markdown_extensions:
   - pymdownx.superfences
   - pymdownx.highlight
   - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.critic
   - pymdownx.tasklist:
       custom_checkbox: true
@@ -51,6 +56,8 @@ plugins:
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+extra_css:
+  - assets/overrides.css
 
 nav:
   - Home: index.md

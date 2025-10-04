@@ -1,4 +1,4 @@
-# How-to: Add a New Observable
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/function.svg" alt="Observable icon"/> How-to: Add a New Observable
 
 1) Define data structure in `include/simulation/simulation_data.hpp` (or suitable module).
 2) Compute it in the time step (SERK2/RK) or post-step hook.

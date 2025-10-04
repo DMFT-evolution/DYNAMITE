@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" role="img">
+  <title>GPU</title>
+  <desc>Graphics/compute processor chip with parallel lanes</desc>
+  <rect x="5" y="5" width="14" height="14" rx="2"/>
+  <!-- pins -->
+  <path d="M8 3V5"/><path d="M12 3V5"/><path d="M16 3V5"/>
+  <path d="M8 19V21"/><path d="M12 19V21"/><path d="M16 19V21"/>
+  <path d="M3 8H5"/><path d="M3 12H5"/><path d="M3 16H5"/>
+  <path d="M19 8H21"/><path d="M19 12H21"/><path d="M19 16H21"/>
+  <!-- parallel lanes -->
+  <path d="M8.5 9.5 L15.5 9.5"/>
+  <path d="M8.5 12 L15.5 12"/>
+  <path d="M8.5 14.5 L15.5 14.5"/>
+</svg>

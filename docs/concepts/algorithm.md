@@ -1,4 +1,4 @@
-# Algorithm (from Lang–Sachdev–Diehl, arXiv:2504.06849)
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, arXiv:2504.06849)
 
 This section summarizes the numerical renormalization algorithm implemented in DMFE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
 
@@ -29,7 +29,8 @@ Important: DMFE uses exactly the non-equidistant, nested grid defined in the arX
 - Precompute interpolation structures (positions, indices, weights) on a base grid of length L; these are used for fast 2D interpolation.
 - History is organized in layers corresponding to renormalized time scales; layers can be coarsened as t grows while keeping error below a tolerance.
 
-Symbols in outputs:
+## Symbols in outputs
+
 - `QKv`, `QRv`: grid samples of C and R
 - `dQKv`, `dQRv`: their time derivatives
 - `t1grid`: time nodes used by the integrator

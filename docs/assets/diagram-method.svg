@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="580" viewBox="0 0 920 580" role="img" aria-label="DMFE method pipeline">
+  <defs>
+    <style>
+      .box { fill: #e8f4f8; stroke: #1976d2; stroke-width: 1.8; }
+      .decision { fill: #fff9c4; stroke: #f57c00; stroke-width: 1.6; }
+      .title { font: 600 13px sans-serif; fill: #01579b; }
+      .note { font: 11px sans-serif; fill: #37474f; }
+      .cond { font: 11px sans-serif; fill: #e65100; font-style: italic; }
+      .arrow { fill: none; stroke: #1976d2; stroke-width: 2; marker-end: url(#arrow); }
+      .arrow-back { fill: none; stroke: #d32f2f; stroke-width: 2; marker-end: url(#arrow-red); stroke-dasharray: 5 3; }
+      .arrow-cond { fill: none; stroke: #f57c00; stroke-width: 1.8; marker-end: url(#arrow-orange); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1976d2" />
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#d32f2f" />
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#f57c00" />
+    </marker>
+  </defs>
+  
+  <!-- Main loop header -->
+  <g transform="translate(20,20)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="880" height="50"/>
+    <text class="title" x="16" y="24">Main time loop: while (t &lt; tmax &amp;&amp; loop &lt; maxLoop &amp;&amp; delta_t ≥ delta_t_min)</text>
+    <text class="note" x="16" y="40">Each iteration advances t by delta_t; adaptive stepping and method switching</text>
+  </g>
+  
+  <!-- Step 1: Update via integrator -->
+  <g transform="translate(340,100)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="240" height="56"/>
+    <text class="title" x="16" y="22">delta = update() or updateGPU()</text>
+    <text class="note" x="16" y="40">Calls RK54, SSPRK104, or SERK2</text>
+  </g>
+  <path class="arrow" d="M460,70 V100"/>
+  
+  <!-- Inside integrator: multi-stage loop -->
+  <g transform="translate(100,190)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="720" height="110"/>
+    <text class="title" x="16" y="22">For each RK stage (n = 0 .. stages-1):</text>
+    <text class="note" x="16" y="42">1. interpolate() – 2D sparse grid lookup for history</text>
+    <text class="note" x="16" y="60">2. QKstep() – compute dC/dt via convolutions (ConvA, ConvR)</text>
+    <text class="note" x="16" y="78">3. QRstep() – compute dR/dt via convolutions</text>
+    <text class="note" x="16" y="96">4. appendAll() or replaceAll() – update state vectors (QKv, QRv, t1grid, rvec)</text>
+  </g>
+  <path class="arrow" d="M460,156 V190"/>
+  
+  <!-- Decision: periodic sparsify? -->
+  <g transform="translate(340,330)">
+    <path class="decision" d="M120,0 L240,0 L240,44 L120,44 Z" stroke-width="1.6"/>
+    <text class="cond" x="130" y="18">loop % 100000 == 0?</text>
+    <text class="note" x="130" y="36" style="font-size:10px;">Sparsify + interpolate</text>
+  </g>
+  <path class="arrow" d="M460,300 V330"/>
+  
+  <!-- Sparsify branch -->
+  <g transform="translate(640,340)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="240" height="56"/>
+    <text class="title" x="12" y="20">sparsifyNscale()</text>
+    <text class="note" x="12" y="36">Prune grid points</text>
+    <text class="note" x="12" y="50">then interpolate()</text>
+  </g>
+  <path class="arrow-cond" d="M580,352 H640"/>
+  <text class="note" x="590" y="348" style="fill:#f57c00;">Yes</text>
+  
+  <!-- Continue main path -->
+  <path class="arrow" d="M460,374 V410"/>
+  <text class="note" x="470" y="395">No</text>
+  
+  <!-- Decision: adaptive timestep -->
+  <g transform="translate(310,410)">
+    <path class="decision" d="M150,0 L300,0 L300,50 L150,50 Z" stroke-width="1.6"/>
+    <text class="cond" x="160" y="18">delta &lt; delta_max?</text>
+    <text class="note" x="160" y="34" style="font-size:10px;">Grow delta_t by 1.01</text>
+    <text class="note" x="160" y="46" style="font-size:10px;">else shrink by 0.9 if too large</text>
+  </g>
+  <path class="arrow" d="M460,410 V410"/>
+  
+  <!-- Decision: method switch RK54 ↔ SSPRK104 -->
+  <g transform="translate(280,490)">
+    <path class="decision" d="M180,0 L360,0 L360,50 L180,50 Z" stroke-width="1.6"/>
+    <text class="cond" x="190" y="18">delta &gt; delta_max &amp; method=SSPRK104?</text>
+    <text class="note" x="190" y="36" style="font-size:10px;">Switch to RK54, halve delta_t</text>
+  </g>
+  <path class="arrow" d="M460,460 V490"/>
+  
+  <!-- Rollback path (GPU only) -->
+  <g transform="translate(50,490)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="180" height="50" style="fill:#ffebee;"/>
+    <text class="title" x="12" y="20" style="fill:#c62828;">rollbackState(10)</text>
+    <text class="note" x="12" y="36">If delta &gt; 2*delta_max</text>
+  </g>
+  <path class="arrow-cond" d="M460,520 H240 Q230,520 230,510 V100 Q230,90 240,90 H340"/>
+  <text class="note" x="245" y="300" style="fill:#d32f2f;font-size:10px;">rollback (GPU)</text>
+  
+  <!-- Back to top of loop -->
+  <path class="arrow-back" d="M460,540 H840 Q850,540 850,530 V40 Q850,30 840,30 H460"/>
+  <text class="note" x="860" y="285" style="fill:#d32f2f;">Next iteration</text>
+  
+  <!-- CPU / GPU note at bottom -->
+  <g transform="translate(340,565)">
+    <text class="note" x="0" y="0" style="font-weight:600;">CPU: OpenMP + vectorization | GPU: CUDA kernels (auto-detected)</text>
+  </g>
+</svg>

@@ -1,4 +1,4 @@
-# Install & Build
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/cpu.svg" alt="Install icon"/> Install & Build
 
 DMFE builds with CMake for CPU and optionally CUDA GPUs.
 

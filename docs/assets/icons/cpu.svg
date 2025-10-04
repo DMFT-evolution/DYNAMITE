@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" role="img">
+  <title>CPU</title>
+  <desc>Processor chip</desc>
+  <rect x="6" y="6" width="12" height="12" rx="2"/>
+  <!-- pins -->
+  <path d="M9 4V6"/><path d="M12 4V6"/><path d="M15 4V6"/>
+  <path d="M9 18V20"/><path d="M12 18V20"/><path d="M15 18V20"/>
+  <path d="M4 9H6"/><path d="M4 12H6"/><path d="M4 15H6"/>
+  <path d="M18 9H20"/><path d="M18 12H20"/><path d="M18 15H20"/>
+  <!-- core -->
+  <rect x="9" y="9" width="6" height="6" rx="1"/>
+</svg>

@@ -1,4 +1,4 @@
-# Testing
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Testing icon"/> Testing
 
 Lightweight validation strategy:
 
@@ -6,5 +6,6 @@ Lightweight validation strategy:
 - Use `RegressionRuns/` to compare outputs between branches
 - Verify CLI help (`-h`) matches docs after option changes
 
-Future work:
+## Future work
+
 - Add scripted sanity tests that parse small outputs and compare invariants

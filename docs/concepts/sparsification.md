@@ -1,4 +1,4 @@
-# Sparsification
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
 
 Sparsification preserves asymptotic efficiency by pruning history with controlled error. The pruning criterion and reconstruction exactly match the implementation in `src/sparsify/`.
 
@@ -18,7 +18,8 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 	$\displaystyle s\,\big\lvert 2\,(r[i]-r[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d r[i-1]}{\Delta_1} + \tfrac{\mathrm d r[i+1]}{\Delta_3}\big) \big\rvert.$
 - If the total is below the threshold, node i is erasable; otherwise it is kept.
 
-Index reconstruction and derivative scaling:
+## Index reconstruction and derivative scaling
+
 - Build the kept index list `inds` including $0$ and $N-1$.
 - Build `indsD` by shifting interior kept indices by $+1$ for derivative‑anchored data; set `indsD[0]=0`.
 - Compute `tfac` per kept chunk: `tfac[0]=1`, and for `i > 0`
@@ -31,12 +32,14 @@ $$
 	- dQK, dQR, dr use `indsD` and are multiplied by tfac to preserve derivative consistency under grid compression.
 - Compress `t1grid` with `inds` and recompute $\Delta t$ and `delta_t_ratio` as $\Delta t_i/\Delta t_{i-1}$ for $i \ge 2$.
 
-Cadence and modes:
+## Cadence and modes
+
 - The GPU implementation evaluates flags at even indices for efficiency; CPU checks all interior indices.
 - Aggressive vs conservative modes only change the threshold value and sweep cadence; the mechanism is identical.
 - After sparsification, the code may try SERK2 briefly; disable via `--serk2=false` if desired.
 
-Choosing a threshold:
+## Choosing a threshold
+
 - Start from the default (tuned for len and ε) and validate on short runs by comparing C and R slices and derived observables (energy, gFDR/FDT diagnostics) with sparsification off. Increase threshold for more compression; decrease for more accuracy.
 
 Implementation references: `include/sparsify/sparsify_utils.hpp`, `src/sparsify/sparsify_utils.cpp` (CPU), `src/sparsify/sparsify_utils.cu` (GPU). Post‑prune, interpolation is re‑initialized automatically by downstream calls.

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" role="img">
+  <title>Convolution</title>
+  <desc>Two signals combining to a result, representing convolution</desc>
+  <!-- signal A -->
+  <path d="M3 14 C 5 10, 7 18, 9 14 C 11 10, 13 18, 15 14"/>
+  <!-- signal B (kernel) -->
+  <path d="M5 8 C 7 6, 9 10, 11 8 C 13 6, 15 10, 17 8"/>
+  <!-- combine marker -->
+  <path d="M19 6 L19 18"/>
+  <path d="M16 12 L22 12"/>
+</svg>

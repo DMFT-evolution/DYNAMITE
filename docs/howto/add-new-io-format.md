@@ -1,4 +1,4 @@
-# How-to: Add a New IO Format
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/file.svg" alt="IO icon"/> How-to: Add a New IO Format
 
 1) Extend `src/io/` with a writer/reader for the new format.
 2) Integrate with existing async export flow (respect `--async-export`).

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="64" viewBox="0 0 160 64" role="img" aria-label="DMFE logo (high contrast)">
+  <defs>
+    <linearGradient id="gc" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff6f00"/>
+      <stop offset="100%" stop-color="#d32f2f"/>
+    </linearGradient>
+    <style>
+      .word { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; letter-spacing: 0.4px; }
+    </style>
+  </defs>
+  <!-- Symbol: stylized 2D grid with a causal triangle, high-contrast warm gradient -->
+  <g transform="translate(8,8)">
+    <rect x="0" y="0" width="48" height="48" rx="6" ry="6" fill="url(#gc)" opacity="0.25"/>
+    <g stroke="#ff6f00" stroke-width="1" opacity="0.7">
+      <path d="M8 8 H48 M8 20 H48 M8 32 H48"/>
+      <path d="M8 8 V48 M20 8 V48 M32 8 V48"/>
+    </g>
+    <path d="M8 8 L48 8 L8 48 Z" fill="#ff6f00" opacity="0.5"/>
+    <path d="M8 8 L48 8 L8 48 Z" fill="none" stroke="#ffd180" stroke-width="2" opacity="0.9"/>
+  </g>
+  <!-- Wordmark: white for maximum contrast -->
+  <g transform="translate(68,42)">
+    <text class="word" x="0" y="0" font-size="28" fill="#ffffff">DMFE</text>
+  </g>
+</svg>

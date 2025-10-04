@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="300" viewBox="0 0 840 300" role="img" aria-label="DMFE architecture diagram">
+  <defs>
+    <style>
+      .box { fill: #ffffff; stroke: #4e5d6c; stroke-width: 1.5; }
+      .title { font: 600 14px sans-serif; fill: #263238; }
+      .text { font: 11px sans-serif; fill: #546e7a; }
+      .label { font: 11px sans-serif; fill: #1e88e5; font-weight: 600; }
+      .arrow { fill: none; stroke: #1e88e5; stroke-width: 2; marker-end: url(#arrow); }
+      .dashed { stroke-dasharray: 4 3; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#1e88e5" />
+    </marker>
+  </defs>
+  
+  <!-- Top: Simulation control -->
+  <g transform="translate(30,20)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="240" height="54"/>
+    <text class="title" x="14" y="24">Simulation control</text>
+    <text class="text" x="14" y="40">CLI, schedule, checkpoints, I/O</text>
+  </g>
+  
+  <!-- Middle row: Core computational modules -->
+  <g transform="translate(20,110)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="140" height="60"/>
+    <text class="title" x="12" y="24">EOMs</text>
+    <text class="text" x="12" y="42">QKstep, QRstep</text>
+  </g>
+  
+  <g transform="translate(190,110)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="160" height="60"/>
+    <text class="title" x="12" y="24">Integrator</text>
+    <text class="text" x="12" y="42">RK54/SSPRK104/SERK2</text>
+  </g>
+  
+  <g transform="translate(380,110)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="170" height="60"/>
+    <text class="title" x="12" y="24">Interpolation</text>
+    <text class="text" x="12" y="42">2D sparse grid</text>
+  </g>
+  
+  <g transform="translate(580,110)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="170" height="60"/>
+    <text class="title" x="12" y="24">Convolution</text>
+    <text class="text" x="12" y="42">ConvA, ConvR</text>
+  </g>
+  
+  <!-- Bottom row: Support modules -->
+  <g transform="translate(380,210)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="170" height="60"/>
+    <text class="title" x="12" y="24">Sparsify</text>
+    <text class="text" x="12" y="42">sparsifyNscale</text>
+  </g>
+  
+  <g transform="translate(580,210)">
+    <rect class="box" x="0" y="0" rx="6" ry="6" width="170" height="60"/>
+    <text class="title" x="12" y="24">Core</text>
+    <text class="text" x="12" y="42">Memory, GPU/CPU</text>
+  </g>
+  
+  <!-- Data flow arrows -->
+  <path class="arrow" d="M160,140 H190"/>
+  <path class="arrow" d="M350,140 H380"/>
+  <path class="arrow" d="M550,140 H580"/>
+  <path class="arrow" d="M465,170 V210"/>
+  <path class="arrow dashed" d="M665,170 V210"/>
+  <path class="arrow" d="M120,74 V110"/>
+  
+  <!-- Labels -->
+  <text class="label" x="165" y="132">stage</text>
+  <text class="label" x="358" y="132">interp</text>
+  <text class="label" x="555" y="132">conv</text>
+  <text class="label" x="438" y="200">prune</text>
+  <text class="label" x="638" y="200">kernels</text>
+  <text class="label" x="95" y="102">loop</text>
+</svg>

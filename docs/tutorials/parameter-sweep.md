@@ -1,4 +1,4 @@
-# Tutorial: Parameter Sweep
+# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Tutorial: Parameter Sweep
 
 Run a simple sweep over `lambda` while reusing grid data.
 
