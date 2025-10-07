@@ -3,11 +3,9 @@
 	<h1 style="margin:0;">DMFE: Dynamical Mean-Field Evolution Toolkit</h1>
 </div>
 
-<p style="margin-top:0;color:#455a64;">
-	Rigorous time-evolution of non-stationary DMFT equations for glassy and related systems.
-	Expert-focused, with validated CPU and accelerated GPU paths.
-	Designed for reproducible, high-accuracy studies of aging observables and quenches.
-</p>
+<p style="margin-top:0;color:#455a64;"><b>
+An open-source toolkit for time-evolving non-stationary dynamical mean-field equations with memory. It targets systems that develop emergent slow time scales (e.g., quenches, aging, and other far-from-equilibrium protocols) and delivers long-time trajectories with controlled accuracy at practical cost. High performance CPU and GPU acceleration, reproducible outputs, and resumable checkpoints.
+</p></b>
 
 ## Problem setting (DMFT, aging, quench)
 
@@ -20,21 +18,25 @@ $$
 
 The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to sublinear in simulated time while controlling accuracy relevant to aging observables.
 
-## Method at a glance
+## What DMFE provides
 
-- Two-dimensional sparse interpolation for history terms
-- Adaptive RK54 as default; auto-switch to SSPRK104 at stability limit; optional SERK2 trials after sparsification
-- GPU kernels with portable CPU fallback
-- Asynchronous I/O; resume runs and version-compat checks
+- Non-stationary DMFT time evolution after quenches for mean-field glassy and related models.
+- Two-dimensional sparse interpolation for memory kernels on the causal triangle, with controlled error.
+- Adaptive high-order explicit integrators with stability-aware switching (RK54 → SSPRK104), plus sparsification-aware steps.
+- CPU-first implementation with optional GPU kernels; deterministic runs and versioned outputs for reproducibility.
+- Resume from checkpoints; lightweight, streaming I/O suitable for long trajectories.
 
-Relevant modules: core, EOMs, interpolation, convolution, sparsify, simulation, io.
+When you should use it
+- You study aging dynamics and two-time observables C(t, t') and R(t, t') in fully-connected/mean-field models.
+- Your DMFT equations close in terms of C and R with memory integrals/convolutions over the past.
+- You need long-time, high-accuracy trajectories at feasible cost (sublinear scaling in simulated time).
 
-<figure>
-	<img src="assets/diagram-method.svg" alt="Method pipeline: Quench → EOM → Integrator → Interpolation grid → Sparsify (CPU/GPU paths)" />
-	<figcaption>Method pipeline: quench to observables with CPU/GPU execution paths.</figcaption>
-</figure>
+What DMFE assumes (scope)
+- Causal, single-site effective dynamics admitting closed DMFT equations on the triangular domain t ≥ t'.
+- History terms expressed as integrals/convolutions evaluable on a 2D interpolation grid.
+- Model-specific closures supplied through an EOM module (examples provided). See concepts/eoms-and-observables.md.
 
-## Quickstart (expert)
+## Quickstart
 
 - Build Release:
 
@@ -50,6 +52,14 @@ Relevant modules: core, EOMs, interpolation, convolution, sparsify, simulation, 
 
 - Outputs: HDF5 `data.h5` when available (datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec`) with attributes for parameters and time; otherwise binary with text summaries.
 
+## Typical workflow
+
+1) Pick or implement an EOM module defining the closures F, G for your model.
+2) Choose an interpolation grid (sizes and layout) balancing accuracy and speed.
+3) Select an integrator and tolerances; default adaptive RK54 usually works best initially.
+4) Run a short trajectory, inspect stability and estimated errors; adjust grid or tolerances.
+5) Launch production runs; use checkpoints and resume to extend time horizons.
+
 ## Where to go next
 
 - Installation notes: install.md (toolchain/CUDA arch selection)
@@ -58,24 +68,26 @@ Relevant modules: core, EOMs, interpolation, convolution, sparsify, simulation, 
 - Architecture and accuracy controls: concepts/*
 - API reference (headers): reference/api/
 
-## Architecture overview
+## Outputs and formats
 
-<figure>
-	<img src="assets/diagram-architecture.svg" alt="Architecture: Simulation → EOMs → Integrator → Interpolation → Convolution; Sparsify and Core supporting; IO & Observables" />
-	<figcaption>High-level module interactions and data flow.</figcaption>
-</figure>
+- Primary: HDF5 file `data.h5` with datasets `QKv`, `QRv`, `dQKv`, `dQRv` and grids `t1grid`, `rvec`, `drvec`; parameters and time stored as attributes. See usage.md for details.
+- Fallback: Binary data with accompanying human-readable summaries when HDF5 is not available.
+- Checkpoints: Periodic snapshots enable resume without loss of accuracy.
 
-## Logo exploration (preview)
+## Performance and accuracy
 
-Below are two simplified alternatives that emphasize the theta-grid/causal triangle while keeping a clean, recognizable silhouette. These are previews; the configured site logo remains unchanged.
+- Sparse 2D interpolation of history terms yields sublinear cost in simulated time for long runs.
+- Stability-aware integrator switching maintains accuracy near stiff/transient regimes.
+- Recommended starting grids are provided in concepts/interpolation-grids.md; refine based on your observable tolerances.
+- CPU path is the reference; enable GPU when available for additional speedups after validating on your model.
 
-<div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
-	<figure style="margin:0;">
-		<img src="assets/logo-dmfe.svg" alt="Logo option A" width="220" height="64"/>
-		<figcaption style="text-align:center;color:#607d8b;">Option A: grid background + sparse nodes</figcaption>
-	</figure>
-	<figure style="margin:0;">
-		<img src="assets/logo-dmfe.svg" alt="Logo option B" width="220" height="64"/>
-		<figcaption style="text-align:center;color:#607d8b;">Option B: minimalist triangle + theta arcs</figcaption>
-	</figure>
-</div>
+## Cite DMFE
+
+If this toolkit supports your research, please cite the method paper:
+
+- Dynamical Mean-Field Evolution for non-stationary glassy dynamics, arXiv:2504.06849 (link: https://arxiv.org/abs/2504.06849)
+
+## Getting help
+
+- See CONTRIBUTING.md and docs/dev/testing.md for guidance on reporting issues.
+- Open an issue in the project tracker with a minimal input reproducing the problem and your build info (compiler/CUDA, commit hash).

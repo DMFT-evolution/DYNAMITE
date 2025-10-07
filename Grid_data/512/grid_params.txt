@@ -1,0 +1,9 @@
+# DMFE grid generation parameters
+len=512
+Tmax=1.00000000000000000e+05
+spline_order=5
+interp_method=rational
+interp_order=10
+fh_stencil=16
+subdir=512
+command_line=./RG-Evo grid -L 512 -M 100000 -d 512 -m rational -o 10 -f 16

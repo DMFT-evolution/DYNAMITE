@@ -55,6 +55,30 @@ DMFE uses the following notation in code and data:
 
 These datasets jointly define the exact nodes and interpolation/quadrature rules used at runtime; they are identical to those used in the paper’s benchmarks.
 
+### Generating/updating the grids and metadata
+
+You can (re)generate a grid package via the built-in CLI:
+
+```bash
+./RG-Evo grid --len L --Tmax 100000 --dir L \
+			  --interp-method poly --interp-order 9
+# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
+```
+
+Flags:
+- `--len L` selects the grid length (N=L).
+- `--Tmax X` sets the long-time scale used by the θ mapping.
+- `--dir SUBDIR` chooses the output subdirectory under `Grid_data/` (default: the value of L).
+- `--spline-order n` controls the integration (quadrature) spline order.
+- `--interp-method {poly|rational|bspline}` chooses the interpolation method for metadata.
+- `--interp-order n` sets interpolation degree/order.
+ - `--fh-stencil m` (rational only) sets the Floater–Hormann window size m ≥ n+1 (default n+1). Wider m blends multiple degree-n local stencils for additional stability on irregular grids while keeping locality.
+
+Method notes:
+- `poly` (barycentric Lagrange) produces local stencils with exactly n+1 weights per entry. This minimizes per-evaluation cost when the interpolated data change often.
+- `rational` (Floater–Hormann) with default m=n+1 matches `poly`; increasing `--fh-stencil m` to n+3..n+7 blends overlapping local stencils and improves robustness on highly non-uniform grids while staying local (exactly m weights per entry).
+- `bspline` produces a dense global map from base samples to outputs, appropriate when you need spline smoothness/derivatives and can reuse the same data across many evaluations.
+
 ## Performance note
 
 Using these paper‑defined non‑equidistant grids is the primary reason the method attains sublinear growth of cost with simulated time. Changing to an equidistant grid will typically increase complexity toward the cubic baseline and should be avoided.

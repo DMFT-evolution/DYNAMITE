@@ -12,7 +12,7 @@
 // External declarations for global config object (defined in main executable)
 extern SimulationConfig config;
 
-// Pointers are owned/defined in the main executable (main.cu)
+// Pointers are owned/defined in the main executable (main.cpp)
 extern SimulationData* sim;
 extern RKData* rk;
 

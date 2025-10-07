@@ -41,6 +41,61 @@ Show help and defaults:
 ./RG-Evo -h
 ```
 
+### Generate interpolation grids (theta/phi/pos) and interpolation metadata
+
+The `grid` subcommand creates interpolation grids and metadata under `Grid_data/<L>/`.
+
+Usage:
+
+```bash
+./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
+# METHODS: poly | rational | bspline
+							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
+# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
+```
+
+Examples:
+
+```bash
+# Generate 512-point grids with barycentric Lagrange (degree 9)
+./RG-Evo grid --len 512 --Tmax 100000 --dir 512 --interp-method poly --interp-order 9
+
+# Generate with rational barycentric (Floater–Hormann style interface) of order 9
+./RG-Evo grid -L 512 --interp-method rational --interp-order 9
+
+# Same, using a wider FH window (blend across m=n+5 nodes)
+./RG-Evo grid -L 512 --interp-method rational --interp-order 9 --fh-stencil 14
+
+# Generate with B-spline of degree 9 (global collocation weights)
+./RG-Evo grid -L 512 --interp-method bspline --interp-order 9
+```
+
+Outputs written to `Grid_data/<SUBDIR>/` include:
+
+- Grids: `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
+- Integration weights: `int.dat` (N)
+- Position grids: `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
+- Interpolation metadata (theta → targets):
+	- A1 (phi1): `indsA1y.dat` (N×N start indices), `weightsA1y.dat`
+	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
+	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
+
+Notes on methods:
+- poly writes local stencils: each entry stores a start index and n+1 weights.
+- rational (Floater–Hormann) defaults to m=n+1 (like poly). Set --fh-stencil m (m ≥ n+1) to blend multiple degree-n stencils over a window for extra stability on irregular nodes; each entry then stores m weights.
+- bspline writes dense weights per entry (global map). Prefer poly/rational when y changes frequently between evaluations.
+
+### Automatic grid provisioning at startup
+
+When you start a simulation, the code ensures that interpolation grids for the requested length `-L` are available:
+
+- It first checks `Grid_data/<L>/` for the required files.
+- If missing, it scans other subdirectories under `Grid_data/` for a matching `grid_params.txt` with `len=<L>` and will reuse it via a symlink (`Grid_data/<L> -> Grid_data/<subdir>`) or by copying files.
+- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
+
+This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
+
 ## Documentation
 
 - User & Developer Docs (MkDocs): see `docs/` and `mkdocs.yml`.
@@ -155,14 +210,14 @@ For most use cases, asynchronous export is recommended as it provides better per
 
 ## Inputs (required data)
 
-Interpolation grids are loaded at startup from `Grid_data/<L>/`, where `<L>` is the grid length you pass via `-L` (defaults to 512). The directory must contain:
+Interpolation grids are loaded at startup from `Grid_data/<L>/`, where `<L>` is the grid length you pass via `-L` (defaults to 512). If missing, they are auto-generated as described above. The directory contains:
 
 - `theta.dat`, `phi1.dat`, `phi2.dat`, `int.dat`
 - `posA1y.dat`, `posA2y.dat`, `posB2y.dat`
 - `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat`
 - `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat`
 
-Example: `Grid_data/512/...` for `-L 512`.
+Example: `Grid_data/512/...` for `-L 512`. On first use the program may create a symlink `Grid_data/512 -> Grid_data/<existing>` when reusing an equivalent set.
 
 ## Outputs (where data is saved)
 

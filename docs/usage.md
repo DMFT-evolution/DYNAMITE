@@ -34,6 +34,30 @@ Interpolation weights/indices are loaded from `Grid_data/<L>/`:
 
 Choose the largest L that fits memory/time for your study; verify convergence of observables with L.
 
+### Generating grids and interpolation metadata
+
+Use the built-in grid generator to create or refresh `Grid_data/<L>/`:
+
+```bash
+./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+							[--spline-order n] [--interp-method METHOD] [--interp-order n]
+# METHODS: poly | rational | bspline
+```
+
+This writes:
+- `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
+- `int.dat` (N) — integration weights (controlled by `--spline-order`)
+- `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
+- Interpolation metadata for mapping theta → targets:
+	- A1 (phi1): `indsA1y.dat`, `weightsA1y.dat`
+	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
+	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
+
+Method notes and trade‑offs:
+- `poly`: local barycentric Lagrange of order n (degree n). Minimal weights per entry (n+1). Good accuracy for smooth data; fastest when the sample values change often.
+- `rational`: barycentric rational variant with the same interface and locality as `poly`, typically slightly more robust on irregular grids.
+- `bspline`: B‑spline of degree n via global collocation. Exports dense weights per entry (global linear map). Prefer this when you need spline smoothness/derivatives and can reuse the same data vector across many evaluations; otherwise `poly`/`rational` are usually faster.
+
 ## Outputs and observables
 
 - HDF5 `data.h5` when available; else `data.bin` plus text summaries.

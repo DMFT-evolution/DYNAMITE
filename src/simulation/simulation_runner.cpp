@@ -28,7 +28,7 @@
 #include <numeric>
 #include "search/search_utils.hpp"
 
-// External global variables (defined in main.cu)
+// External global variables (defined in main.cpp)
 extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;

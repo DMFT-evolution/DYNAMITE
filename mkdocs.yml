@@ -70,20 +70,23 @@ nav:
     - Parameter sweep: tutorials/parameter-sweep.md
     - Reading outputs: tutorials/reading-outputs.md
   - Concepts:
-      - Algorithm: concepts/algorithm.md
-      - Architecture: concepts/architecture.md
-      - EOMs and observables: concepts/eoms-and-observables.md
-      - Interpolation grids: concepts/interpolation-grids.md
-      - Time integration: concepts/time-integration.md
-      - Sparsification: concepts/sparsification.md
-      - Version compatibility: concepts/version-compatibility.md
+    - Algorithm: concepts/algorithm.md
+    - Architecture: concepts/architecture.md
+    - EOMs and observables: concepts/eoms-and-observables.md
+    - Interpolation grids: concepts/interpolation-grids.md
+    - Time integration: concepts/time-integration.md
+    - Sparsification: concepts/sparsification.md
+    - Version compatibility: concepts/version-compatibility.md
   - How-to:
+    - Generate new grids: howto/generate-grids.md
     - Add new observable: howto/add-new-observable.md
     - Add new kernel: howto/add-new-kernel.md
     - Add new IO format: howto/add-new-io-format.md
   - Reference:
     - Overview: reference/index.md
+  - Bibliography: reference/bibliography.md
   - Developer:
+    - Contributors: dev/contributors.md
     - Contributing: dev/contributing.md
     - Testing: dev/testing.md
     - Release: dev/release.md

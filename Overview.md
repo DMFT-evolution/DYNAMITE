@@ -27,7 +27,7 @@ Public headers are under `include/`, sources under `src/`:
 
 - Root
   - `CMakeLists.txt` — build configuration (C++/CUDA, targets DFME-core and RG-Evo)
-  - `main.cu` — program entry (version print, CLI parse, init, run)
+  - `main.cpp` — program entry (version print, CLI parse, init, run)
   - `build/` — CMake build artifacts (generated)
   - `Grid_data/` — precomputed grid assets (512/, 1024/, 2048/)
   - `Overview.md`, `README.md`, `build.sh`
@@ -54,10 +54,31 @@ Public headers are under `include/`, sources under `src/`:
 
 ---
 
+  ## Grid generation (theta/phi/pos and metadata)
+
+  The executable provides a `grid` subcommand to generate the non‑equidistant θ/ϕ grids and the interpolation metadata consumed at runtime. Outputs are written under `Grid_data/<L>/`.
+
+  Quick example:
+
+  ```
+  ./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
+                --interp-method poly --interp-order 9
+  ```
+
+  Key flags:
+  - `--len L` grid size (512/1024/2048 supported by default); `--Tmax X` sets long‑time scale for θ.
+  - `--interp-method {poly|rational|bspline}` and `--interp-order n` choose the interpolation used to precompute weights.
+  - `--fh-stencil m` (rational only) sets the Floater–Hormann window size (m ≥ n+1). Default m=n+1 (equivalent to `poly`); wider m (e.g., n+3..n+7) blends overlapping local stencils for additional robustness on irregular grids while keeping locality.
+  - `--spline-order n` controls the quadrature spline order for `int.dat`.
+
+  Artifacts written: `theta.dat`, `phi1.dat`, `phi2.dat`, `int.dat`, `posA1y.dat`, `posA2y.dat`, `posB2y.dat`, and interpolation indices/weights for A1/A2/B2.
+
+  ---
+
 ## Function locations (quick reference)
 
 - Entry/CLI
-  - `main.cu`: prints version, calls `parseCommandLineArguments`, then `init` and `runSimulation`
+  - `main.cpp`: prints version, calls `parseCommandLineArguments`, then `init` and `runSimulation`
   - `parseCommandLineArguments` — `src/core/config.cu`, declared in `include/config.hpp`
 - Initialization/State
   - `init` — `src/core/initialization.cu`, declared in `include/initialization.hpp`

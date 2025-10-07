@@ -107,7 +107,10 @@ endif()
 
 # Toolchain-specific host flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    list(APPEND common_host_flags -ffast-math)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        # Silence benign Clang note about overriding -ffp-contract from aggregate flags
+        list(APPEND common_host_flags -Wno-overriding-t-option)
+    endif()
     if(OpenMP_CXX_FOUND)
         list(APPEND common_host_flags ${OpenMP_CXX_FLAGS})
         # Add OpenMP flags to CUDA compilation for host code in .cu files
@@ -209,6 +212,31 @@ set(CPU_SOURCES
     src/version/version_compat.cpp
     src/EOMs/time_steps.cpp
     src/EOMs/runge_kutta.cpp
+    src/grid/theta_grid.cpp
+    src/grid/grid_io.cpp
+    src/grid/phi_grid.cpp
+    src/grid/grid_cli.cpp
+    src/grid/pos_grid.cpp
+
+    src/grid/integration.cpp
+    src/grid/interpolation_weights.cpp
+)
+
+# Build the high-precision theta grid generator with strict FP (no fast-math, no contraction)
+# Use per-source COMPILE_OPTIONS so these appear at the end of the compile line.
+# Guard Clang-specific flags with a compiler check and quiet the override warning.
+set_source_files_properties(src/grid/theta_grid.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:Clang>:-fno-fast-math>"
+    "$<$<CXX_COMPILER_ID:Clang>:-ffp-contract=off>"
+    "$<$<CXX_COMPILER_ID:Clang>:-Wno-overriding-t-option>"
+)
+
+# Re-apply fast-math to all other CPU sources explicitly so we don't pass both
+# -ffast-math and -fno-fast-math to the same translation unit.
+set(FASTMATH_CPU_SOURCES ${CPU_SOURCES})
+list(REMOVE_ITEM FASTMATH_CPU_SOURCES src/grid/theta_grid.cpp)
+set_source_files_properties(${FASTMATH_CPU_SOURCES} PROPERTIES COMPILE_OPTIONS
+    "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-ffast-math>"
 )
 
 # Additional CPU-only sources when CUDA is disabled
@@ -268,11 +296,7 @@ endif()
 
 # CPU source files are already in CPU_SOURCES list above
 
-if(DMFE_WITH_CUDA)
-    add_executable(RG-Evo main.cu)
-else()
-    add_executable(RG-Evo main.cpp)
-endif()
+add_executable(RG-Evo main.cpp)
 
 target_link_libraries(RG-Evo PRIVATE DFME-core)
 target_link_options(RG-Evo PRIVATE $<HOST_LINK:-ldl>)
@@ -300,7 +324,7 @@ endif()
 
 # Optional shared-runtime variant (CUDA only)
 if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
-    add_executable(RG-Evo-shared main.cu)
+    add_executable(RG-Evo-shared main.cpp)
     target_link_libraries(RG-Evo-shared PRIVATE DFME-core)
     target_link_options(RG-Evo-shared PRIVATE $<HOST_LINK:-ldl>)
     set_target_properties(RG-Evo-shared PROPERTIES
@@ -333,3 +357,15 @@ foreach(tgt IN ITEMS DFME-core RG-Evo)
 endforeach()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Simple test for barycentric interpolation weights (standalone, no DFME-core linkage)
+add_executable(test_interp_weights
+    src/grid/test_interpolation_weights.cpp
+    src/grid/theta_grid.cpp
+    src/grid/interpolation_weights.cpp
+)
+set_target_properties(test_interp_weights PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+    LINKER_LANGUAGE CXX
+)
+target_include_directories(test_interp_weights PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
