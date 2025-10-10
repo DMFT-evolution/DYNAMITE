@@ -12,25 +12,25 @@
 #include <vector>
 
 namespace {
-// Local barycentric polynomial interpolation.
+// Local barycentric polynomial interpolation (long double precision).
 // Precomputes weights for a small per-interval stencil; evaluation is O(m).
 // Accurate and stable on dense, smooth, monotone, nonuniform grids.
 struct LocalBarycentric {
-	std::vector<double> x; // strictly increasing knots
-	std::vector<double> y; // values at knots
-	int m = 8;             // stencil size (polynomial degree m-1)
+	std::vector<long double> x; // strictly increasing knots
+	std::vector<long double> y; // values at knots
+	int m = 8;                  // stencil size (polynomial degree m-1)
 
 	// For interval i in [0,n-2], choose left index L(i) so nodes are x[L..L+m-1].
 	std::vector<int> left_of_interval; // size n-1
 
 	// For left index L in [0,n-m], store barycentric weights for x[L..L+m-1].
-	std::vector<double> weights; // flat: (n-m+1) blocks of m
+	std::vector<long double> weights; // flat: (n-m+1) blocks of m
 
 	static int clamp_int(int v, int lo, int hi) {
 		return v < lo ? lo : (v > hi ? hi : v);
 	}
 
-	void build(const std::vector<double>& xin, const std::vector<double>& yin, int m_in = 8) {
+	void build(const std::vector<long double>& xin, const std::vector<long double>& yin, int m_in = 8) {
 		const std::size_t n = xin.size();
 		if (n < 2 || yin.size() != n) throw std::invalid_argument("LocalBarycentric: bad input size");
 		x = xin; y = yin;
@@ -60,23 +60,23 @@ struct LocalBarycentric {
 
 		// Precompute weights for each possible left index L
 		const int nLeft = std::max(0, Nm) + 1;
-		weights.assign(std::size_t(nLeft) * std::size_t(m), 0.0);
+		weights.assign(std::size_t(nLeft) * std::size_t(m), 0.0L);
 		for (int L = 0; L < nLeft; ++L) {
 			// Standard barycentric weights for x[L..L+m-1]
 			for (int j = 0; j < m; ++j) {
-				double w = 1.0;
-				const double xj = x[std::size_t(L + j)];
+				long double w = 1.0L;
+				const long double xj = x[std::size_t(L + j)];
 				for (int k = 0; k < m; ++k) {
 					if (k == j) continue;
-					const double diff = xj - x[std::size_t(L + k)];
+					const long double diff = xj - x[std::size_t(L + k)];
 					w *= diff;
 				}
-				weights[std::size_t(L) * std::size_t(m) + std::size_t(j)] = 1.0 / w;
+				weights[std::size_t(L) * std::size_t(m) + std::size_t(j)] = 1.0L / w;
 			}
 		}
 	}
 
-	inline double eval(double xi) const {
+	inline long double eval(long double xi) const {
 		const std::size_t n = x.size();
 		if (xi <= x.front()) return y.front();
 		if (xi >= x.back()) return y.back();
@@ -88,7 +88,7 @@ struct LocalBarycentric {
 		const int nLeft = std::max(0, int(n) - m) + 1;
 		const int Lclamped = clamp_int(L, 0, nLeft - 1);
 
-		const double* wptr = &weights[std::size_t(Lclamped) * std::size_t(m)];
+		const long double* wptr = &weights[std::size_t(Lclamped) * std::size_t(m)];
 
 		// Exact hit avoids division by zero
 		for (int j = 0; j < m; ++j) {
@@ -96,11 +96,11 @@ struct LocalBarycentric {
 			if (xi == x[idx]) return y[idx];
 		}
 
-		double num = 0.0, den = 0.0;
+		long double num = 0.0L, den = 0.0L;
 		for (int j = 0; j < m; ++j) {
 			const std::size_t idx = std::size_t(Lclamped + j);
-			const double diff = xi - x[idx];
-			const double w = wptr[j] / diff;
+			const long double diff = xi - x[idx];
+			const long double w = wptr[j] / diff;
 			den += w;
 			num += w * y[idx];
 		}
@@ -112,9 +112,9 @@ struct LocalBarycentric {
 
 void generate_pos_grids(std::size_t len,
 						double Tmax,
-						const std::vector<double>& theta,
-						const std::vector<double>& phi1,
-						const std::vector<double>& phi2,
+						const std::vector<long double>& theta,
+						const std::vector<long double>& phi1,
+						const std::vector<long double>& phi2,
 						std::vector<double>& posA1y,
 						std::vector<double>& posA2y,
 						std::vector<double>& posB2y) {
@@ -137,25 +137,29 @@ void generate_pos_grids(std::size_t len,
 
 	// Step 1: Densely sample analytical θ(y) (vectorized)
 	const std::size_t M = N * oversample;
-	std::vector<double> inv_x, inv_y;  // inv_x = theta values, inv_y = y positions
+	std::vector<long double> inv_x, inv_y;  // inv_x = theta values (long double), inv_y = y positions
 	inv_x.reserve(M);
 	inv_y.reserve(M);
 	
-	// Build indices vector for vectorized theta computation
+	// Build indices vector for vectorized theta computation (theta_of_vec expects double indices)
 	std::vector<double> indices(M);
 	for (std::size_t k = 0; k < M; ++k) {
-		double y = 1.0 + (static_cast<double>(N) - 1.0) * (double(k) / double(M - 1));
-		indices[k] = y - 1.0;  // Convert to 0-based index
+		long double y = 1.0L + (static_cast<long double>(N) - 1.0L) * (static_cast<long double>(k) / static_cast<long double>(M - 1));
+		indices[k] = static_cast<double>(y - 1.0L);  // Convert to 0-based index (double)
 		inv_y.push_back(y);
 	}
 	
 	// Compute all θ values at once (vectorized; reuses internal constants)
-	theta_of_vec(indices, N, Tmax, inv_x);
+	// theta_of_vec outputs long double; keep as long double for higher internal accuracy
+	std::vector<long double> inv_x_ld;
+	inv_x_ld.reserve(M);
+	theta_of_vec(indices, N, Tmax, inv_x_ld);
+	inv_x.swap(inv_x_ld);
 	
 	// Ensure strict monotonicity in sampled theta
 	for (std::size_t k = 1; k < M; ++k) {
 		if (inv_x[k] <= inv_x[k-1]) {
-			inv_x[k] = std::nextafter(inv_x[k-1], std::numeric_limits<double>::infinity());
+			inv_x[k] = std::nextafter(inv_x[k-1], std::numeric_limits<long double>::infinity());
 		}
 	}
 	
@@ -166,37 +170,52 @@ void generate_pos_grids(std::size_t len,
 	posA1y.assign(N * N, 0.0);
 	posA2y.assign(N * N, 0.0);
 	posB2y.assign(N * N, 0.0);
-	const double tiny = 1e-200; // epsilon for stability in B2
+	const long double tiny = 1e-200L; // epsilon for stability in B2
 
 	// Precompute domain bounds for safe evaluation
-	const double theta_min = inv_x.front();
-	const double theta_max = inv_x.back();
-	auto safe_eval = [&](double val) {
+	const long double theta_min = inv_x.front();
+	const long double theta_max = inv_x.back();
+		auto safe_eval = [&](long double val) -> long double {
 		if (val <= theta_min) return inv_y.front();
 		if (val >= theta_max) return inv_y.back();
 		return inv_interp.eval(val);
 	};
 
 	for (std::size_t i = 0; i < N; ++i) {
-		const double ti = theta[i];
+		const long double ti = theta[i];
 		for (std::size_t j = 0; j < N; ++j) {
-			const double v1 = phi1[i * N + j];
-			const double v2 = phi2[i * N + j];
+			const long double v1 = phi1[i * N + j];
+			const long double v2 = phi2[i * N + j];
 			
-			posA1y[i * N + j] = safe_eval(v1);
-			posA2y[i * N + j] = safe_eval(v2);
+			posA1y[i * N + j] = static_cast<double>(safe_eval(v1));
+			posA2y[i * N + j] = static_cast<double>(safe_eval(v2));
 			
 			// posB2y = inv_theta[theta[j] / (phi2 - 10^-200)]
-			const double denom = v2 - tiny;
-			double argB2;
-			if (std::abs(denom) < 1e-300) {
+			const long double denom = v2 - tiny;
+			long double argB2;
+			if (std::fabs(denom) < 1e-300L) {
 				// Near-zero denominator: clamp to domain boundary
 				argB2 = (ti > 0) ? theta_max : theta_min;
 			} else {
 				argB2 = ti / denom;
 			}
-			posB2y[i * N + j] = safe_eval(argB2);
+			posB2y[i * N + j] = static_cast<double>(safe_eval(argB2));
 		}
 	}
+}
+
+// Legacy wrapper that promotes double inputs to long double and forwards
+void generate_pos_grids(std::size_t len,
+						double Tmax,
+						const std::vector<double>& theta,
+						const std::vector<double>& phi1,
+						const std::vector<double>& phi2,
+						std::vector<double>& posA1y,
+						std::vector<double>& posA2y,
+						std::vector<double>& posB2y) {
+	std::vector<long double> theta_ld(theta.begin(), theta.end());
+	std::vector<long double> phi1_ld(phi1.begin(), phi1.end());
+	std::vector<long double> phi2_ld(phi2.begin(), phi2.end());
+	generate_pos_grids(len, Tmax, theta_ld, phi1_ld, phi2_ld, posA1y, posA2y, posB2y);
 }
 

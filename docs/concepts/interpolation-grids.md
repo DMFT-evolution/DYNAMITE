@@ -42,13 +42,13 @@ DMFE uses the following notation in code and data:
 - $\theta \equiv \{\phi_k\}$ (stored in `theta.dat`).
 - $\varphi^{(1)} \equiv \{\rho_k^{(1)}(\alpha_j)\}$ (stored in `phi1.dat`).
 - $\varphi^{(2)} \equiv \{\rho_k^{(2)}(\alpha_j)\}$ (stored in `phi2.dat`).
-- Quintic‑spline quadrature weights for the irregular grid (stored in `int.dat`).
+- Spline‑consistent quadrature weights for the irregular grid (stored in `int.dat`, B‑spline degree s; default s=5).
 
 ## What the files contain
 
 - `theta.dat`  — primary (monotone) parameterization θ of time‑ratio nodes {φ_k}.
 - `phi1.dat`, `phi2.dat` — the two contour families ϕ¹, ϕ² evaluated on the φ‑grid; used to assemble 2D interpolation stencils consistent with the renormalized layering.
-- `int.dat` — quadrature weights associated with {φ_k} for accurate evaluation of memory integrals.
+- `int.dat` — quadrature weights associated with {φ_k} for accurate evaluation of memory integrals (open‑clamped B‑spline of configurable degree; default 5).
 - `posA1y.dat`, `posA2y.dat`, `posB2y.dat` — physical positions of interpolation stencils assembled from θ, ϕ¹, ϕ² (A/B families correspond to distinct directional stencils).
 - `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat` — index maps into the base arrays (C, R, and their derivatives) for fast gathers.
 - `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat` — interpolation weights matching the index maps.
@@ -69,7 +69,7 @@ Flags:
 - `--len L` selects the grid length (N=L).
 - `--Tmax X` sets the long-time scale used by the θ mapping.
 - `--dir SUBDIR` chooses the output subdirectory under `Grid_data/` (default: the value of L).
-- `--spline-order n` controls the integration (quadrature) spline order.
+- `--spline-order n` controls the integration (quadrature) B‑spline degree (default: 5).
 - `--interp-method {poly|rational|bspline}` chooses the interpolation method for metadata.
 - `--interp-order n` sets interpolation degree/order.
  - `--fh-stencil m` (rational only) sets the Floater–Hormann window size m ≥ n+1 (default n+1). Wider m blends multiple degree-n local stencils for additional stability on irregular grids while keeping locality.

@@ -19,5 +19,11 @@ Goal: build and run DMFE in Release on L=512 grid and inspect outputs.
 
 ## Troubleshooting
 
-- Missing `Grid_data/512`: pick another `-L` with existing data (512/1024/2048)
+- Missing `Grid_data/<L>`: generate it with the grid subcommand. Example for L=512:
+	```bash
+	./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
+		--spline-order 5 --interp-method poly --interp-order 9
+	```
+	This writes theta/phi grids, integration weights, and interpolation metadata into `Grid_data/512/`.
+	See How-to → Generate new grids for details and options.
 - GPU errors: retry with `--gpu false`

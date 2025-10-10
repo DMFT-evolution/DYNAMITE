@@ -9,7 +9,7 @@ namespace grid {
 
 namespace {
 
-inline int pick_stencil_start(const std::vector<double>& x, int n, double xq) {
+inline int pick_stencil_start(const std::vector<long double>& x, int n, long double xq) {
     const int N = static_cast<int>(x.size());
     const int m = n + 1;
     int hi = static_cast<int>(std::lower_bound(x.begin(), x.end(), xq) - x.begin());
@@ -31,25 +31,58 @@ inline int pick_stencil_start(const std::vector<double>& x, int n, double xq) {
     return start;
 }
 
-inline void barycentric_node_weights(const std::vector<double>& nodes,
+inline void barycentric_node_weights(const std::vector<long double>& nodes,
                                      std::vector<long double>& w) {
     const int m = static_cast<int>(nodes.size());
     w.assign(m, 1.0L);
     for (int j = 0; j < m; ++j) {
         long double denom = 1.0L;
-        long double xj = (long double)nodes[j];
+        long double xj = nodes[j];
         for (int k = 0; k < m; ++k) if (k != j) {
-            denom *= (xj - (long double)nodes[k]);
+            denom *= (xj - nodes[k]);
         }
         w[j] = 1.0L / denom;
+    }
+}
+
+// Floater–Hormann weights on a local window xn of size m and order d.
+// Weights depend only on xn and d (not on the query xq).
+inline void floater_hormann_local_weights(const std::vector<long double>& xn,
+                                          int d,
+                                          std::vector<long double>& wfh) {
+    const int m = static_cast<int>(xn.size());
+    wfh.assign(m, 0.0L);
+    if (m == 0) return;
+
+    for (int j = 0; j < m; ++j) {
+        // r is the local offset of x_j within a (d+1)-subset that contains j
+        const int rmin = std::max(0, j - (m - d - 1));
+        const int rmax = std::min(d, j);
+        long double sum = 0.0L;
+        for (int r = rmin; r <= rmax; ++r) {
+            const int i = j - r; // subset starts at i, runs i..i+d, contains j at offset r
+            long double prod = 1.0L;
+            bool zero = false;
+            for (int k = 0; k <= d; ++k) {
+                if (k == r) continue;
+                long double diff = xn[j] - xn[i + k];
+                if (diff == 0.0L) { zero = true; break; } // duplicate nodes
+                prod *= diff;
+            }
+            if (zero || prod == 0.0L) continue;
+            // Sign is (-1)^i = (-1)^(j - r)
+            long double sgn = (( (j - r) & 1 ) ? -1.0L : 1.0L);
+            sum += sgn / prod;
+        }
+        wfh[j] = sum;
     }
 }
 
 } // namespace
 
 std::vector<BarycentricStencil>
-compute_barycentric_weights(const std::vector<double>& x,
-                            const std::vector<double>& xq,
+compute_barycentric_weights(const std::vector<long double>& x,
+                            const std::vector<long double>& xq,
                             int n) {
     const int N = static_cast<int>(x.size());
     const int m = n + 1;
@@ -58,16 +91,14 @@ compute_barycentric_weights(const std::vector<double>& x,
     std::vector<BarycentricStencil> out;
     out.reserve(xq.size());
 
-    for (double q : xq) {
+    for (long double q : xq) {
         int start = pick_stencil_start(x, n, q);
-        std::vector<double> xn; xn.reserve(m);
+        std::vector<long double> xn; xn.reserve(m);
         for (int j = 0; j < m; ++j) xn.push_back(x[start + j]);
 
         // If q coincides with a node in the stencil, return delta weights
         int exact_idx = -1;
-        for (int j = 0; j < m; ++j) {
-            if (q == xn[j]) { exact_idx = j; break; }
-        }
+    for (int j = 0; j < m; ++j) { if (q == xn[j]) { exact_idx = j; break; } }
 
         std::vector<double> alpha(m, 0.0);
         if (exact_idx >= 0) {
@@ -78,7 +109,7 @@ compute_barycentric_weights(const std::vector<double>& x,
             long double den = 0.0L;
             std::vector<long double> tmp(m);
             for (int j = 0; j < m; ++j) {
-                long double v = wloc[j] / ((long double)q - (long double)xn[j]);
+                long double v = wloc[j] / (q - xn[j]);
                 tmp[j] = v;
                 den += v;
             }
@@ -91,16 +122,22 @@ compute_barycentric_weights(const std::vector<double>& x,
     return out;
 }
 
+// Backward-compatible overload
 std::vector<BarycentricStencil>
-compute_barycentric_rational_weights(const std::vector<double>& x,
-                                     const std::vector<double>& xq,
+compute_barycentric_weights(const std::vector<double>& x,
+                            const std::vector<double>& xq,
+                            int n) {
+    std::vector<long double> xl(x.size());
+    for (std::size_t i = 0; i < x.size(); ++i) xl[i] = (long double)x[i];
+    return compute_barycentric_weights(xl, xq, n);
+}
+
+std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<long double>& x,
+                                     const std::vector<long double>& xq,
                                      int d,
                                      int m) {
-    // Floater–Hormann (local rational barycentric): for a chosen window of m nodes
-    // around xq, blend the degree-d local Lagrange interpolants defined by all
-    // contiguous subsets of size d+1 within that window. This yields nodeless,
-    // stable weights on irregular grids when m > d+1. For m == d+1, reduces to
-    // the degree-d polynomial barycentric on the single stencil.
+    // Proper local Floater–Hormann of order d on a centered window of size m.
     const int N = (int)x.size();
     if (d < 0) d = 0;
     if (m < d + 1) m = d + 1;
@@ -109,24 +146,26 @@ compute_barycentric_rational_weights(const std::vector<double>& x,
     std::vector<BarycentricStencil> out;
     out.reserve(xq.size());
 
-    // Temporary buffers reused per query
-    std::vector<double> xn; xn.reserve(m);
-    std::vector<long double> wl; wl.reserve(d + 1);
-    std::vector<long double> denom_contrib(m);
-    std::vector<long double> num_contrib(m);
+    std::vector<long double> xn; xn.reserve(m);
+    std::vector<long double> wfh; wfh.reserve(m);
+    std::vector<long double> tmp; tmp.reserve(m);
 
-    for (double q : xq) {
+    for (long double q : xq) {
         // Choose centered window of size m
-        int centerOrder = std::max(1, d);
-        int start0 = pick_stencil_start(x, centerOrder, q); // uses n=d for centering heuristic
-        // Expand to m-sized window, clamped
         int hi = (int)(std::lower_bound(x.begin(), x.end(), q) - x.begin());
         int start = std::clamp(hi - m / 2, 0, N - m);
+
         xn.clear(); xn.reserve(m);
         for (int j = 0; j < m; ++j) xn.push_back(x[start + j]);
 
-        // Exact hit
-        int hit = -1; for (int j = 0; j < m; ++j) if (q == xn[j]) { hit = j; break; }
+        // Exact hit (with tolerance relative to local span)
+        long double span = std::max(1.0L, xn.back() - xn.front());
+        long double tol = 64 * std::numeric_limits<long double>::epsilon() * span;
+        int hit = -1;
+        for (int j = 0; j < m; ++j) {
+            if (fabsl(q - xn[j]) <= tol) { hit = j; break; }
+        }
+
         std::vector<double> alpha(m, 0.0);
         if (hit >= 0) {
             alpha[hit] = 1.0;
@@ -134,53 +173,45 @@ compute_barycentric_rational_weights(const std::vector<double>& x,
             continue;
         }
 
-        std::fill(denom_contrib.begin(), denom_contrib.end(), 0.0L);
-        std::fill(num_contrib.begin(), num_contrib.end(), 0.0L);
+        // Local FH weights on this window
+        floater_hormann_local_weights(xn, d, wfh);
 
-        // Blend over all contiguous subsets S of size d+1 within the window of size m
-        const int nSub = m - (d + 1) + 1;
-        for (int s = 0; s < nSub; ++s) {
-            // Compute local barycentric node weights for subset xn[s..s+d]
-            std::vector<double> xloc; xloc.reserve(d + 1);
-            for (int j = 0; j <= d; ++j) xloc.push_back(xn[s + j]);
-            std::vector<long double> wloc;
-            barycentric_node_weights(xloc, wloc);
-            // Evaluate rational barycentric on this subset: coefficients beta_j = w_j/(q - x_j)
-            long double den = 0.0L;
-            std::vector<long double> beta(d + 1);
-            for (int j = 0; j <= d; ++j) {
-                long double b = wloc[j] / ((long double)q - (long double)xloc[j]);
-                beta[j] = b;
-                den += b;
-            }
-            if (den == 0.0L) continue;
-            long double scale = 1.0L / den; // normalizer for this subset
-            // Distribute this subset's normalized contribution to the m-sized alpha
-            for (int j = 0; j <= d; ++j) {
-                int idx = s + j;
-                num_contrib[idx] += beta[j] * scale; // accumulates normalized weights
-                denom_contrib[idx] += 0.0L;          // placeholder for symmetry with poly path
-            }
+        // Barycentric evaluation on the window
+        long double den = 0.0L;
+        tmp.assign(m, 0.0L);
+        for (int j = 0; j < m; ++j) {
+            long double v = wfh[j] / (q - xn[j]);
+            tmp[j] = v;
+            den += v;
         }
-        // Normalize across the window so that sum alpha = 1
-        long double sum = 0.0L;
-        for (int j = 0; j < m; ++j) sum += num_contrib[j];
-        if (sum == 0.0L) {
-            // Fallback to polynomial on m nodes if blending degenerates
+
+        if (den == 0.0L) {
+            // Fallback (should be rare): use polynomial barycentric on this window
             std::vector<long double> wloc;
             barycentric_node_weights(xn, wloc);
-            long double den = 0.0L;
-            std::vector<long double> tmp(m);
-            for (int j = 0; j < m; ++j) { tmp[j] = wloc[j] / ((long double)q - (long double)xn[j]); den += tmp[j]; }
+            long double den2 = 0.0L;
+            for (int j = 0; j < m; ++j) { tmp[j] = wloc[j] / (q - xn[j]); den2 += tmp[j]; }
+            long double invden2 = 1.0L / den2;
+            for (int j = 0; j < m; ++j) alpha[j] = (double)(tmp[j] * invden2);
+        } else {
             long double invden = 1.0L / den;
             for (int j = 0; j < m; ++j) alpha[j] = (double)(tmp[j] * invden);
-        } else {
-            long double inv = 1.0L / sum;
-            for (int j = 0; j < m; ++j) alpha[j] = (double)(num_contrib[j] * inv);
         }
+
         out.push_back(BarycentricStencil{ start, std::move(alpha) });
     }
     return out;
+}
+
+// Backward-compatible overload
+std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<double>& x,
+                                     const std::vector<double>& xq,
+                                     int d,
+                                     int m) {
+    std::vector<long double> xl(x.size());
+    for (std::size_t i = 0; i < x.size(); ++i) xl[i] = (long double)x[i];
+    return compute_barycentric_rational_weights(xl, xq, d, m);
 }
 
 // -------------------- B-spline interpolation (global) --------------------
@@ -189,21 +220,21 @@ namespace {
 // Build open knot vector with endpoints clamped p+1 times and
 // interior knots chosen from the input nodes (first N - p - 1 interior nodes).
 static std::vector<long double>
-build_open_knot_vector(const std::vector<double>& x, int p) {
+build_open_knot_vector(const std::vector<long double>& x, int p) {
     const int N = static_cast<int>(x.size());
     if (N < p + 1) throw std::invalid_argument("B-spline: need N >= p+1");
     const int mBasis = N; // number of basis functions equals number of data points
     const int K = mBasis + p + 1; // number of knots
     std::vector<long double> t(K);
     // Clamp endpoints to x-front/back (open clamped)
-    for (int i = 0; i <= p; ++i) t[i] = (long double)x.front();
-    for (int i = 0; i <= p; ++i) t[K - 1 - i] = (long double)x.back();
+    for (int i = 0; i <= p; ++i) t[i] = x.front();
+    for (int i = 0; i <= p; ++i) t[K - 1 - i] = x.back();
     // Interior knots by averaging p consecutive parameter values (use u = x)
     // t[j] = (u_{j-p} + ... + u_{j-1}) / p for j = p+1..n (n = N-1)
     const int n = N - 1;
     for (int j = p + 1; j <= n; ++j) {
         long double sum = 0.0L;
-        for (int i = j - p; i <= j - 1; ++i) sum += (long double)x[i];
+    for (int i = j - p; i <= j - 1; ++i) sum += x[i];
         t[j] = sum / (long double)p;
     }
     return t;
@@ -293,8 +324,8 @@ static void lu_solve(const std::vector<long double>& LU, int n, const std::vecto
 struct BSplineWeights;
 
 std::vector<BSplineWeights>
-compute_bspline_weights(const std::vector<double>& x,
-                        const std::vector<double>& xq,
+compute_bspline_weights(const std::vector<long double>& x,
+                        const std::vector<long double>& xq,
                         int p) {
     const int N = static_cast<int>(x.size());
     if (N < p + 1) throw std::invalid_argument("B-spline: need at least p+1 nodes");
@@ -306,7 +337,7 @@ compute_bspline_weights(const std::vector<double>& x,
     std::vector<long double> A((std::size_t)N * N, 0.0L);
     std::vector<long double> Nvals(p + 1);
     for (int i = 0; i < N; ++i) {
-    long double u = (long double)x[i];
+    long double u = x[i];
         int span = find_span(mBasis, p, u, knots);
         basis_funs(span, u, p, knots, Nvals);
         int first = span - p;
@@ -327,10 +358,10 @@ compute_bspline_weights(const std::vector<double>& x,
     out.reserve(xq.size());
 
     std::vector<long double> rhs(N, 0.0L), sol(N);
-    for (double xqi : xq) {
+    for (long double xqi : xq) {
         // Build basis vector e at xq (nonzeros in a block of size p+1)
         std::fill(rhs.begin(), rhs.end(), 0.0L);
-    long double u = (long double)xqi;
+        long double u = xqi;
         int span = find_span(mBasis, p, u, knots);
         basis_funs(span, u, p, knots, Nvals);
         int first = span - p;
@@ -347,6 +378,16 @@ compute_bspline_weights(const std::vector<double>& x,
     }
 
     return out;
+}
+
+// Backward-compatible overload
+std::vector<BSplineWeights>
+compute_bspline_weights(const std::vector<double>& x,
+                        const std::vector<double>& xq,
+                        int n) {
+    std::vector<long double> xl(x.size());
+    for (std::size_t i = 0; i < x.size(); ++i) xl[i] = (long double)x[i];
+    return compute_bspline_weights(xl, xq, n);
 }
 
 } // namespace grid

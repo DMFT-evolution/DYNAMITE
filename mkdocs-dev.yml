@@ -1,0 +1,33 @@
+INHERIT: mkdocs.yml
+
+# Allow API content in dev preview by overriding top-level 'exclude'
+exclude: []
+
+nav:
+  - Home: index.md
+  - Install: install.md
+  - Usage: usage.md
+  - Tutorials:
+    - First run: tutorials/first-run.md
+    - CPU-only: tutorials/cpu-only.md
+    - Cluster portable build: tutorials/cluster-portable-build.md
+    - Parameter sweep: tutorials/parameter-sweep.md
+    - Reading outputs: tutorials/reading-outputs.md
+  - Concepts:
+    - Algorithm: concepts/algorithm.md
+    - Architecture: concepts/architecture.md
+    - EOMs and observables: concepts/eoms-and-observables.md
+    - Interpolation grids: concepts/interpolation-grids.md
+    - Time integration: concepts/time-integration.md
+    - Sparsification: concepts/sparsification.md
+    - Version compatibility: concepts/version-compatibility.md
+  - How-to:
+    - Generate new grids: howto/generate-grids.md
+    - Add new observable: howto/add-new-observable.md
+    - Add new kernel: howto/add-new-kernel.md
+    - Add new IO format: howto/add-new-io-format.md
+  - Reference:
+    - Overview: reference/index.md
+    - API: reference/api/index.md
+    - Cite: reference/cite.md
+  - Bibliography: reference/bibliography.md

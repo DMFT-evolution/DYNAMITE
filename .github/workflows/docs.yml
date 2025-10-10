@@ -17,7 +17,7 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material mkdocs-material-extensions mkdocs-exclude
+          pip install mkdocs mkdocs-material mkdocs-material-extensions doxybook2
           sudo apt-get update
           sudo apt-get install -y doxygen graphviz
       - name: Generate API docs

@@ -14,19 +14,19 @@ namespace {
 // writing moved to grid_io.cpp; readers are provided by grid_io.hpp
 } // namespace
 
-void generate_phi_grids(const std::vector<double>& theta,
-						std::vector<double>& phi1,
-						std::vector<double>& phi2) {
+void generate_phi_grids(const std::vector<long double>& theta,
+						std::vector<long double>& phi1,
+						std::vector<long double>& phi2) {
 	const std::size_t N = theta.size();
-	phi1.assign(N * N, 0.0);
-	phi2.assign(N * N, 0.0);
+	phi1.assign(N * N, 0.0L);
+	phi2.assign(N * N, 0.0L);
 	for (std::size_t i = 0; i < N; ++i) {
-		const double ti = theta[i];
-		const double one_minus_ti = 1.0 - ti;
-		double* row1 = &phi1[i * N];
-		double* row2 = &phi2[i * N];
+		const long double ti = theta[i];
+		const long double one_minus_ti = 1.0L - ti;
+		long double* row1 = &phi1[i * N];
+		long double* row2 = &phi2[i * N];
 		for (std::size_t j = 0; j < N; ++j) {
-			const double tj = theta[j];
+			const long double tj = theta[j];
 			row1[j] = ti * tj;                      // KroneckerProduct(theta, theta)
 			row2[j] = ti + one_minus_ti * tj;       // theta + (1 - theta) * theta
 		}
@@ -35,9 +35,9 @@ void generate_phi_grids(const std::vector<double>& theta,
 
 // write_phi_grids moved to grid_io.cpp
 
-bool validate_against_saved(const std::vector<double>& theta,
-							const std::vector<double>& phi1,
-							const std::vector<double>& phi2,
+bool validate_against_saved(const std::vector<long double>& theta,
+							const std::vector<long double>& phi1,
+							const std::vector<long double>& phi2,
 							std::size_t len,
 							const std::string& subdir,
 							double tol,
@@ -57,8 +57,8 @@ bool validate_against_saved(const std::vector<double>& theta,
 	if (!read_matrix_tsv(base + "/phi1.dat", ref_phi1, len)) return false;
 	if (!read_matrix_tsv(base + "/phi2.dat", ref_phi2, len)) return false;
 
-	auto update = [&](double a, double b) {
-		double d = std::abs(a - b);
+	auto update = [&](long double a, double b) {
+		long double d = std::abs(a - (long double)b);
 		if (d > maxAbsDiff) maxAbsDiff = d;
 		if (d > tol) ++mismatches;
 	};

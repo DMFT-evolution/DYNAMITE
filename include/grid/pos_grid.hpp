@@ -22,6 +22,17 @@
 // All outputs are row-major N x N matrices of 1-based fractional indices in [1, N].
 void generate_pos_grids(std::size_t len,
 						double Tmax,
+						const std::vector<long double>& theta,
+						const std::vector<long double>& phi1,
+						const std::vector<long double>& phi2,
+						std::vector<double>& posA1y,
+						std::vector<double>& posA2y,
+						std::vector<double>& posB2y);
+
+// Legacy wrapper: accepts double inputs and promotes to long double internally,
+// preserving on-disk double outputs for compatibility.
+void generate_pos_grids(std::size_t len,
+						double Tmax,
 						const std::vector<double>& theta,
 						const std::vector<double>& phi1,
 						const std::vector<double>& phi2,

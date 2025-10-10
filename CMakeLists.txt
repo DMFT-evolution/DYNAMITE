@@ -195,6 +195,7 @@ set(CPU_SOURCES
     src/core/config.cpp
     src/core/initialization.cpp
     src/math/math_sigma.cpp
+    src/math/lambert_w.cpp
     src/search/search_utils.cpp
     src/core/host_utils.cpp
     src/core/device_utils.cpp
@@ -363,6 +364,7 @@ add_executable(test_interp_weights
     src/grid/test_interpolation_weights.cpp
     src/grid/theta_grid.cpp
     src/grid/interpolation_weights.cpp
+    src/math/lambert_w.cpp
 )
 set_target_properties(test_interp_weights PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}

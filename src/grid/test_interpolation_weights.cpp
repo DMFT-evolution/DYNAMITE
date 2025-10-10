@@ -23,7 +23,7 @@ int main() {
     const int n = 9; // interpolation order
 
     // Build theta input grid
-    std::vector<double> theta;
+    std::vector<long double> theta;
     theta.reserve(len);
     generate_theta_grid(len, Tmax, theta);
 
@@ -44,7 +44,7 @@ int main() {
     for (int d = 0; d <= n; ++d) {
         // y_j = theta_j^d
         std::vector<double> y(len);
-        for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(theta[j], d);
+    for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(static_cast<double>(theta[j]), d);
 
         // Evaluate at queries
     for (int qi = 0; qi < (int)xq.size(); ++qi) {
@@ -75,7 +75,7 @@ int main() {
     worst_err = 0.0;
     for (int d = 0; d <= n; ++d) {
         std::vector<double> y(len);
-        for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(theta[j], d);
+    for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(static_cast<double>(theta[j]), d);
         for (int qi = 0; qi < (int)xq.size(); ++qi) {
             const BarycentricStencil& st = stencils_rat[qi];
             long double acc = 0.0L;
@@ -97,7 +97,7 @@ int main() {
     worst_err = 0.0;
     for (int d = 0; d <= n; ++d) {
         std::vector<double> y(len);
-        for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(theta[j], d);
+    for (std::size_t j = 0; j < len; ++j) y[j] = std::pow(static_cast<double>(theta[j]), d);
         for (int qi = 0; qi < (int)xq.size(); ++qi) {
             const BarycentricStencil& st = stencils_rat_wide[qi];
             long double acc = 0.0L;

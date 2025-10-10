@@ -1,5 +1,7 @@
 # DMFE
 
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DMFE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
+
 DMFE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; arXiv:2504.06849), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
 
 Key features:
@@ -74,7 +76,7 @@ Examples:
 Outputs written to `Grid_data/<SUBDIR>/` include:
 
 - Grids: `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
-- Integration weights: `int.dat` (N)
+- Integration weights: `int.dat` (N) — spline‑consistent open‑clamped B‑spline quadrature (degree s; default s=5)
 - Position grids: `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
 - Interpolation metadata (theta → targets):
 	- A1 (phi1): `indsA1y.dat` (N×N start indices), `weightsA1y.dat`
@@ -92,7 +94,7 @@ When you start a simulation, the code ensures that interpolation grids for the r
 
 - It first checks `Grid_data/<L>/` for the required files.
 - If missing, it scans other subdirectories under `Grid_data/` for a matching `grid_params.txt` with `len=<L>` and will reuse it via a symlink (`Grid_data/<L> -> Grid_data/<subdir>`) or by copying files.
-- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
+- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
 
 This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
 
@@ -105,10 +107,19 @@ This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision 
   - Usage: `docs/usage.md`
   - Tutorials: `docs/tutorials/`
   - Concepts & Architecture: `docs/concepts/`
+	- Cite: `docs/reference/cite.md`
 
 ## Contributing
 
 See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. Update docs when changing public behavior and run `./docs/gen_api.sh` after header changes.
+
+## License
+
+Licensed under the Apache License, Version 2.0. See the `LICENSE` file for details.
+
+## Cite
+
+If you use DMFE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, arXiv:2504.06849.
 
 ## Build options
 

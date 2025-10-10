@@ -83,9 +83,12 @@ What DMFE assumes (scope)
 
 ## Cite DMFE
 
-If this toolkit supports your research, please cite the method paper:
+If this toolkit supports your research, please cite:
 
-- Dynamical Mean-Field Evolution for non-stationary glassy dynamics, arXiv:2504.06849 (link: https://arxiv.org/abs/2504.06849)
+- Software: see Reference → Cite for release/version details (CITATION.cff).
+- Method paper: J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” arXiv:2504.06849.
+
+License: Apache-2.0. See the License badge and the LICENSE file in the repository.
 
 ## Getting help
 

@@ -5,7 +5,7 @@ Entry point: `./RG-Evo`. Show all options with `-h`.
 ## Model and parameters
 
 - `-p`, `-q` (integers): model orders (e.g., spherical mixed p-spin). Use `p>=2`; common: `p=3, q=4`.
-- `-l, --lambda` (float): coupling strength (dimensionless). Typical 0.1–1; study transitions by sweeping.
+- `-l, --lambda` (float): coupling strength (dimensionless). Typical 0–1; study transitions by sweeping.
 - `-T, --T0` (float|inf): initial/thermal scale; use `inf` for zero-noise quenches.
 - `-G, --Gamma` (float): damping or mass-like scale where applicable.
 

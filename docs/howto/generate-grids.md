@@ -12,7 +12,7 @@ This how-to walks you through generating the θ/ϕ grids, integration weights, p
 
 Outputs (under `Grid_data/512/`):
 - `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
-- `int.dat` integration weights (N)
+- `int.dat` integration weights (N), computed via open‑clamped B‑spline quadrature of degree s (default s=5)
 - `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (N×N)
 - Interp metadata: `indsA1y.dat`, `weightsA1y.dat`, `indsA2y.dat`, `weightsA2y.dat`, `indsB2y.dat`, `weightsB2y.dat`
 
@@ -20,7 +20,7 @@ Outputs (under `Grid_data/512/`):
 
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
-              [--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
+              [--spline-order s] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
 # METHODS: poly | rational | bspline
 # Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
 ```
@@ -28,7 +28,7 @@ Outputs (under `Grid_data/512/`):
 - `--len L` (required): grid length N. Available sets in repo: 512/1024/2048. Default 512.
 - `--Tmax X`: long-time scale for θ mapping; default 100000.
 - `--dir SUBDIR`: output subdirectory under `Grid_data/`. Defaults to the value of L.
-- `--spline-order n`: quadrature spline order (affects `int.dat`). Default 5.
+- `--spline-order s`: B‑spline degree for quadrature (affects `int.dat`). Default 5.
 - `--interp-method`: interpolation method for metadata.
   - `poly`: local barycentric Lagrange (degree n). Minimal n+1 weights per entry.
   - `rational`: Floater–Hormann (rational barycentric). Defaults to a single stencil (m=n+1), or set `--fh-stencil m` to blend across a wider window (m ≥ n+1).

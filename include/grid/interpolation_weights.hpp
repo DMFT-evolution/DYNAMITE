@@ -29,9 +29,15 @@ struct BarycentricStencil {
 // Compute weights for all queries in xq using local degree-n barycentric Lagrange.
 // Preconditions: x must be strictly increasing and contain at least n+1 points.
 std::vector<BarycentricStencil>
-compute_barycentric_weights(const std::vector<double>& x,    // input nodes
-                            const std::vector<double>& xq,   // query points
-                            int n);                          // interpolation order
+compute_barycentric_weights(const std::vector<long double>& x,    // input nodes
+                            const std::vector<long double>& xq,   // query points (long double)
+                            int n);                               // interpolation order
+
+// Backward-compatible overload
+std::vector<BarycentricStencil>
+compute_barycentric_weights(const std::vector<double>& x,
+                            const std::vector<double>& xq,
+                            int n);
 
 // Compute weights for all queries using a local barycentric rational (Floater–Hormann)
 // variant with parameter d. For a contiguous stencil size of d+1, this reduces to
@@ -42,12 +48,35 @@ compute_barycentric_weights(const std::vector<double>& x,    // input nodes
 // local Lagrange barycentric formulas within that window. When m==d+1 this
 // reduces to the polynomial barycentric case on a single stencil.
 std::vector<BarycentricStencil>
-compute_barycentric_rational_weights(const std::vector<double>& x,   // input nodes
-                                     const std::vector<double>& xq,  // query points
-                                     int d,                          // FH order (degree)
-                                     int m);                         // stencil size (>= d+1)
+compute_barycentric_rational_weights(const std::vector<long double>& x,   // input nodes
+                                     const std::vector<long double>& xq,  // query points (long double)
+                                     int d,                                // FH order (degree)
+                                     int m);                               // stencil size (>= d+1)
+
+// Backward-compatible overload
+std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<double>& x,
+                                     const std::vector<double>& xq,
+                                     int d,
+                                     int m);
 
 // Backward-compatible overload: m defaults to d+1
+inline std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<long double>& x,
+                                     const std::vector<long double>& xq,
+                                     int d) {
+    return compute_barycentric_rational_weights(x, xq, d, d + 1);
+}
+
+// Convenience overload: accept double xq and promote to long double for internal use
+inline std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<long double>& x,
+                                     const std::vector<double>& xq,
+                                     int d) {
+    std::vector<long double> xq_ld(xq.begin(), xq.end());
+    return compute_barycentric_rational_weights(x, xq_ld, d, d + 1);
+}
+
 inline std::vector<BarycentricStencil>
 compute_barycentric_rational_weights(const std::vector<double>& x,
                                      const std::vector<double>& xq,
@@ -65,9 +94,41 @@ struct BSplineWeights {
 };
 
 std::vector<BSplineWeights>
-compute_bspline_weights(const std::vector<double>& x,   // input nodes (strictly increasing)
-                        const std::vector<double>& xq,  // query points
-                        int n);                          // spline degree
+compute_bspline_weights(const std::vector<long double>& x,   // input nodes (strictly increasing)
+                        const std::vector<long double>& xq,  // query points (long double)
+                        int n);                               // spline degree
+
+// Backward-compatible overloads for double xq
+inline std::vector<BarycentricStencil>
+compute_barycentric_weights(const std::vector<long double>& x,
+                            const std::vector<double>& xq,
+                            int n) {
+    std::vector<long double> xq_ld(xq.begin(), xq.end());
+    return compute_barycentric_weights(x, xq_ld, n);
+}
+
+inline std::vector<BarycentricStencil>
+compute_barycentric_rational_weights(const std::vector<long double>& x,
+                                     const std::vector<double>& xq,
+                                     int d,
+                                     int m) {
+    std::vector<long double> xq_ld(xq.begin(), xq.end());
+    return compute_barycentric_rational_weights(x, xq_ld, d, m);
+}
+
+inline std::vector<BSplineWeights>
+compute_bspline_weights(const std::vector<long double>& x,
+                        const std::vector<double>& xq,
+                        int n) {
+    std::vector<long double> xq_ld(xq.begin(), xq.end());
+    return compute_bspline_weights(x, xq_ld, n);
+}
+
+// Backward-compatible overload
+std::vector<BSplineWeights>
+compute_bspline_weights(const std::vector<double>& x,
+                        const std::vector<double>& xq,
+                        int n);
 
 } // namespace grid
 } // namespace dmfe

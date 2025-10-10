@@ -21,10 +21,10 @@ struct GridPaths {
 // - int.dat (vector of size N)
 // - posA1y.dat, posA2y.dat, posB2y.dat (N x N TSV)
 // Returns the file paths.
-GridPaths write_all_grids(const std::vector<double>& theta,
-                          const std::vector<double>& phi1,
-                          const std::vector<double>& phi2,
-                          const std::vector<double>& wint,
+GridPaths write_all_grids(const std::vector<long double>& theta,
+                          const std::vector<long double>& phi1,
+                          const std::vector<long double>& phi2,
+                          const std::vector<long double>& wint,
                           const std::vector<double>& posA1y,
                           const std::vector<double>& posA2y,
                           const std::vector<double>& posB2y,

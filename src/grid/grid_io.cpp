@@ -23,7 +23,7 @@ static bool ensure_dir(const std::string& path) {
     return false;
 }
 
-std::string write_theta_grid(const std::vector<double>& theta, std::size_t /*len*/, const std::string& subdir) {
+std::string write_theta_grid(const std::vector<long double>& theta, std::size_t /*len*/, const std::string& subdir) {
     std::string base = "Grid_data/" + subdir;
     // Create parent and child directories (best-effort)
     ensure_dir("Grid_data");
@@ -33,8 +33,26 @@ std::string write_theta_grid(const std::vector<double>& theta, std::size_t /*len
     if (!ofs) throw std::runtime_error(std::string("Failed to open ") + out + ": " + std::strerror(errno));
     ofs.setf(std::ios::scientific);
     ofs.precision(17);
-    for (double v : theta) ofs << v << '\n';
+    for (long double v : theta) ofs << static_cast<double>(v) << '\n';
     return out;
+}
+
+// Local helpers formerly spread across files
+static void write_matrix_tsv(const std::string& path,
+                             const std::vector<long double>& mat,
+                             std::size_t N) {
+    std::ofstream ofs(path);
+    if (!ofs) throw std::runtime_error(std::string("Failed to open ") + path + ": " + std::strerror(errno));
+    ofs.setf(std::ios::scientific);
+    ofs.precision(17);
+    for (std::size_t i = 0; i < N; ++i) {
+        const long double* row = &mat[i * N];
+        for (std::size_t j = 0; j < N; ++j) {
+            if (j) ofs << '\t';
+            ofs << row[j];
+        }
+        ofs << '\n';
+    }
 }
 
 // Local helpers formerly spread across files
@@ -108,8 +126,8 @@ bool read_matrix_tsv(const std::string& path, std::vector<double>& out, std::siz
     return row == N;
 }
 
-static std::pair<std::string, std::string> write_phi_grids_local(const std::vector<double>& phi1,
-                                                                 const std::vector<double>& phi2,
+static std::pair<std::string, std::string> write_phi_grids_local(const std::vector<long double>& phi1,
+                                                                 const std::vector<long double>& phi2,
                                                                  std::size_t len,
                                                                  const std::string& subdir) {
     std::string base = "Grid_data/" + subdir;
@@ -122,7 +140,7 @@ static std::pair<std::string, std::string> write_phi_grids_local(const std::vect
     return {p1, p2};
 }
 
-static std::string write_integration_weights_local(const std::vector<double>& weights,
+static std::string write_integration_weights_local(const std::vector<long double>& weights,
                                                    std::size_t len,
                                                    const std::string& subdir) {
     std::string base = "Grid_data/" + subdir;
@@ -133,7 +151,7 @@ static std::string write_integration_weights_local(const std::vector<double>& we
     if (!ofs) throw std::runtime_error(std::string("Failed to open ") + path + ": " + std::strerror(errno));
     ofs.setf(std::ios::scientific);
     ofs.precision(17);
-    for (std::size_t i = 0; i < len && i < weights.size(); ++i) ofs << weights[i] << '\n';
+    for (std::size_t i = 0; i < len && i < weights.size(); ++i) ofs << static_cast<double>(weights[i]) << '\n';
     return path;
 }
 
@@ -155,10 +173,10 @@ write_pos_grids_local(const std::vector<double>& posA1y,
     return {pA1, pA2, pB2};
 }
 
-GridPaths write_all_grids(const std::vector<double>& theta,
-                          const std::vector<double>& phi1,
-                          const std::vector<double>& phi2,
-                          const std::vector<double>& wint,
+GridPaths write_all_grids(const std::vector<long double>& theta,
+                          const std::vector<long double>& phi1,
+                          const std::vector<long double>& phi2,
+                          const std::vector<long double>& wint,
                           const std::vector<double>& posA1y,
                           const std::vector<double>& posA2y,
                           const std::vector<double>& posB2y,

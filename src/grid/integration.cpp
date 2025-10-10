@@ -6,134 +6,203 @@
 #include <string>
 #include <vector>
 #include "grid/grid_io.hpp"
-// High-precision arithmetic for stable small linear solves
+// High-precision arithmetic for stable small linear solves (kept for legacy helpers)
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
 namespace {
-// Solve small linear system A x = b via Gaussian elimination with partial pivoting.
-// A is (m x m), stored row-major, b and x are size m.
-template <typename T>
-static void solve_small_t(std::vector<T>& A, std::vector<T>& b, int m) {
-    using boost::multiprecision::abs; // enable ADL for multiprecision types
-    using std::abs;
-    for (int k = 0; k < m; ++k) {
-        // pivot
-        int piv = k;
-        T amax = abs(A[k * m + k]);
-        for (int i = k + 1; i < m; ++i) {
-            T v = abs(A[i * m + k]);
-            if (v > amax) { amax = v; piv = i; }
+
+// ---------------- Spline-consistent integration helpers ----------------
+
+// Open (clamped) knot vector using x as parameter values; endpoints repeated p+1 times.
+static std::vector<long double>
+build_open_knot_vector(const std::vector<long double>& x, int p) {
+    const int N = static_cast<int>(x.size());
+    if (N < p + 1) throw std::invalid_argument("spline integration: need N >= p+1");
+    const int mBasis = N; // number of basis functions equals number of data points
+    const int K = mBasis + p + 1; // number of knots
+    std::vector<long double> t(K);
+    for (int i = 0; i <= p; ++i) t[i] = x.front();
+    for (int i = 0; i <= p; ++i) t[K - 1 - i] = x.back();
+    const int n = N - 1;
+    for (int j = p + 1; j <= n; ++j) {
+        long double sum = 0.0L;
+        for (int i = j - p; i <= j - 1; ++i) sum += x[i];
+        t[j] = sum / static_cast<long double>(p);
+    }
+    return t;
+}
+
+// Find span such that t[span] <= u < t[span+1]
+static int find_span(int mBasis, int p, long double u, const std::vector<long double>& t) {
+    const int n = mBasis - 1;
+    if (u >= t[n + 1]) return n;
+    if (u <= t[p]) return p;
+    int low = p, high = n + 1, mid = (low + high) / 2;
+    while (!(u >= t[mid] && u < t[mid + 1])) {
+        if (u < t[mid]) high = mid; else low = mid;
+        mid = (low + high) / 2;
+    }
+    return mid;
+}
+
+// Basis functions N_{i-p..i,p}(u). Returns N size p+1.
+static void basis_funs(int span, long double u, int p, const std::vector<long double>& t,
+                       std::vector<long double>& N) {
+    N.assign(p + 1, 0.0L);
+    std::vector<long double> left(p + 1), right(p + 1);
+    N[0] = 1.0L;
+    for (int j = 1; j <= p; ++j) {
+        left[j] = u - t[span + 1 - j];
+        right[j] = t[span + j] - u;
+        long double saved = 0.0L;
+        for (int r = 0; r < j; ++r) {
+            long double denom = right[r + 1] + left[j - r];
+            long double temp = (denom != 0.0L) ? (N[r] / denom) : 0.0L;
+            N[r] = saved + right[r + 1] * temp;
+            saved = left[j - r] * temp;
         }
-        if (amax == T(0)) continue; // singular; leave as is
-        if (piv != k) {
-            for (int j = k; j < m; ++j) std::swap(A[k * m + j], A[piv * m + j]);
-            std::swap(b[k], b[piv]);
-        }
-        T diag = A[k * m + k];
-        for (int j = k; j < m; ++j) A[k * m + j] /= diag;
-        b[k] /= diag;
-        for (int i = 0; i < m; ++i) {
-            if (i == k) continue;
-            T f = A[i * m + k];
-            if (f == T(0)) continue;
-            for (int j = k; j < m; ++j) A[i * m + j] -= f * A[k * m + j];
-            b[i] -= f * b[k];
+        N[j] = saved;
+    }
+}
+
+// Assemble banded collocation matrix A (N x N), where A_ij = N_j(x_i).
+// Only fill band entries where |i-j| <= p.
+static void assemble_collocation(const std::vector<long double>& x, int p,
+                                 const std::vector<long double>& knots,
+                                 std::vector<long double>& A) {
+    const int N = static_cast<int>(x.size());
+    A.assign(static_cast<std::size_t>(N) * N, 0.0L);
+    const int mBasis = N;
+    std::vector<long double> Nvals(p + 1);
+    for (int i = 0; i < N; ++i) {
+        long double u = x[i];
+        int span = find_span(mBasis, p, u, knots);
+        basis_funs(span, u, p, knots, Nvals);
+        int first = span - p;
+        for (int j = 0; j <= p; ++j) {
+            int col = first + j;
+            if (col >= 0 && col < N) A[static_cast<std::size_t>(i) * N + col] = Nvals[j];
         }
     }
 }
 
-} // namespace
-
-void compute_integration_weights(const std::vector<double>& theta,
-                                 int order,
-                                 std::vector<double>& w) {
-    using mp_t = boost::multiprecision::cpp_dec_float_100;
-    const std::size_t N = theta.size();
-    if (N == 0) { w.clear(); return; }
-    if (order < 1) order = 1;
-    if (order > 8) order = 8;
-
-    w.assign(N, 0.0);
-    // use extended precision internally
-    std::vector<long double> wl(N, 0.0L);
-    std::vector<long double> comp(N, 0.0L); // Kahan compensation per node
-
-    // Composite local polynomial rule: for each interval [t_i, t_{i+1}],
-    // build weights a_j such that sum_j a_j p(t_j) = ∫_{t_i}^{t_{i+1}} p(t) dt for all polynomials p of degree <= order.
-    // Use a stencil S of size M = min(order+1, N) nodes near the interval; center symmetrically around [i,i+1] when possible.
-    const int M = std::min<int>(order + 1, (int)N);
-    // For stability, limit at ends by sliding window.
-    for (std::size_t i = 0; i + 1 < N; ++i) {
-        double a = theta[i], b = theta[i + 1];
-        double h = b - a;
-        if (h <= 0.0) continue;
-        // symmetric stencil in index space around the interval [i, i+1]
-        int j0 = static_cast<int>(i) - (M/2 - 1);
-        if (j0 < 0) j0 = 0;
-        if (j0 + M > (int)N) j0 = (int)N - M;
-
-        // Center-and-scale absolute moment formulation: y = (t - c) / s
-        const mp_t a_mp = mp_t(a);
-        const mp_t b_mp = mp_t(b);
-        const mp_t c = (a_mp + b_mp) / mp_t(2);
-        // scale s as the local stencil span for robustness, but not smaller than h
-        const double span_d = theta[j0 + M - 1] - theta[j0];
-        const mp_t s = mp_t(std::max(h, span_d));
-        const mp_t ya = (a_mp - c) / s;
-        const mp_t yb = (b_mp - c) / s;
-
-        std::vector<mp_t> A(M * M);
-        std::vector<mp_t> bvec(M);
-        std::vector<mp_t> yk(M);
-        for (int k2 = 0; k2 < M; ++k2) {
-            yk[k2] = (mp_t(theta[j0 + k2]) - c) / s;
-        }
-        // Build Vandermonde in powers of y, and exact moments over [ya, yb]
-        for (int r = 0; r < M; ++r) {
-            // moment of y^r over [ya, yb] in t-units: ∫ (s y + c)' dt = s ∫ y^r dy = s * (yb^{r+1} - ya^{r+1})/(r+1)
-            mp_t ypow_a = mp_t(1), ypow_b = mp_t(1);
-            for (int k = 0; k < r + 1; ++k) { ypow_a *= ya; ypow_b *= yb; }
-            bvec[r] = s * (ypow_b - ypow_a) / mp_t(r + 1);
-            for (int k2 = 0; k2 < M; ++k2) {
-                if (r == 0) {
-                    A[r * M + k2] = mp_t(1);
-                } else {
-                    mp_t p = mp_t(1);
-                    for (int tpow = 0; tpow < r; ++tpow) p *= yk[k2];
-                    A[r * M + k2] = p;
-                }
+// Simple banded LU factorization without pivoting on A (in-place), band half-width p.
+// A is full row-major N x N but only band entries are assumed non-zero.
+static void banded_lu(std::vector<long double>& A, int N, int p) {
+    for (int k = 0; k < N; ++k) {
+        long double akk = A[static_cast<std::size_t>(k) * N + k];
+        // Assume non-singular; no pivoting
+        for (int i = k + 1; i <= std::min(N - 1, k + p); ++i) {
+            long double lik = A[static_cast<std::size_t>(i) * N + k] /= akk;
+            for (int j = k + 1; j <= std::min(N - 1, k + p); ++j) {
+                A[static_cast<std::size_t>(i) * N + j] -= lik * A[static_cast<std::size_t>(k) * N + j];
             }
         }
-        solve_small_t(A, bvec, M);
-        // Accumulate directly (no extra h factor; bvec already in t-units)
-        for (int k2 = 0; k2 < M; ++k2) {
-            long double increment = static_cast<long double>(bvec[k2]);
-            long double y = increment - comp[j0 + k2];
-            long double t = wl[j0 + k2] + y;
-            comp[j0 + k2] = (t - wl[j0 + k2]) - y;
-            wl[j0 + k2] = t;
+    }
+}
+
+// Solve A x = b using LU factors in A (unit-lower L and upper U embedded), band p.
+static void banded_lu_solve(const std::vector<long double>& A, int N, int p,
+                            const std::vector<long double>& b,
+                            std::vector<long double>& x) {
+    x = b;
+    // Forward: L y = b
+    for (int i = 0; i < N; ++i) {
+        int j0 = std::max(0, i - p);
+        for (int j = j0; j < i; ++j) {
+            x[i] -= A[static_cast<std::size_t>(i) * N + j] * x[j];
         }
     }
+    // Backward: U x = y
+    for (int i = N - 1; i >= 0; --i) {
+        int j1 = std::min(N - 1, i + p);
+        for (int j = i + 1; j <= j1; ++j) {
+            x[i] -= A[static_cast<std::size_t>(i) * N + j] * x[j];
+        }
+        x[i] /= A[static_cast<std::size_t>(i) * N + i];
+    }
+}
 
-    // Normalize to ensure exactness for constants: sum w = 1 when theta[0]=0, theta[-1]=1
-    long double sum = 0.0L, csum = 0.0L;
-    for (long double v : wl) {
-        long double y = v - csum;
-        long double t = sum + y;
-        csum = (t - sum) - y;
-        sum = t;
+// Solve A^T x = b using LU factors (no pivoting). Use transposed triangular solves.
+static void banded_lu_solve_transpose(const std::vector<long double>& A, int N, int p,
+                                      const std::vector<long double>& b,
+                                      std::vector<long double>& x) {
+    x = b;
+    // Solve U^T y = b (U upper) -> forward-like
+    for (int i = 0; i < N; ++i) {
+        int j0 = std::max(0, i - p);
+        for (int j = j0; j < i; ++j) {
+            // U^T has (j,i) = U(i,j)
+            x[i] -= A[static_cast<std::size_t>(j) * N + i] * x[j];
+        }
+        x[i] /= A[static_cast<std::size_t>(i) * N + i];
     }
-    if (sum != 0.0L) {
-        for (auto& v : wl) v /= sum;
+    // Solve L^T x = y (L unit-lower) -> backward-like
+    for (int i = N - 1; i >= 0; --i) {
+        int j1 = std::min(N - 1, i + p);
+        for (int j = i + 1; j <= j1; ++j) {
+            // L^T has (i,j) = L(j,i)
+            x[i] -= A[static_cast<std::size_t>(j) * N + i] * x[j];
+        }
+        // No division: diagonal of L is 1
     }
-    // Enforce non-negative small eps at ends
-    if (!wl.empty()) {
-        if (wl.front() < 0) wl.front() = 0.0L;
-        if (wl.back() < 0) wl.back() = 0.0L;
-    }
+}
 
-    // cast back to double
-    for (std::size_t i2 = 0; i2 < N; ++i2) w[i2] = static_cast<double>(wl[i2]);
+// Compute integral of each B-spline basis over [a,b]: M_j = (t_{j+p+1} - t_j)/(p+1)
+static std::vector<long double>
+compute_basis_integrals(const std::vector<long double>& knots, int N, int p) {
+    std::vector<long double> M(N, 0.0L);
+    for (int j = 0; j < N; ++j) {
+        long double num = knots[j + p + 1] - knots[j];
+        M[j] = num / static_cast<long double>(p + 1);
+    }
+    return M;
+}
+
+// (No mapping needed anymore) Degree p will be taken directly from `order` and
+// clamped into [1, N-1] at call site.
+
+} // namespace
+
+void compute_integration_weights(const std::vector<long double>& theta,
+                                 int order,
+                                 std::vector<long double>& w) {
+    const int N = static_cast<int>(theta.size());
+    w.clear();
+    if (N == 0) return;
+
+    // Take spline degree directly from `order`; clamp to feasible range [1, N-1]
+    int p = order;
+    if (p < 1) p = 1;
+    if (p > N - 1) p = std::max(1, N - 1);
+
+    // Build clamped knot vector and banded collocation matrix
+    auto knots = build_open_knot_vector(theta, p);
+    std::vector<long double> A; A.reserve(static_cast<std::size_t>(N) * std::min(N, 2*p+1));
+    assemble_collocation(theta, p, knots, A);
+
+    // Factor banded LU (no pivoting)
+    banded_lu(A, N, p);
+
+    // Build basis integrals vector M (exact)
+    std::vector<long double> M = compute_basis_integrals(knots, N, p);
+
+    // Solve A^T w = M
+    std::vector<long double> wl;
+    banded_lu_solve_transpose(A, N, p, M, wl);
+
+    // Output
+    w.resize(N);
+    for (int i = 0; i < N; ++i) w[i] = wl[i];
+}
+
+// Backward-compatible overload for double theta
+void compute_integration_weights(const std::vector<double>& theta,
+                                 int order,
+                                 std::vector<long double>& w) {
+    std::vector<long double> thetal(theta.size());
+    for (std::size_t i = 0; i < theta.size(); ++i) thetal[i] = static_cast<long double>(theta[i]);
+    compute_integration_weights(thetal, order, w);
 }
 
 // write_integration_weights moved to grid_io.cpp; reading centralized in grid_io.cpp

@@ -7,11 +7,18 @@ set -euo pipefail
 ROOT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")"/.. && pwd)
 cd "$ROOT_DIR"
 
+DMFE_WITH_API=${DMFE_WITH_API:-0}
+
+if [[ "$DMFE_WITH_API" != "1" ]]; then
+  echo "INFO: DMFE_WITH_API=0; skipping API generation."
+  exit 0
+fi
+
 # 1) Run doxygen
 mkdir -p docs/reference/doxygen docs/reference/api
 if ! command -v doxygen >/dev/null 2>&1; then
-  echo "ERROR: doxygen not found. Install it (apt install doxygen)." >&2
-  exit 1
+  echo "WARN: doxygen not found. Skipping API generation." >&2
+  exit 0
 fi
 
 doxygen Doxyfile
@@ -68,19 +75,5 @@ if [ -n "$DOXYBOOK2_BIN" ] && [ -x "$DOXYBOOK2_BIN" ]; then
 
   echo "API docs generated under docs/reference/api/"
 else
-  echo "WARN: doxybook2 not found. Skipping API conversion and writing placeholder." >&2
-  mkdir -p docs/reference/api
-  cat > docs/reference/api/index.md <<'MD'
-# API Reference (Placeholder)
-
-Doxygen XML was generated to `docs/reference/doxygen/xml`.
-
-To render Markdown API pages, install doxybook2 and re-run:
-
-```bash
-./docs/gen_api.sh
-```
-
-You can also set DOXYBOOK2 to the full path of the binary, and DOXYBOOK2_TEMPLATES to its templates/default directory.
-MD
+  echo "WARN: doxybook2 not found. Skipping API conversion." >&2
 fi

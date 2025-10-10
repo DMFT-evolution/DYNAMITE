@@ -48,10 +48,6 @@ markdown_extensions:
 
 plugins:
   - search
-  - exclude:
-      glob:
-        - reference/api/**
-        - reference/doxygen/**
 
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
@@ -59,12 +55,17 @@ extra_javascript:
 extra_css:
   - assets/overrides.css
 
+exclude:
+  - reference/doxygen/**
+  - reference/api/**
+
 nav:
   - Home: index.md
   - Install: install.md
   - Usage: usage.md
   - Tutorials:
     - First run: tutorials/first-run.md
+    - Generate grids: tutorials/generate-grids.md
     - CPU-only: tutorials/cpu-only.md
     - Cluster portable build: tutorials/cluster-portable-build.md
     - Parameter sweep: tutorials/parameter-sweep.md
@@ -84,7 +85,8 @@ nav:
     - Add new IO format: howto/add-new-io-format.md
   - Reference:
     - Overview: reference/index.md
-  - Bibliography: reference/bibliography.md
+    - Cite: reference/cite.md
+    - Bibliography: reference/bibliography.md
   - Developer:
     - Contributors: dev/contributors.md
     - Contributing: dev/contributing.md

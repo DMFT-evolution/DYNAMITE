@@ -68,19 +68,20 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
 
     if (subdir.empty()) subdir = std::to_string(len);
 
-    std::vector<double> theta;
+    std::vector<long double> theta;
     generate_theta_grid(len, Tmax, theta);
 
     // Generate phi grids
-    std::vector<double> phi1, phi2;
+    std::vector<long double> phi1, phi2;
     generate_phi_grids(theta, phi1, phi2);
 
-    // Integration weights
-    std::vector<double> wint;
+    // Integration weights (keep as long double until export)
+    std::vector<long double> wint;
     compute_integration_weights(theta, spline_order, wint);
 
     // Position grids (A1y, A2y, B2y) from theta and phi using interpolation-based inverse
     std::vector<double> posA1y, posA2y, posB2y;
+    // Use long double inputs directly (internals operate in long double; outputs remain double)
     generate_pos_grids(len, Tmax, theta, phi1, phi2, posA1y, posA2y, posB2y);
 
     // Compute interpolation weights for mapping theta -> phi1 and theta -> phi2 entries (N*N queries each)
@@ -96,13 +97,9 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     const int mFH = (interp_method == "rational")
         ? (int)std::min<std::size_t>(N, (std::size_t)std::max(n + 1, (fh_stencil > 0 ? fh_stencil : (n + 1))))
         : 0;
-    std::vector<double> xq; xq.reserve(N*N);
-    for (std::size_t i = 0; i < N; ++i) {
-        for (std::size_t j = 0; j < N; ++j) xq.push_back(phi1[i * N + j]);
-    }
 
     if (interp_method == "poly") {
-        auto st = dmfe::grid::compute_barycentric_weights(theta, xq, n);
+    auto st = dmfe::grid::compute_barycentric_weights(theta, phi1, n);
         const int m = n + 1;
         inds.resize(N * N);
         weights_flat.resize((std::size_t)N * N * m);
@@ -111,9 +108,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
             for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
         }
         // A2
-        std::vector<double> xq2; xq2.reserve(N*N);
-        for (std::size_t i = 0; i < N; ++i) for (std::size_t j = 0; j < N; ++j) xq2.push_back(phi2[i * N + j]);
-        auto st2 = dmfe::grid::compute_barycentric_weights(theta, xq2, n);
+    auto st2 = dmfe::grid::compute_barycentric_weights(theta, phi2, n);
         indsA2.resize(N * N);
         const std::size_t msz = (std::size_t)N * N * (std::size_t)m;
         weightsA2_flat.resize(msz);
@@ -122,7 +117,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
             for (int j = 0; j < m; ++j) weightsA2_flat[k * m + j] = st2[k].alpha[j];
         }
     } else if (interp_method == "rational") {
-        auto st = dmfe::grid::compute_barycentric_rational_weights(theta, xq, n, mFH);
+    auto st = dmfe::grid::compute_barycentric_rational_weights(theta, phi1, n, mFH);
         const int m = mFH;
         inds.resize(N * N);
         weights_flat.resize((std::size_t)N * N * m);
@@ -131,9 +126,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
             for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
         }
         // A2
-        std::vector<double> xq2; xq2.reserve(N*N);
-        for (std::size_t i = 0; i < N; ++i) for (std::size_t j = 0; j < N; ++j) xq2.push_back(phi2[i * N + j]);
-        auto st2 = dmfe::grid::compute_barycentric_rational_weights(theta, xq2, n, mFH);
+    auto st2 = dmfe::grid::compute_barycentric_rational_weights(theta, phi2, n, mFH);
         indsA2.resize(N * N);
         weightsA2_flat.resize((std::size_t)N * N * m);
         for (std::size_t k = 0; k < st2.size(); ++k) {
@@ -142,16 +135,14 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         }
     } else if (interp_method == "bspline") {
         // Global weights per entry: store inds as -1 and write N weights per entry
-        auto W = dmfe::grid::compute_bspline_weights(theta, xq, n);
+    auto W = dmfe::grid::compute_bspline_weights(theta, phi1, n);
         inds.assign(N * N, -1);
         weights_flat.resize((std::size_t)N * N * N);
         for (std::size_t k = 0; k < W.size(); ++k) {
             for (std::size_t j = 0; j < N; ++j) weights_flat[k * N + j] = W[k].w[j];
         }
         // A2
-        std::vector<double> xq2; xq2.reserve(N*N);
-        for (std::size_t i = 0; i < N; ++i) for (std::size_t j = 0; j < N; ++j) xq2.push_back(phi2[i * N + j]);
-        auto W2 = dmfe::grid::compute_bspline_weights(theta, xq2, n);
+    auto W2 = dmfe::grid::compute_bspline_weights(theta, phi2, n);
         indsA2.assign(N * N, -1);
         weightsA2_flat.resize((std::size_t)N * N * N);
         for (std::size_t k = 0; k < W2.size(); ++k) {
@@ -164,21 +155,21 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
 
     if (!validate) {
         // Unified writer for all grids
-        GridPaths paths = write_all_grids(theta, phi1, phi2, wint, posA1y, posA2y, posB2y, len, subdir);
+    GridPaths paths = write_all_grids(theta, phi1, phi2, wint, posA1y, posA2y, posB2y, len, subdir);
         // Save generation parameters for provenance
         write_grid_generation_params(len, Tmax, spline_order, interp_method, n, mFH, subdir, cmdline);
         // Write interpolation metadata for A1 and A2
         auto ip = write_A1_interp_metadata(inds, weights_flat, len, subdir);
         auto ip2 = write_A2_interp_metadata(indsA2, weightsA2_flat, len, subdir);
-        // Compute and write interpolation metadata for B2: xq = theta[i] / (phi2[i,j] - tiny)
+        // Compute and write interpolation metadata for B2: xqB2 = theta[i] / (phi2[i,j] - tiny)
         const double tiny = 1e-200;
-        std::vector<double> xqB2; xqB2.reserve(N*N);
+        std::vector<long double> xqB2; xqB2.reserve(N*N);
         for (std::size_t i = 0; i < N; ++i) {
-            const double ti = theta[i];
+            const long double ti = theta[i];
             for (std::size_t j = 0; j < N; ++j) {
-                const double denom = phi2[i * N + j] - tiny;
-                double arg;
-                if (std::abs(denom) < 1e-300) {
+                const long double denom = phi2[i * N + j] - tiny;
+                long double arg;
+                if (std::fabs(denom) < 1e-300L) {
                     arg = (ti > 0) ? theta.back() : theta.front();
                 } else {
                     arg = ti / denom;
@@ -244,7 +235,10 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     }
     double maxAbsDiffW = 0.0; std::size_t mismW = 0;
     const double tolInt = 1e-7;
-    if (!validate_integration_weights(wint, len, subdir, tolInt, maxAbsDiffW, mismW)) {
+    // Validator expects double inputs; down-convert a view of wint
+    std::vector<double> wint_d(wint.size());
+    for (std::size_t i = 0; i < wint.size(); ++i) wint_d[i] = static_cast<double>(wint[i]);
+    if (!validate_integration_weights(wint_d, len, subdir, tolInt, maxAbsDiffW, mismW)) {
         std::cerr << "Validation FAILED (int.dat) or reference file missing in Grid_data/" << subdir
                   << ". Max abs diff=" << maxAbsDiffW << ", mismatches=" << mismW << std::endl;
         exitCode = 2; return true;

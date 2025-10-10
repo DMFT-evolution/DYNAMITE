@@ -5,9 +5,10 @@ DMFE builds with CMake for CPU and optionally CUDA GPUs.
 ## Prerequisites
 
 - CMake >= 3.24
-- A C++17 compiler (GCC or Clang). OpenMP recommended.
-- Optional: CUDA Toolkit (for GPU build)
-- Optional: HDF5 dev libs (for compile-time HDF5 linkage)
+- C++17 compiler (GCC or Clang) with OpenMP
+- Optional: CUDA Toolkit (enables GPU build)
+- Optional: HDF5 development libraries (compile-time HDF5)
+- Docs build: Doxygen (Graphviz optional for diagrams)
 
 ## Build from source
 
@@ -47,3 +48,13 @@ See README Build options for the full list and examples.
 - CMake can’t find CUDA: set `-DDMFE_WITH_CUDA=OFF` to build CPU-only; verify `nvcc --version`.
 - Linker errors with libgomp/libomp: set `-DDMFE_STATIC_OPENMP=OFF` or install matching OpenMP.
 - Runtime: missing grid data → ensure `Grid_data/<L>/` exists for your `-L`.
+
+### No sudo / user-space installs
+
+- Python tools (mkdocs, doxybook2): use `pip install --user ...` or a local environment (e.g., micromamba/conda).
+- Doxygen: use a prebuilt binary or container if your system lacks packages.
+- Graphviz is optional; API pages generate without diagrams when not present.
+
+---
+
+License: Apache-2.0. See the repository `LICENSE` file. For citation instructions, see Reference → Cite.
