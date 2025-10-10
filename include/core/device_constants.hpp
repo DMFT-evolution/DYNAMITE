@@ -11,6 +11,12 @@
 // enabled in CMakeLists.txt so a device linking step unifies the symbols.
 #pragma once
 
+#ifdef __CUDACC__
 extern __constant__ int d_p;
 extern __constant__ int d_p2;
 extern __constant__ double d_lambda;
+#else
+extern int d_p;
+extern int d_p2;
+extern double d_lambda;
+#endif
