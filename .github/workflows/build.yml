@@ -10,6 +10,8 @@ jobs:
   cpu-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Install Boost headers
+        run: sudo apt-get update && sudo apt-get install -y libboost-all-dev
       - uses: actions/checkout@v4
       - name: Install toolchain
         run: |

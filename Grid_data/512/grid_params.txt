@@ -2,7 +2,8 @@
 len=512
 Tmax=1.00000000000000000e+05
 spline_order=7
-interp_method=poly
+interp_method=rational
 interp_order=9
+fh_stencil=12
 subdir=512
-command_line=./RG-Evo grid -s 7
+command_line=./RG-Evo grid -s 7 -m rational -o 9 -f 12

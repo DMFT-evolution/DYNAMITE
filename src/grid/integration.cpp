@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 #include "grid/grid_io.hpp"
-// High-precision arithmetic for stable small linear solves (kept for legacy helpers)
-#include <boost/multiprecision/cpp_dec_float.hpp>
 
 namespace {
 
