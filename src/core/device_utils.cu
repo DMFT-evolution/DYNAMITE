@@ -3,7 +3,9 @@
 #include <sys/resource.h>
 #include <unistd.h>
 #include <chrono>
+#include "core/console.hpp"
 #include <cstdlib>
+#include <sys/sysinfo.h>
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
 #endif
@@ -108,7 +110,7 @@ bool isCompatibleGPUInstalled() {
     int deviceCount = 0;
     cudaError_t err = cudaGetDeviceCount(&deviceCount);
     if (err != cudaSuccess || deviceCount == 0) {
-        std::cerr << "No CUDA-capable devices found." << std::endl;
+	std::cerr << dmfe::console::ERR() << "No CUDA-capable devices found." << std::endl;
         return false;
     }
 
@@ -118,12 +120,12 @@ bool isCompatibleGPUInstalled() {
 
         // Check compute capability
         if (deviceProp.major > 8 || (deviceProp.major == 8 && deviceProp.minor >= 6)) {
-            std::cout << "Compatible GPU found: " << deviceProp.name << std::endl;
+			std::cout << dmfe::console::INFO() << "Compatible GPU found: " << deviceProp.name << std::endl;
             return true;
         }
     }
 
-    std::cerr << "No compatible GPU found (compute capability >= 8.6)." << std::endl;
+	std::cerr << dmfe::console::WARN() << "No compatible GPU found (compute capability >= 8.6)." << std::endl;
     return false;
 }
 
@@ -163,6 +165,8 @@ size_t getAvailableGPUMemory() {
     }
     return total_mem / (1024 * 1024); // Convert to MB
 }
+
+// getTotalSystemMemoryKB is implemented in device_utils.cpp; ensure symbol visible here via header.
 
 // Function to update peak memory usage
 void updatePeakMemory() {

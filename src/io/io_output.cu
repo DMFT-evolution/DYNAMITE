@@ -11,6 +11,7 @@
 #include "version/version_info.hpp"
 #include <fstream>
 #include <iostream>
+#include "core/console.hpp"
 #include <sstream>
 #include <iomanip>
 #include <sys/stat.h>
@@ -262,9 +263,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             rvecFile << simulation.h_t1grid[i] << "\t" << simulation.h_rvec[i] << "\n";
         }
         rvecFile.close();
-        std::cout << "Saved rvec history to " << rvecFilename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved rvec history to " << rvecFilename << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << rvecFilename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
     }
     
     // Save energy history
@@ -277,9 +278,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             energyFile << simulation.h_t1grid[i] << "\t" << energy_history[i] << "\n";
         }
         energyFile.close();
-        std::cout << "Saved energy history to " << energyFilename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved energy history to " << energyFilename << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << energyFilename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
     }
     
     // Save QK[0] history
@@ -292,12 +293,12 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             qk0File << simulation.h_t1grid[i] << "\t" << qk0_history[i] << "\n";
         }
         qk0File.close();
-        std::cout << "Saved QK[0] history to " << qk0Filename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved QK[0] history to " << qk0Filename << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << qk0Filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
     
-    std::cout << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << std::endl;
+    std::cout << dmfe::console::SAVE() << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << std::endl;
 }
 
 // Async version of saveHistory that works with snapshot data (simplified, no GPU operations)
@@ -328,9 +329,9 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
             rvecFile << snapshot.t1grid[i] << "\t" << snapshot.rvec[i] << "\n";
         }
         rvecFile.close();
-        std::cout << "Saved rvec history to " << rvecFilename << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved rvec history to " << rvecFilename << " (async)" << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << rvecFilename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
     }
     
     // Save energy history
@@ -343,9 +344,9 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
             energyFile << snapshot.t1grid[i] << "\t" << energy_history[i] << "\n";
         }
         energyFile.close();
-        std::cout << "Saved energy history to " << energyFilename << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved energy history to " << energyFilename << " (async)" << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << energyFilename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
     }
     
     // Save QK[0] history
@@ -358,12 +359,12 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
             qk0File << snapshot.t1grid[i] << "\t" << snapshot.QKv[i * snapshot.current_len] << "\n";
         }
         qk0File.close();
-        std::cout << "Saved QK[0] history to " << qk0Filename << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved QK[0] history to " << qk0Filename << " (async)" << std::endl;
     } else {
-        std::cerr << "Error: Could not open file " << qk0Filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
     
-    std::cout << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << " (async)" << std::endl;
 }
 
 

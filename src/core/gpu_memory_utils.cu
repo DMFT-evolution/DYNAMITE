@@ -4,6 +4,7 @@
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 #include <iostream>
+#include "core/console.hpp"
 
 // d_p, d_p2, d_lambda declared in device_constants.hpp and defined in device_constants.cu
 
@@ -82,7 +83,7 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 
 	sim.error_result.resize(1, 0.0);
 
-	std::cout << "Host -> Device vector copy complete." << std::endl;
+	std::cout << dmfe::console::INFO() << "Host -> Device vector copy complete." << std::endl;
 }
 
 void copyVectorsToCPU(SimulationData& sim) {
@@ -137,7 +138,7 @@ void copyVectorsToCPU(SimulationData& sim) {
 	copyBack(sim.h_indsA2y, sim.d_indsA2y);
 	copyBack(sim.h_indsB2y, sim.d_indsB2y);
 
-	std::cout << "Device -> Host vector copy complete." << std::endl;
+	std::cout << dmfe::console::INFO() << "Device -> Host vector copy complete." << std::endl;
 }
 
 void clearAllDeviceVectors(SimulationData& sim) {
@@ -160,7 +161,7 @@ void clearAllDeviceVectors(SimulationData& sim) {
 	cl(sim.temp5); cl(sim.temp6); cl(sim.temp7); cl(sim.temp8); cl(sim.temp9);
 	cl(sim.Stemp0); cl(sim.Stemp1);
 	cl(sim.error_result);
-	std::cout << "Cleared device vectors." << std::endl;
+	std::cout << dmfe::console::INFO() << "Cleared device vectors." << std::endl;
 }
 
 void clearAllHostVectors(SimulationData& sim) {
@@ -183,7 +184,7 @@ void clearAllHostVectors(SimulationData& sim) {
 	cl(sim.h_temp5); cl(sim.h_temp6); cl(sim.h_temp7); cl(sim.h_temp8); cl(sim.h_temp9);
 	cl(sim.h_Stemp0); cl(sim.h_Stemp1);
 	cl(sim.h_error_result);
-	std::cout << "Cleared host vectors." << std::endl;
+	std::cout << dmfe::console::INFO() << "Cleared host vectors." << std::endl;
 }
 
 void copyParametersToDevice(int p_host, int p2_host, double lambda_host) {

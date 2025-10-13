@@ -3,6 +3,7 @@
 #include <cmath>
 #include <string>
 #include <cstdio>
+#include "core/console.hpp"
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
@@ -12,7 +13,7 @@
 // Debug-only CUDA error check utilities. Use tiny inline helpers + macros to avoid overhead when not debugging.
 inline void __dmfe_cuda_check(cudaError_t err, const char* expr, const char* file, int line) {
     if (err != cudaSuccess) {
-        fprintf(stderr, "CUDA error %s at %s:%d: %s\n", expr, file, line, cudaGetErrorString(err));
+        std::cerr << dmfe::console::ERR() << "CUDA error " << expr << " at " << file << ":" << line << ": " << cudaGetErrorString(err) << std::endl;
         abort();
     }
 }
@@ -24,7 +25,7 @@ inline void __dmfe_cuda_check(cudaError_t err, const char* expr, const char* fil
 inline void __dmfe_cuda_post_launch_check(const char* where, const char* file, int line) {
     cudaError_t e = cudaGetLastError();
     if (e != cudaSuccess) {
-        fprintf(stderr, "CUDA kernel launch failure at %s (%s:%d): %s\n", where, file, line, cudaGetErrorString(e));
+        std::cerr << dmfe::console::ERR() << "CUDA kernel launch failure at " << where << " (" << file << ":" << line << "): " << cudaGetErrorString(e) << std::endl;
         abort();
     }
 }
@@ -45,6 +46,8 @@ bool isCompatibleGPUInstalled();
 // System utility functions
 bool isHDF5Available();
 size_t getCurrentMemoryUsage();
+// Total physical system memory in KB (Linux); returns 0 if unavailable
+size_t getTotalSystemMemoryKB();
 size_t getGPUMemoryUsage();
 size_t getAvailableGPUMemory();
 void updatePeakMemory();

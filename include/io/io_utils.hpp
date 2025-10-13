@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <atomic>
 #include "simulation/simulation_data.hpp"
 #include "core/config.hpp"
 
@@ -21,6 +22,31 @@ struct SimulationDataSnapshot {
     size_t peak_memory_kb_snapshot, peak_gpu_memory_mb_snapshot;
     std::chrono::high_resolution_clock::time_point program_start_time_snapshot;
 };
+
+// Lightweight telemetry for async/sync save status (for TUI/status display)
+struct SaveTelemetry {
+    bool in_progress = false;           // true while background save thread is running
+    std::string target_file;            // last target filename
+    std::string last_completed_file;    // last file that finished saving
+    std::chrono::high_resolution_clock::time_point last_start_time{}; // last save start
+    std::chrono::high_resolution_clock::time_point last_end_time{};   // last save end
+};
+
+// Query current save telemetry (thread-safe snapshot)
+SaveTelemetry getSaveTelemetry();
+// Internal: update/save telemetry helpers (defined in io_utils.cpp)
+void _setSaveStart(const std::string& filename);
+void _setSaveEnd(const std::string& filename);
+
+// Telemetry/UI coordination helpers
+// Mark that save telemetry changed; runner should refresh status immediately.
+void markSaveTelemetryDirty();
+// Consume and clear the dirty flag; returns true if a refresh is requested.
+bool consumeSaveTelemetryDirty();
+// Mark that external prints occurred and TUI anchor should be reset.
+void invalidateStatusAnchor();
+// Consume and clear the anchor invalidation flag.
+bool consumeStatusAnchorInvalidated();
 
 // Structure to hold loaded simulation state parameters
 struct LoadedStateParams {

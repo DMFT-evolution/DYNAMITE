@@ -1,4 +1,5 @@
 #include "core/host_device_utils.hpp"
+#include "core/console.hpp"
 
 void Product(const std::vector<double>& a, const std::vector<double>& b, std::vector<double>& out) {
     if (a.size() != b.size()) throw std::invalid_argument("Product: size mismatch");
@@ -13,18 +14,18 @@ void scaleVec(const std::vector<double>& in, double s, std::vector<double>& out)
 
 void printVectorDifference(const std::vector<double>& a, const std::vector<double>& b) {
     if (a.size() != b.size()) {
-        std::cerr << "Error: Vectors must be of the same length.\n";
-        std::cerr << "Size of vector a: " << a.size() << ", Size of vector b: " << b.size() << "\n";
+    std::cerr << dmfe::console::ERR() << "Vectors must be of the same length.\n";
+    std::cerr << dmfe::console::ERR() << "Size of vector a: " << a.size() << ", Size of vector b: " << b.size() << "\n";
         return;
     }
     double total = 0.0;
-    std::cout << "Differences between vectors:\n";
+    std::cout << dmfe::console::INFO() << "Differences between vectors:\n";
     for (size_t i = 0; i < a.size(); ++i) {
         double diff = std::abs(a[i] - b[i]);
-        std::cout << "Index " << i << ": |" << a[i] << " - " << b[i] << "| = " << diff << "\n";
+        std::cout << dmfe::console::INFO() << "Index " << i << ": |" << a[i] << " - " << b[i] << "| = " << diff << "\n";
         total += diff;
     }
-    std::cout << "Total Differences between vectors: " << total << "\n";
+    std::cout << dmfe::console::INFO() << "Total Differences between vectors: " << total << "\n";
 }
 
 thrust::device_vector<double> SubtractGPU(const thrust::device_vector<double>& a, const thrust::device_vector<double>& b) {

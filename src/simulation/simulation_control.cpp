@@ -2,6 +2,7 @@
 #include "simulation/simulation_data.hpp"
 #include "core/config.hpp"
 #include "core/config_build.hpp"
+#include "core/console.hpp"
 #include "interpolation/interpolation_core.hpp"
 #include <iostream>
 
@@ -16,7 +17,7 @@ bool rollbackState(int n) {
     
     // Check if we have enough history to roll back
     if (n >= currentSize - 1) {
-        std::cerr << "Error: Cannot roll back " << n << " iterations. Only " 
+        std::cerr << dmfe::console::ERR() << "Cannot roll back " << n << " iterations. Only "
                   << (currentSize - 1) << " iterations available." << std::endl;
         return false;
     }
@@ -58,7 +59,8 @@ bool rollbackState(int n) {
         interpolate();
     }
     
-    std::cout << "Successfully rolled back " << n << " iterations to time t = " 
+    std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
+              << " iterations to time t = "
               << (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) << std::endl;
 #else
     // Get current state size
@@ -66,7 +68,7 @@ bool rollbackState(int n) {
     
     // Check if we have enough history to roll back
     if (n >= currentSize - 1) {
-        std::cerr << "Error: Cannot roll back " << n << " iterations. Only " 
+        std::cerr << dmfe::console::ERR() << "Cannot roll back " << n << " iterations. Only "
                   << (currentSize - 1) << " iterations available." << std::endl;
         return false;
     }
@@ -90,7 +92,8 @@ bool rollbackState(int n) {
 
     interpolate();
     
-    std::cout << "Successfully rolled back " << n << " iterations to time t = " 
+    std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
+              << " iterations to time t = "
               << sim->h_t1grid.back() << std::endl;
 #endif
     return true;

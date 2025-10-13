@@ -11,6 +11,7 @@
 #include "version/version_info.hpp"
 #include <fstream>
 #include <iostream>
+#include "core/console.hpp"
 #include <sstream>
 #include <iomanip>
 #include <sys/stat.h>
@@ -53,6 +54,55 @@ extern std::chrono::high_resolution_clock::time_point program_start_time;
 std::mutex saveMutex;
 bool saveInProgress = false;
 std::condition_variable saveCondition;
+
+// Save telemetry state (protected by saveMutex)
+static SaveTelemetry g_saveTelemetry{};
+static std::atomic<bool> g_saveTelemetryDirty{false};
+static std::atomic<bool> g_statusAnchorInvalidated{false};
+
+SaveTelemetry getSaveTelemetry() {
+    std::lock_guard<std::mutex> lock(saveMutex);
+    return g_saveTelemetry;
+}
+
+void _setSaveStart(const std::string& filename) {
+    std::lock_guard<std::mutex> lock(saveMutex);
+    g_saveTelemetry.in_progress = true;
+    g_saveTelemetry.target_file = filename;
+    g_saveTelemetry.last_start_time = std::chrono::high_resolution_clock::now();
+    g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
+    g_statusAnchorInvalidated.store(true, std::memory_order_relaxed);
+    // Print on its own line so TUI can redraw cleanly on next tick
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    std::cout << dmfe::console::SAVE() << "Save started: " << filename << std::endl << std::flush;
+}
+
+void _setSaveEnd(const std::string& filename) {
+    std::lock_guard<std::mutex> lock(saveMutex);
+    g_saveTelemetry.in_progress = false;
+    g_saveTelemetry.last_completed_file = filename;
+    g_saveTelemetry.last_end_time = std::chrono::high_resolution_clock::now();
+    g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
+    g_statusAnchorInvalidated.store(true, std::memory_order_relaxed);
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    std::cout << dmfe::console::DONE() << "Save finished: " << filename << std::endl << std::flush;
+}
+
+void markSaveTelemetryDirty() {
+    g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
+}
+
+bool consumeSaveTelemetryDirty() {
+    return g_saveTelemetryDirty.exchange(false, std::memory_order_acq_rel);
+}
+
+void invalidateStatusAnchor() {
+    g_statusAnchorInvalidated.store(true, std::memory_order_relaxed);
+}
+
+bool consumeStatusAnchorInvalidated() {
+    return g_statusAnchorInvalidated.exchange(false, std::memory_order_acq_rel);
+}
 
 // Helper function to find an existing parameter directory with matching parameters
 std::string findExistingParamDir(const std::string& resultsDir_param, int p_param, int p2_param,
@@ -248,8 +298,8 @@ std::string formatMemory(size_t memory_kb) {
 
 // Function to wait for any ongoing async saves to complete
 void waitForAsyncSavesToComplete() {
-    std::cout << "Waiting for any ongoing async saves to complete..." << std::endl;
+    std::cout << dmfe::console::INFO() << "Waiting for any ongoing async saves to complete..." << std::endl;
     std::unique_lock<std::mutex> lock(saveMutex);
     saveCondition.wait(lock, []{ return !saveInProgress; });
-    std::cout << "All async saves completed." << std::endl;
+    std::cout << dmfe::console::DONE() << "All async saves completed." << std::endl;
 }

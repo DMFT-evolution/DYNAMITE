@@ -31,6 +31,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "core/console.hpp"
+
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
 #elif defined(USE_HDF5)
@@ -84,19 +86,19 @@ void setupOutputDirectory()
         }
     }
 
-    std::cout << "Executable (canonical): " << (exeCanon.empty() ? std::string("<unknown>") : exeCanon) << std::endl;
-    std::cout << "HOME (canonical): " << (homeCanon.empty() ? std::string("<unknown>") : homeCanon) << std::endl;
-    std::cout << "Selected results root: " << config.resultsDir << std::endl;
+    std::cout << dmfe::console::INFO() << "Executable (canonical): " << (exeCanon.empty() ? std::string("<unknown>") : exeCanon) << std::endl;
+    std::cout << dmfe::console::INFO() << "HOME (canonical): " << (homeCanon.empty() ? std::string("<unknown>") : homeCanon) << std::endl;
+    std::cout << dmfe::console::INFO() << "Selected results root: " << config.resultsDir << std::endl;
     
     // Check if directory already exists
     struct stat st = {0};
     if (stat(config.resultsDir.c_str(), &st) == 0) {
         // Directory exists
         if (S_ISDIR(st.st_mode)) {
-            std::cout << "Directory already exists: " << config.resultsDir << std::endl;
+            std::cout << dmfe::console::INFO() << "Directory already exists: " << config.resultsDir << std::endl;
             // Check if it's writable
             if (config.save_output && access(config.resultsDir.c_str(), W_OK) == 0) {
-                std::cout << "Directory is writable." << std::endl;
+                std::cout << dmfe::console::INFO() << "Directory is writable." << std::endl;
                 return; // Directory exists and is writable, no need to create it
             }
         }
@@ -116,7 +118,7 @@ void setupOutputDirectory()
                     path += dir + "/";
                     if (stat(path.c_str(), &st) == -1) {
                         if (mkdir(path.c_str(), 0755) != 0) {
-                            std::cerr << "Warning: Could not create directory " << path 
+                            std::cerr << dmfe::console::WARN() << "Could not create directory " << path 
                                       << ": " << strerror(errno) << std::endl;
                             // Keep configured resultsDir as-is; later writes may fail, which is preferable to silently changing location
                             break;
@@ -127,11 +129,11 @@ void setupOutputDirectory()
         } else {
             // Relative path
             if (mkdir(config.resultsDir.c_str(), 0755) != 0) {
-                std::cerr << "Warning: Could not create directory " << config.resultsDir 
+                std::cerr << dmfe::console::WARN() << "Could not create directory " << config.resultsDir 
                           << ": " << strerror(errno) << std::endl;
                 // Keep configured resultsDir; do not silently change output location
             } else {
-                std::cout << "Created output directory: " << config.resultsDir << std::endl;
+                std::cout << dmfe::console::DONE() << "Created output directory: " << config.resultsDir << std::endl;
             }
         }
     }
@@ -145,7 +147,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     std::string filename = dirPath + "/params.txt";
     std::ofstream params(filename);
     if (!params) {
-        std::cerr << "Error: Could not open parameter file " << filename << std::endl;
+        std::cerr << dmfe::console::ERR() << "Could not open parameter file " << filename << std::endl;
         return;
     }
     
@@ -257,7 +259,9 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "current_energy = " << energy << std::endl;
     
     params.close();
-    std::cout << "Saved parameters to " << filename << std::endl;
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << std::endl;
 }
 
 // Async version of saveParametersToFile that works with snapshot data
@@ -266,7 +270,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     std::string filename = dirPath + "/params.txt";
     std::ofstream params(filename);
     if (!params) {
-        std::cerr << "Error: Could not open parameter file " << filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open parameter file " << filename << std::endl;
         return;
     }
     
@@ -365,7 +369,9 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "current_energy = " << snapshot.energy << std::endl;
     
     params.close();
-    std::cout << "Saved parameters to " << filename << " (async)" << std::endl;
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << " (async)" << std::endl;
 }
 
 void saveSimulationStateBinary(const std::string& filename, double delta, double delta_t)
@@ -394,7 +400,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     
     std::ofstream file(filename, std::ios::binary);
     if (!file) {
-        std::cerr << "Error: Could not open file " << filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << filename << std::endl;
         return;
     }
     
@@ -430,7 +436,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     file.write(reinterpret_cast<const char*>(sim->h_rvec.data()), sim->h_rvec.size() * sizeof(double));
     file.write(reinterpret_cast<const char*>(sim->h_drvec.data()), sim->h_drvec.size() * sizeof(double));
     
-    std::cout << "Saved binary data to " << filename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved binary data to " << filename << std::endl;
     
     // Also write parameters to a separate text file
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -474,7 +480,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (file < 0) throw std::runtime_error("Failed to create HDF5 file");
 
     auto fail_and_fallback = [&](const char* why){
-        std::cerr << "[HDF5] write failed: " << why << "; falling back to binary." << std::endl;
+        std::cerr << dmfe::console::WARN() << "[HDF5] write failed: " << why << "; falling back to binary." << std::endl;
         h5rt::close_file(file);
         // Remove possibly empty/partial file
         std::remove(filename.c_str());
@@ -510,7 +516,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (!h5rt::write_attr_double(file, "energy", energy)) { fail_and_fallback("attr energy"); return; }
 
     h5rt::close_file(file);
-    std::cout << "Saved HDF5 data to " << filename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << std::endl;
     saveParametersToFile(dirPath, delta, delta_t);
 #if DMFE_WITH_CUDA
     saveHistory(filename, delta, delta_t, *sim, config.len, config.T0, config.gpu);
@@ -543,7 +549,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     std::string binFilename = dirPath + "/data.bin";
     if (fileExists(binFilename)) {
         std::remove(binFilename.c_str());
-        std::cout << "Removed existing binary file: " << binFilename << std::endl;
+    std::cout << dmfe::console::INFO() << "Removed existing binary file: " << binFilename << std::endl;
     }
     
     // Create HDF5 file
@@ -701,7 +707,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     add_attr("aggressive_sparsify", H5::PredType::NATIVE_INT, &aggressive_sparsify_int);
     add_attr("energy", H5::PredType::NATIVE_DOUBLE, &energy);
     
-    std::cout << "Saved HDF5 data to " << filename 
+    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
               << " (time=" << t_current 
               << ", vectors=" << sim->h_QKv.size() / config.len << "×" << config.len 
               << ", energy=" << energy
@@ -731,7 +737,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     if (file < 0) throw std::runtime_error("Failed to create HDF5 file");
 
     auto fail_and_fallback = [&](const char* why){
-        std::cerr << "[HDF5] write failed: " << why << "; falling back to binary." << std::endl;
+        std::cerr << dmfe::console::WARN() << "[HDF5] write failed: " << why << "; falling back to binary." << std::endl;
         h5rt::close_file(file);
         // Remove possibly empty/partial file
         std::remove(filename.c_str());
@@ -765,7 +771,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     if (!h5rt::write_attr_double(file, "energy", snapshot.energy)) { fail_and_fallback("attr energy"); }
 
     h5rt::close_file(file);
-    std::cout << "Saved HDF5 data to " << filename << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << " (async)" << std::endl;
     
     // For async, we need to reconstruct the SimulationData for saveHistory
     // This is a bit hacky, but necessary since saveHistory expects the global sim
@@ -908,7 +914,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     add_attr("aggressive_sparsify", H5::PredType::NATIVE_INT, &aggressive_sparsify_int);
     add_attr("energy", H5::PredType::NATIVE_DOUBLE, &snapshot.energy);
     
-    std::cout << "Saved HDF5 data to " << filename 
+    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
               << " (time=" << snapshot.t_current 
               << ", vectors=" << snapshot.QKv.size() / snapshot.current_len << "×" << snapshot.current_len 
               << ", energy=" << snapshot.energy
@@ -938,12 +944,19 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
     
     // Wait for any ongoing save to complete
     {
-        std::cout << "Waiting for ongoing save to complete..." << std::endl;
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::INFO() << "Waiting for ongoing save to complete..." << std::endl << std::flush;
         std::unique_lock<std::mutex> lock(saveMutex);
         saveCondition.wait(lock, []{ return !saveInProgress; });
         saveInProgress = true;
-        std::cout << "Save lock acquired, proceeding with snapshot creation" << std::endl;
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::INFO() << "Save lock acquired, proceeding with snapshot creation" << std::endl << std::flush;
     }
+
+    // Mark save started for telemetry immediately after acquiring the lock
+    _setSaveStart(filename);
     
 #if DMFE_WITH_CUDA
     // Create snapshot synchronously to pause simulation during this critical section
@@ -951,14 +964,16 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
 #else
     // Create empty snapshot for CPU-only builds
     SimulationDataSnapshot snapshot;
-    std::cerr << "Warning: Snapshot creation not available in CPU-only builds" << std::endl;
+    std::cerr << dmfe::console::WARN() << "Snapshot creation not available in CPU-only builds" << std::endl;
 #endif
     
     // Check if async export is enabled
     if (config.async_export) {
         // For asynchronous saving, use the snapshot in background thread for I/O operations
-        auto saveAsync = [filename, dirPath, delta, delta_t, snapshot]() {
-            std::cout << "Background save thread started for " << filename << std::endl;
+    auto saveAsync = [filename, dirPath, delta, delta_t, snapshot]() {
+            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+            invalidateStatusAnchor();
+            std::cout << dmfe::console::INFO() << "Background save thread started for " << filename << std::endl << std::flush;
             try {
 #if defined(H5_RUNTIME_OPTIONAL)
                 if (h5rt::available()) {
@@ -977,13 +992,17 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
                 saveCompressedDataAsync(dirPath, snapshot);
 #endif
             } catch (const std::exception& e) {
-                std::cerr << "Error in background save: " << e.what() << std::endl;
+                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+                invalidateStatusAnchor();
+                std::cerr << dmfe::console::ERR() << "Error in background save: " << e.what() << std::endl << std::flush;
                 // Fallback to synchronous binary save
                 try {
                     saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
                     saveCompressedDataAsync(dirPath, snapshot);
                 } catch (...) {
-                    std::cerr << "Fallback save also failed" << std::endl;
+                    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+                    invalidateStatusAnchor();
+                    std::cerr << dmfe::console::ERR() << "Fallback save also failed" << std::endl << std::flush;
                 }
             }
             
@@ -991,8 +1010,11 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
             {
                 std::lock_guard<std::mutex> lock(saveMutex);
                 saveInProgress = false;
-                std::cout << "Background save completed for " << filename << ", saveInProgress set to false" << std::endl;
+                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+                invalidateStatusAnchor();
+                std::cout << dmfe::console::DONE() << "Background save completed for " << filename << ", saveInProgress set to false" << std::endl << std::flush;
             }
+            _setSaveEnd(filename);
             saveCondition.notify_one();
         };
         
@@ -1000,11 +1022,15 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
         std::thread saveThread(saveAsync);
         saveThread.detach();
         
-        std::cout << "Created snapshot and started background save to " << filename << std::endl;
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::SAVE() << "Created snapshot and started background save to " << filename << std::endl << std::flush;
     } else {
         // Synchronous saving mode
-        std::cout << "Performing synchronous save to " << filename << std::endl;
-        try {
+    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    invalidateStatusAnchor();
+    std::cout << dmfe::console::INFO() << "Performing synchronous save to " << filename << std::endl << std::flush;
+    try {
 #if defined(H5_RUNTIME_OPTIONAL)
             if (h5rt::available()) {
                 saveSimulationStateHDF5Async(filename, snapshot);
@@ -1022,13 +1048,17 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
             saveCompressedDataAsync(dirPath, snapshot);
 #endif
         } catch (const std::exception& e) {
-            std::cerr << "Error in synchronous save: " << e.what() << std::endl;
+            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+            invalidateStatusAnchor();
+            std::cerr << dmfe::console::ERR() << "Error in synchronous save: " << e.what() << std::endl << std::flush;
             // Fallback to synchronous binary save
             try {
                 saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
                 saveCompressedDataAsync(dirPath, snapshot);
             } catch (...) {
-                std::cerr << "Fallback save also failed" << std::endl;
+                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+                invalidateStatusAnchor();
+                std::cerr << dmfe::console::ERR() << "Fallback save also failed" << std::endl << std::flush;
             }
         }
         
@@ -1036,8 +1066,11 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
         {
             std::lock_guard<std::mutex> lock(saveMutex);
             saveInProgress = false;
-            std::cout << "Synchronous save completed for " << filename << ", saveInProgress set to false" << std::endl;
+            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+            invalidateStatusAnchor();
+            std::cout << dmfe::console::DONE() << "Synchronous save completed for " << filename << ", saveInProgress set to false" << std::endl << std::flush;
         }
+    _setSaveEnd(filename);
         saveCondition.notify_one();
     }
     
@@ -1065,7 +1098,7 @@ void saveCompressedData(const std::string& dirPath)
     std::string qk_filename = dirPath + "/QK_compressed";
     std::ofstream qk_file(qk_filename, std::ios::binary);
     if (!qk_file) {
-        std::cerr << "Error: Could not open file " << qk_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qk_filename << std::endl;
         return;
     }
     
@@ -1083,7 +1116,7 @@ void saveCompressedData(const std::string& dirPath)
     std::string qr_filename = dirPath + "/QR_compressed";
     std::ofstream qr_file(qr_filename, std::ios::binary);
     if (!qr_file) {
-        std::cerr << "Error: Could not open file " << qr_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qr_filename << std::endl;
         return;
     }
     
@@ -1100,7 +1133,7 @@ void saveCompressedData(const std::string& dirPath)
     std::string t1_filename = dirPath + "/t1_compressed.txt";
     std::ofstream t1_file(t1_filename);
     if (!t1_file) {
-        std::cerr << "Error: Could not open file " << t1_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << t1_filename << std::endl;
         return;
     }
     
@@ -1110,7 +1143,7 @@ void saveCompressedData(const std::string& dirPath)
     }
     t1_file.close();
     
-    std::cout << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << std::endl;
 }
 
 // Async version of saveCompressedData that works with snapshot data
@@ -1120,7 +1153,7 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     std::string qk_filename = dirPath + "/QK_compressed";
     std::ofstream qk_file(qk_filename, std::ios::binary);
     if (!qk_file) {
-        std::cerr << "Error: Could not open file " << qk_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qk_filename << std::endl;
         return;
     }
     
@@ -1138,7 +1171,7 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     std::string qr_filename = dirPath + "/QR_compressed";
     std::ofstream qr_file(qr_filename, std::ios::binary);
     if (!qr_file) {
-        std::cerr << "Error: Could not open file " << qr_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << qr_filename << std::endl;
         return;
     }
     
@@ -1155,7 +1188,7 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     std::string t1_filename = dirPath + "/t1_compressed.txt";
     std::ofstream t1_file(t1_filename);
     if (!t1_file) {
-        std::cerr << "Error: Could not open file " << t1_filename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open file " << t1_filename << std::endl;
         return;
     }
     
@@ -1165,5 +1198,5 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     }
     t1_file.close();
     
-    std::cout << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << " (async)" << std::endl;
 }

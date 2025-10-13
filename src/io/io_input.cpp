@@ -11,6 +11,7 @@
 #include "version/version_info.hpp"
 #include <fstream>
 #include <iostream>
+#include "core/console.hpp"
 #include <sstream>
 #include <iomanip>
 #include <sys/stat.h>
@@ -61,7 +62,7 @@ std::vector<double> importVectorFromFile(const std::string &filename)
     std::ifstream file(filename);
     if (!file.is_open())
     {
-        std::cerr << "Error: Could not open file " << filename << std::endl;
+        std::cerr << dmfe::console::ERR() << "Could not open file " << filename << std::endl;
         return data;
     }
     double v;
@@ -76,7 +77,7 @@ std::vector<size_t> importIntVectorFromFile(const std::string &filename)
     std::ifstream file(filename);
     if (!file.is_open())
     {
-        std::cerr << "Error: Could not open file " << filename << std::endl;
+        std::cerr << dmfe::console::ERR() << "Could not open file " << filename << std::endl;
         return data;
     }
     size_t v;
@@ -116,14 +117,14 @@ bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
     std::ifstream file(filename, std::ios::binary);
     if (!file)
     {
-        std::cerr << "Error: Could not open binary file " << filename << std::endl;
+        std::cerr << dmfe::console::ERR() << "Could not open binary file " << filename << std::endl;
         return false;
     }
     int header_version;
     file.read(reinterpret_cast<char *>(&header_version), sizeof(int));
     if (header_version != 1)
     {
-        std::cerr << "Error: Unsupported binary file version: " << header_version << std::endl;
+        std::cerr << dmfe::console::ERR() << "Unsupported binary file version: " << header_version << std::endl;
         return false;
     }
     size_t t1grid_size, vector_len;
@@ -144,7 +145,7 @@ bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
     file.read(reinterpret_cast<char *>(&file_energy), sizeof(double));
     if (file_p != p_param || file_p2 != p2_param || fabs(file_lambda - lambda_param) > 1e-10 || fabs(file_T0 - T0_param) > 1e-10 || fabs(file_Gamma - Gamma_param) > 1e-10)
     {
-        std::cerr << "Warning: File parameters don't match current simulation parameters" << std::endl;
+        std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
         return false;
     }
     sim.h_t1grid.resize(t1grid_size);
@@ -168,7 +169,7 @@ bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
     sim.h_delta_t_ratio[0] = 0.0;
     for (size_t i = 2; i < t1grid_size; ++i)
         sim.h_delta_t_ratio[i] = (sim.h_t1grid[i] - sim.h_t1grid[i - 1]) / (sim.h_t1grid[i - 1] - sim.h_t1grid[i - 2]);
-    std::cout << "Successfully loaded binary simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop << ", Energy: " << file_energy << std::endl;
+    std::cout << dmfe::console::INFO() << "Successfully loaded binary simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop << ", Energy: " << file_energy << std::endl;
     return true;
 }
 
@@ -200,7 +201,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         std::abs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
         std::abs(file_delta_t_min - delta_t_min_param) > 1e-10 || std::abs(file_delta_t_max - delta_max_param) > 1e-10 ||
         file_use_serk2 != (use_serk2_param ? 1 : 0) || file_aggressive_sparsify != (aggressive_sparsify_param ? 1 : 0)) {
-        std::cerr << "Warning: File parameters don't match current simulation parameters" << std::endl;
+    std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
         h5rt::close_file(file);
         return false;
     }
@@ -213,7 +214,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     size_t t1grid_size = h5rt::dataset_length(file, "t1grid");
     size_t qkv_size = h5rt::dataset_length(file, "QKv");
     if (t1grid_size == 0 || qkv_size == 0 || (qkv_size % t1grid_size) != 0) {
-        std::cerr << "Error: Inconsistent dimensions in HDF5 file" << std::endl;
+        std::cerr << dmfe::console::ERR() << "Inconsistent dimensions in HDF5 file" << std::endl;
         h5rt::close_file(file); return false;
     }
     size_t vector_len = qkv_size / t1grid_size;
@@ -265,7 +266,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
             fabs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
             fabs(file_delta_t_min - delta_t_min_param) > 1e-10 || fabs(file_delta_t_max - delta_max_param) > 1e-10 ||
             file_use_serk2 != (use_serk2_param ? 1 : 0) || file_aggressive_sparsify != (aggressive_sparsify_param ? 1 : 0)) {
-            std::cerr << "Warning: File parameters don't match current simulation parameters" << std::endl;
+        std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
             return false;
         }
         double file_delta=0, file_delta_t=0; int file_loop=0; double file_energy=0.0;
@@ -280,7 +281,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         H5::DataSet qkv_dataset = file.openDataSet("QKv");
         H5::DataSpace qkv_space = qkv_dataset.getSpace();
         hsize_t qkv_dims[1]; qkv_space.getSimpleExtentDims(qkv_dims, nullptr);
-        if (qkv_dims[0] % t1grid_size != 0) { std::cerr << "Error: Inconsistent dimensions in HDF5 file" << std::endl; return false; }
+    if (qkv_dims[0] % t1grid_size != 0) { std::cerr << dmfe::console::ERR() << "Inconsistent dimensions in HDF5 file" << std::endl; return false; }
         size_t vector_len = qkv_dims[0] / t1grid_size;
         sim.h_t1grid.resize(t1grid_size);
         sim.h_QKv.resize(t1grid_size * vector_len);
@@ -301,13 +302,13 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         sim.h_delta_t_ratio[0] = 0.0;
         for (size_t i = 2; i < t1grid_size; ++i)
             sim.h_delta_t_ratio[i] = (sim.h_t1grid[i] - sim.h_t1grid[i - 1]) / (sim.h_t1grid[i - 1] - sim.h_t1grid[i - 2]);
-        std::cout << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop;
-        if (file_energy != 0.0) std::cout << ", Energy: " << file_energy;
-        std::cout << std::endl;
+    std::cout << dmfe::console::INFO() << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop;
+    if (file_energy != 0.0) std::cout << ", Energy: " << file_energy;
+    std::cout << std::endl;
         return true;
     }
     catch (H5::Exception &e) {
-        std::cerr << "HDF5 error: " << e.getCDetailMsg() << std::endl;
+    std::cerr << dmfe::console::ERR() << "HDF5 error: " << e.getCDetailMsg() << std::endl;
         return false;
     }
 #endif
@@ -327,7 +328,7 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     std::ifstream paramFile(paramFilename);
     if (!paramFile)
     {
-        std::cerr << "Error: Could not open parameter file " << paramFilename << std::endl;
+    std::cerr << dmfe::console::ERR() << "Could not open parameter file " << paramFilename << std::endl;
         return false;
     }
     int file_p = -1, file_p2 = -1, file_len = -1;
@@ -378,7 +379,13 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     bool match = true;
     std::string dir = paramFilename.substr(0, paramFilename.find_last_of('/'));
     auto mismatch = [&](const std::string &n, const std::string &a, const std::string &b)
-    { std::cerr<<"Parameter mismatch in " << dir << ": "<<n<<" (file: "<<a<<", current: "<<b<<")"<<std::endl; match=false; };
+    {
+        if (config.debug) {
+            std::cerr << dmfe::console::WARN() << "Parameter mismatch in " << dir << ": " << n
+                      << " (file: " << a << ", current: " << b << ")" << std::endl;
+        }
+        match = false;
+    };
     if (file_p != p_param)
         mismatch("p", std::to_string(file_p), std::to_string(p_param));
     if (file_p2 != p2_param)
@@ -412,16 +419,16 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
     std::string paramFilename = dirPath + "/params.txt";
     if (fileExists(paramFilename)) {
         if (!checkVersionCompatibilityInteractive(paramFilename)) {
-            std::cerr << "Loading cancelled due to version mismatch." << std::endl;
+            std::cerr << dmfe::console::ERR() << "Loading cancelled due to version mismatch." << std::endl;
             return false;
         }
         if (!checkParametersMatch(paramFilename, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param)) {
-            std::cerr << "Parameter mismatch: Will not load file " << filename << std::endl;
+            std::cerr << dmfe::console::ERR() << "Parameter mismatch: Will not load file " << filename << std::endl;
             return false;
         }
-        std::cout << "All parameters match. Proceeding with loading..." << std::endl;
+    std::cout << dmfe::console::INFO() << "All parameters match. Proceeding with loading..." << std::endl;
     } else {
-        std::cerr << "Warning: Parameter file " << paramFilename << " not found. Will attempt to load but compatibility cannot be verified." << std::endl;
+    std::cerr << dmfe::console::WARN() << "Parameter file " << paramFilename << " not found. Will attempt to load but compatibility cannot be verified." << std::endl;
     }
 
 #if defined(H5_RUNTIME_OPTIONAL)
@@ -429,7 +436,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
         if (loadSimulationStateHDF5(filename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param, loaded_params)) {
             return true;
         }
-        std::cerr << "HDF5 loading failed; trying binary format..." << std::endl;
+    std::cerr << dmfe::console::WARN() << "HDF5 loading failed; trying binary format..." << std::endl;
     }
 #elif defined(USE_HDF5)
     if (fileExists(filename)) {
@@ -438,7 +445,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
                 return true;
             }
         } catch (H5::Exception &e) {
-            std::cerr << "HDF5 loading failed: " << e.getCDetailMsg() << "\nTrying binary format..." << std::endl;
+            std::cerr << dmfe::console::WARN() << "HDF5 loading failed: " << e.getCDetailMsg() << "\nTrying binary format..." << std::endl;
         }
     }
 #endif

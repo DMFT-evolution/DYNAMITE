@@ -5,6 +5,7 @@
 #include "version/version_compat.hpp"
 #include "io/io_utils.hpp"
 #include <iostream>
+#include "core/console.hpp"
 #include <string>
 #include <unistd.h>
 #include <getopt.h>
@@ -107,43 +108,43 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 break;
             }
             case 'v':
-                std::cout << g_version_info.toString() << std::endl;
+                std::cout << dmfe::console::INFO() << g_version_info.toString() << std::endl;
                 return false;  // Exit after showing version
             case 'c':
                 // Check version compatibility of a specific parameter file
                 {
                     std::string paramFile = optarg;
                     if (!fileExists(paramFile)) {
-                        std::cerr << "Error: Parameter file " << paramFile << " not found." << std::endl;
+                        std::cerr << dmfe::console::ERR() << "Parameter file " << paramFile << " not found." << std::endl;
                         return false;
                     }
                     
                     VersionAnalysis analysis = analyzeVersionCompatibility(paramFile);
-                    std::cout << "Version compatibility check for " << paramFile << ": ";
+                    std::cout << dmfe::console::INFO() << "Version compatibility check for " << paramFile << ": ";
                     
                     switch (analysis.level) {
                         case VersionCompatibility::IDENTICAL:
-                            std::cout << "IDENTICAL" << std::endl;
+                            std::cout << dmfe::console::DONE() << "IDENTICAL" << std::endl;
                             break;
                         case VersionCompatibility::COMPATIBLE:
-                            std::cout << "COMPATIBLE" << std::endl;
+                            std::cout << dmfe::console::DONE() << "COMPATIBLE" << std::endl;
                             break;
                         case VersionCompatibility::WARNING:
-                            std::cout << "WARNING" << std::endl;
+                            std::cout << dmfe::console::WARN() << "WARNING" << std::endl;
                             break;
                         case VersionCompatibility::INCOMPATIBLE:
-                            std::cout << "INCOMPATIBLE" << std::endl;
+                            std::cout << dmfe::console::ERR() << "INCOMPATIBLE" << std::endl;
                             break;
                     }
                     
-                    std::cout << "Current version: " << g_version_info.code_version << std::endl;
-                    std::cout << "File version: " << analysis.file_version << std::endl;
+                    std::cout << dmfe::console::INFO() << "Current version: " << g_version_info.code_version << std::endl;
+                    std::cout << dmfe::console::INFO() << "File version: " << analysis.file_version << std::endl;
                     
                     for (const auto& warning : analysis.warnings) {
-                        std::cout << "Warning: " << warning << std::endl;
+                        std::cout << dmfe::console::WARN() << warning << std::endl;
                     }
                     for (const auto& error : analysis.errors) {
-                        std::cout << "Error: " << error << std::endl;
+                        std::cout << dmfe::console::ERR() << error << std::endl;
                     }
                     
                     return false;  // Exit after checking
@@ -152,7 +153,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 config.allow_incompatible_versions = (std::string(optarg) != "false");
                 break;
             case 'h':
-                std::cout << "Usage: " << argv[0] << " [options]\n"
+                std::cout << dmfe::console::INFO() << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
                           << "  -p INT                          Set p parameter (default: " << config.p << ")\n"
                           << "  -q INT                          Set p2 parameter (default: " << config.p2 << ")\n"
@@ -177,14 +178,14 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -h, --help                      Display this help message and exit\n";
                 return false;
             default:
-                std::cerr << "Unknown option: " << static_cast<char>(optopt) << std::endl;
-                std::cerr << "Run with -h for help" << std::endl;
+                std::cerr << dmfe::console::ERR() << "Unknown option: " << static_cast<char>(optopt) << std::endl;
+                std::cerr << dmfe::console::INFO() << "Run with -h for help" << std::endl;
                 return false;
         }
     }
 
     // Print the selected parameters
-    std::cout << "Running simulation with parameters:\n"
+    std::cout << dmfe::console::INFO() << "Running simulation with parameters:\n"
               << "  p = " << config.p << "\n"
               << "  p2 = " << config.p2 << "\n"
               << "  lambda = " << config.lambda << "\n"

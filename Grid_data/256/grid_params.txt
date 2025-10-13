@@ -1,0 +1,8 @@
+# DMFE grid generation parameters
+len=256
+Tmax=1.00000000000000000e+05
+spline_order=5
+interp_method=poly
+interp_order=9
+subdir=256
+command_line=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo grid -L 256

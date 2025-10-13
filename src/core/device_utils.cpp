@@ -33,6 +33,25 @@ size_t getCurrentMemoryUsage() {
     return usage.ru_maxrss; // Returns KB on Linux, bytes on macOS
 }
 
+#include <sys/sysinfo.h>
+// Function to get total physical system memory in KB (Linux). Returns 0 if unavailable.
+size_t getTotalSystemMemoryKB() {
+    struct sysinfo info;
+    if (sysinfo(&info) == 0) {
+        // totalram is in units of mem_unit bytes
+        unsigned long long bytes = static_cast<unsigned long long>(info.totalram) * info.mem_unit;
+        return static_cast<size_t>(bytes / 1024ULL);
+    }
+    // Fallback using sysconf
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    if (pages > 0 && page_size > 0) {
+        unsigned long long bytes = static_cast<unsigned long long>(pages) * static_cast<unsigned long long>(page_size);
+        return static_cast<size_t>(bytes / 1024ULL);
+    }
+    return 0;
+}
+
 #if !DMFE_WITH_CUDA
 // Function to get GPU memory usage in MB (CPU-only version always returns 0)
 size_t getGPUMemoryUsage() {

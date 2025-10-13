@@ -3,6 +3,7 @@
 #include <mutex>
 #include <vector>
 #include <cstring>
+#include "core/console.hpp"
 #include <iostream>
 
 namespace h5rt {
@@ -212,11 +213,11 @@ bool do_load() {
         "H5T_IEEE_F64BE_g", "H5T_IEEE_F64BE"
       });
       if (H5T_NATIVE_DOUBLE >= 0) {
-        std::cerr << "[h5rt] Using fallback IEEE F64 type for double" << std::endl;
+  std::cerr << dmfe::console::WARN() << "[h5rt] Using fallback IEEE F64 type for double" << std::endl;
       } else {
         // Hardcoded fallback for little-endian systems
         H5T_NATIVE_DOUBLE = 0x321; // H5T_IEEE_F64LE
-        std::cerr << "[h5rt] Using hardcoded IEEE F64LE type for double" << std::endl;
+  std::cerr << dmfe::console::WARN() << "[h5rt] Using hardcoded IEEE F64LE type for double" << std::endl;
       }
     }
     if (H5T_NATIVE_INT < 0) {
@@ -225,23 +226,23 @@ bool do_load() {
         "H5T_STD_I32BE_g", "H5T_STD_I32BE"
       });
       if (H5T_NATIVE_INT >= 0) {
-        std::cerr << "[h5rt] Using fallback STD I32 type for int" << std::endl;
+  std::cerr << dmfe::console::WARN() << "[h5rt] Using fallback STD I32 type for int" << std::endl;
       } else {
         // Hardcoded fallback for little-endian systems
         H5T_NATIVE_INT = 0x320; // H5T_STD_I32LE
-        std::cerr << "[h5rt] Using hardcoded STD I32LE type for int" << std::endl;
+  std::cerr << dmfe::console::WARN() << "[h5rt] Using hardcoded STD I32LE type for int" << std::endl;
       }
     }
   }
 
   if (s_H5open) s_H5open();
   if (loaded_name) {
-    std::cerr << "[h5rt] loaded HDF5 library: " << loaded_name << std::endl;
+  std::cerr << dmfe::console::INFO() << "[h5rt] loaded HDF5 library: " << loaded_name << std::endl;
   }
   if (loaded_name_hl) {
-    std::cerr << "[h5rt] loaded HDF5 HL library: " << loaded_name_hl << std::endl;
+  std::cerr << dmfe::console::INFO() << "[h5rt] loaded HDF5 HL library: " << loaded_name_hl << std::endl;
   } else if (H5T_NATIVE_DOUBLE < 0 || H5T_NATIVE_INT < 0) {
-    std::cerr << "[h5rt] Warning: H5LT not available and native types unresolved; HDF5 writes may fail" << std::endl;
+  std::cerr << dmfe::console::WARN() << "[h5rt] H5LT not available and native types unresolved; HDF5 writes may fail" << std::endl;
   }
   return true;
 }

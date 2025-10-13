@@ -13,6 +13,7 @@
 #include "EOMs/runge_kutta.hpp"
 #include "interpolation/interpolation_core.hpp"
 #include <iostream>
+#include "core/console.hpp"
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -109,7 +110,7 @@ void init()
                                 ::unlink(baseDir.c_str());
                             }
                             if (::symlink(ent->d_name, (root + "/" + std::to_string(L)).c_str()) == 0) {
-                                std::cout << "Using existing grids at " << sub << " via symlink " << baseDir << std::endl;
+                                std::cout << dmfe::console::INFO() << "Using existing grids at " << sub << " via symlink " << baseDir << std::endl;
                                 if (grids_present()) { ::closedir(d); return; }
                             }
                             // Fallback: copy files
@@ -136,7 +137,7 @@ void init()
             }
         }
 
-        std::cout << "No existing grids found for len=" << L << ", generating defaults via CLI..." << std::endl;
+    std::cout << dmfe::console::WARN() << "No existing grids found for len=" << L << ", generating defaults via CLI..." << std::endl;
 
         // Resolve current executable path (Linux: /proc/self/exe)
         char exePath[PATH_MAX]; ssize_t n = ::readlink("/proc/self/exe", exePath, sizeof(exePath)-1);
@@ -148,28 +149,28 @@ void init()
 
     int rc = std::system(cmd.str().c_str());
         if (rc != 0 || !grids_present()) {
-            std::cerr << "Error: failed to generate grids for len=" << L << ". Exit code=" << rc << std::endl;
+            std::cerr << dmfe::console::ERR() << "failed to generate grids for len=" << L << ". Exit code=" << rc << std::endl;
             throw std::runtime_error("grid generation failed");
         }
-        std::cout << "Grids generated at " << baseDir << std::endl;
+        std::cout << dmfe::console::DONE() << "Grids generated at " << baseDir << std::endl;
     };
 
     // Handle GPU configuration based on user preference and hardware availability
 #if DMFE_WITH_CUDA
     if (config.gpu) {
         if (isCompatibleGPUInstalled()) {
-            std::cout << "GPU acceleration enabled." << std::endl;
+            std::cout << dmfe::console::INFO() << "GPU acceleration enabled." << std::endl;
             config.gpu = true;
         } else {
-            std::cout << "Warning: GPU acceleration requested but no compatible GPU found. Falling back to CPU." << std::endl;
+            std::cout << dmfe::console::WARN() << "GPU acceleration requested but no compatible GPU found. Falling back to CPU." << std::endl;
             config.gpu = false;
         }
     } else {
-        std::cout << "GPU acceleration disabled by user. Using CPU." << std::endl;
+    std::cout << dmfe::console::INFO() << "GPU acceleration disabled by user. Using CPU." << std::endl;
         config.gpu = false;
     }
 #else
-    std::cout << "Running in CPU-only mode." << std::endl;
+    std::cout << dmfe::console::INFO() << "Running in CPU-only mode." << std::endl;
     config.gpu = false;
 #endif
     
@@ -191,7 +192,7 @@ void init()
 
     // Try to load existing simulation data
     if (fileExists(filename) || fileExists(filename.substr(0, filename.find_last_of('.')) + ".bin")) {
-        std::cout << "Found existing simulation file. Attempting to load..." << std::endl;
+    std::cout << dmfe::console::INFO() << "Found existing simulation file. Attempting to load..." << std::endl;
         loaded = loadSimulationState(filename, *sim, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.aggressive_sparsify, loaded_params);
         if (loaded) {
             config.loaded = true;
@@ -202,7 +203,7 @@ void init()
     
     if (!loaded) {
         // Start new simulation with default values
-        std::cout << "New simulation..." << std::endl;
+    std::cout << dmfe::console::INFO() << "New simulation..." << std::endl;
         
         sim->h_t1grid.resize(1, 0.0);
         sim->h_delta_t_ratio.resize(1, 0.0);
@@ -225,8 +226,8 @@ void init()
         config.delta_t = loaded_params.delta_t;
         config.loop = loaded_params.loop;
         config.specRad = 4 * sqrt(DDflambda(1));
-        std::cout << "Loaded simulation state: delta=" << config.delta 
-                  << ", delta_t=" << config.delta_t << ", loop=" << config.loop << std::endl;
+    std::cout << dmfe::console::INFO() << "Loaded simulation state: delta=" << config.delta 
+          << ", delta_t=" << config.delta_t << ", loop=" << config.loop << std::endl;
     }
 
     // Initialize intermediate arrays needed for interpolation (always needed)

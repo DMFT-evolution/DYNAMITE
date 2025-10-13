@@ -9,6 +9,7 @@
 //   ... -DUSE_HDF5 -lhdf5 -lhdf5_cpp
 
 #include <iostream>
+#include "core/console.hpp"
 #include <chrono>
 #include <thread>
 #include "include/simulation/simulation_data.hpp" // SimulationData definition
@@ -45,6 +46,7 @@ int main(int argc, char **argv) {
     program_start_time = std::chrono::high_resolution_clock::now();
 
     // Display version information
+    // Keep banner plain; following lines use standardized prefixes
     std::cout << "RG-Evo: DMFE Simulation" << std::endl;
     std::cout << "=======================" << std::endl;
     std::cout << g_version_info.toString() << std::endl;
@@ -66,15 +68,15 @@ int main(int argc, char **argv) {
     // Force GPU mode to false in CPU-only build
     #if !DMFE_WITH_CUDA
     if (config.gpu) {
-        std::cout << "Warning: CUDA support not compiled in. Forcing CPU mode." << std::endl;
+    std::cerr << dmfe::console::WARN() << "CUDA support not compiled in. Forcing CPU mode." << std::endl;
         config.gpu = false;
     }
     #endif
 
     // Print startup banner only for CPU path and only when simulation starts
     if (!config.gpu) {
-        std::cout << "DMFE Simulation starting (CPU mode)..." << std::endl;
-        std::cout << "Available CPU cores: " << std::thread::hardware_concurrency() << std::endl;
+    std::cout << dmfe::console::INFO() << "DMFE Simulation starting (CPU mode)..." << std::endl;
+    std::cout << dmfe::console::INFO() << "Available CPU cores: " << std::thread::hardware_concurrency() << std::endl;
     }
 
     // Initialize simulation

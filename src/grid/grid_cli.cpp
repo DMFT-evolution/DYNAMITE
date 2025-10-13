@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <sstream>
+#include "core/console.hpp"
 
 #include "grid/theta_grid.hpp"
 #include "grid/phi_grid.hpp"
@@ -15,7 +16,7 @@
 namespace dmfe {
 
 static void print_grid_usage(const char* prog) {
-    std::cout << "Usage: " << prog << " grid [options]\n"
+    std::cout << dmfe::console::INFO() << "Usage: " << prog << " grid [options]\n"
               << "Options:\n"
               << "  -L, --len N                  Grid length (default: 512)\n"
               << "  -M, --Tmax X                 Long-time scale Tmax used for theta mapping (default: 100000)\n"
@@ -55,14 +56,14 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         auto read_next_size = [&](std::size_t &dst){ if (i+1 < argc) { dst = static_cast<std::size_t>(std::stoll(argv[++i])); return true;} return false; };
         auto read_next_str = [&](std::string &dst){ if (i+1 < argc) { dst = argv[++i]; return true;} return false; };
         auto read_next_int = [&](int &dst){ if (i+1 < argc) { dst = std::stoi(argv[++i]); return true;} return false; };
-        if ((a == "--len" || a == "-L") && !read_next_size(len)) { std::cerr << "Missing value for --len" << std::endl; exitCode = 1; return true; }
-        else if ((a == "--Tmax" || a == "-M") && !read_next(Tmax)) { std::cerr << "Missing value for --Tmax" << std::endl; exitCode = 1; return true; }
-        else if ((a == "--dir" || a == "-d") && !read_next_str(subdir)) { std::cerr << "Missing value for --dir" << std::endl; exitCode = 1; return true; }
+    if ((a == "--len" || a == "-L") && !read_next_size(len)) { std::cerr << dmfe::console::ERR() << "Missing value for --len" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--Tmax" || a == "-M") && !read_next(Tmax)) { std::cerr << dmfe::console::ERR() << "Missing value for --Tmax" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--dir" || a == "-d") && !read_next_str(subdir)) { std::cerr << dmfe::console::ERR() << "Missing value for --dir" << std::endl; exitCode = 1; return true; }
         else if (a == "--validate" || a == "-V") { validate = true; }
-        else if ((a == "--spline-order" || a == "-s") && !read_next_int(spline_order)) { std::cerr << "Missing value for --spline-order" << std::endl; exitCode = 1; return true; }
-        else if ((a == "--interp-method" || a == "-m") && !read_next_str(interp_method)) { std::cerr << "Missing value for --interp-method" << std::endl; exitCode = 1; return true; }
-        else if ((a == "--interp-order" || a == "-o") && !read_next_int(interp_order)) { std::cerr << "Missing value for --interp-order" << std::endl; exitCode = 1; return true; }
-        else if ((a == "--fh-stencil" || a == "-f") && !read_next_int(fh_stencil)) { std::cerr << "Missing value for --fh-stencil" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--spline-order" || a == "-s") && !read_next_int(spline_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --spline-order" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--interp-method" || a == "-m") && !read_next_str(interp_method)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-method" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--interp-order" || a == "-o") && !read_next_int(interp_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-order" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--fh-stencil" || a == "-f") && !read_next_int(fh_stencil)) { std::cerr << dmfe::console::ERR() << "Missing value for --fh-stencil" << std::endl; exitCode = 1; return true; }
         else if (a == "-h" || a == "--help") { print_grid_usage(argv[0]); exitCode = 0; return true; }
     }
 
@@ -149,7 +150,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
             for (std::size_t j = 0; j < N; ++j) weightsA2_flat[k * N + j] = W2[k].w[j];
         }
     } else {
-        std::cerr << "Unknown --interp-method: " << interp_method << std::endl;
+    std::cerr << dmfe::console::ERR() << "Unknown --interp-method: " << interp_method << std::endl;
         exitCode = 1; return true;
     }
 
@@ -206,7 +207,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
             }
         }
     auto ip3 = write_B2_interp_metadata(indsB2, weightsB2_flat, len, subdir);
-        std::cout << "Generated grids (len=" << len << ", Tmax=" << Tmax << ") ->\n"
+    std::cout << dmfe::console::DONE() << "Generated grids (len=" << len << ", Tmax=" << Tmax << ") ->\n"
                   << "  " << paths.theta
                   << "\n  " << paths.phi1
                   << "\n  " << paths.phi2
@@ -229,7 +230,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     double maxAbsDiff = 0.0; std::size_t mismatches = 0;
     bool ok = validate_against_saved(theta, phi1, phi2, len, subdir, 5e-16, maxAbsDiff, mismatches);
     if (!ok) {
-        std::cerr << "Validation FAILED (theta/phi) or reference files missing in Grid_data/" << subdir
+    std::cerr << dmfe::console::ERR() << "Validation FAILED (theta/phi) or reference files missing in Grid_data/" << subdir
                   << ". Max abs diff=" << maxAbsDiff << ", mismatches=" << mismatches << std::endl;
         exitCode = 2; return true;
     }
@@ -239,11 +240,11 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     std::vector<double> wint_d(wint.size());
     for (std::size_t i = 0; i < wint.size(); ++i) wint_d[i] = static_cast<double>(wint[i]);
     if (!validate_integration_weights(wint_d, len, subdir, tolInt, maxAbsDiffW, mismW)) {
-        std::cerr << "Validation FAILED (int.dat) or reference file missing in Grid_data/" << subdir
+    std::cerr << dmfe::console::ERR() << "Validation FAILED (int.dat) or reference file missing in Grid_data/" << subdir
                   << ". Max abs diff=" << maxAbsDiffW << ", mismatches=" << mismW << std::endl;
         exitCode = 2; return true;
     }
-    std::cout << "Validation OK: theta/phi/int match saved outputs (max abs diffs: phi/theta="
+    std::cout << dmfe::console::DONE() << "Validation OK: theta/phi/int match saved outputs (max abs diffs: phi/theta="
               << maxAbsDiff << ", int=" << maxAbsDiffW << ") with int tol=" << tolInt << std::endl;
 
     exitCode = 0;

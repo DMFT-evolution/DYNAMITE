@@ -96,7 +96,7 @@ void interpolateGPU(
     indexVecNGPU(sim->temp0, sim->Stemp0, sim->d_delta_t_ratio, sim->d_QKB1int, sim->d_QRB1int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[0]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecNGPU B1");
 
-    if (config.debug) DMFE_CUDA_CHECK(cudaDeviceSynchronize());  // stronger sync in debug
+    cudaDeviceSynchronize();  // stronger sync in debug
 
     // Interpolate QKB2int and QRB2int
     indexMatAllGPU(sim->d_posB2xOld, sim->d_indsB2y, sim->d_weightsB2y, sim->d_delta_t_ratio, sim->d_QKB2int, sim->d_QRB2int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[1]);

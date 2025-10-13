@@ -19,6 +19,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include "core/console.hpp"
 #include <cmath>
 
 using namespace std;
@@ -103,7 +104,7 @@ void init_RK54GPU() {
         // Basic size sanity inits
         const size_t expected = static_cast<size_t>(config.len) * static_cast<size_t>(rk->stages);
         if (rk->hK.size() != expected) {
-            fprintf(stderr, "RK54GPU init: hK size mismatch (%zu vs %zu)\n", rk->hK.size(), expected);
+            std::cerr << dmfe::console::ERR() << "RK54GPU init: hK size mismatch (" << rk->hK.size() << " vs " << expected << ")" << std::endl;
             abort();
         }
     }
@@ -148,7 +149,7 @@ void init_SSPRK104GPU() {
     if (config.debug) {
         const size_t expected = static_cast<size_t>(config.len);
         if (rk->hK.size() != expected) {
-            fprintf(stderr, "SSPRK104GPU init: hK size mismatch (%zu vs %zu)\n", rk->hK.size(), expected);
+            std::cerr << dmfe::console::ERR() << "SSPRK104GPU init: hK size mismatch (" << rk->hK.size() << " vs " << expected << ")" << std::endl;
             abort();
         }
     }

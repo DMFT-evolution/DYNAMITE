@@ -42,7 +42,6 @@ __pycache__/
 # Ignore Windows .ini file
 *.ini
 
-
 # Documentation (generated artifacts)
 # MkDocs output
 site/
@@ -56,3 +55,5 @@ docs/reference/api/
 # MkDocs local cache (if present)
 .cache/
 
+# Math.out
+math.out

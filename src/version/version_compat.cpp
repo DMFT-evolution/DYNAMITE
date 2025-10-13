@@ -2,6 +2,7 @@
 #include "core/config.hpp"
 #include <fstream>
 #include <iostream>
+#include "core/console.hpp"
 #include <algorithm>
 #include <sstream>
 #include <vector>
@@ -92,17 +93,17 @@ bool checkVersionCompatibilityInteractive(const std::string& paramFilename) {
         case VersionCompatibility::COMPATIBLE:
             return true;
         case VersionCompatibility::WARNING:
-            std::cerr << "Version warning: potential differences detected. Proceeding." << std::endl;
-            for (auto &w : analysis.warnings) std::cerr << "  - " << w << std::endl;
+            std::cerr << dmfe::console::WARN() << "Version warning: potential differences detected. Proceeding." << std::endl;
+            for (auto &w : analysis.warnings) std::cerr << dmfe::console::WARN() << "  - " << w << std::endl;
             return true;
         case VersionCompatibility::INCOMPATIBLE:
             if (config.allow_incompatible_versions) {
-                std::cerr << "Version incompatibility detected, but proceeding due to --allow-incompatible-versions flag." << std::endl;
-                for (auto &e : analysis.errors) std::cerr << "  - " << e << std::endl;
+                std::cerr << dmfe::console::WARN() << "Version incompatibility detected, but proceeding due to --allow-incompatible-versions flag." << std::endl;
+                for (auto &e : analysis.errors) std::cerr << dmfe::console::ERR() << "  - " << e << std::endl;
                 return true;
             } else {
-                std::cerr << "Version incompatibility detected. Aborting load." << std::endl;
-                for (auto &e : analysis.errors) std::cerr << "  - " << e << std::endl;
+                std::cerr << dmfe::console::ERR() << "Version incompatibility detected. Aborting load." << std::endl;
+                for (auto &e : analysis.errors) std::cerr << dmfe::console::ERR() << "  - " << e << std::endl;
                 return false;
             }
     }
@@ -123,8 +124,8 @@ bool checkVersionCompatibilityBasic(const std::string& paramFilename) {
     }
     
     if (file_version != g_version_info.code_version) {
-        std::cout << "Warning: Parameter file created with version " << file_version 
-                  << ", current version is " << g_version_info.code_version << std::endl;
+    std::cout << dmfe::console::WARN() << "Parameter file created with version " << file_version 
+          << ", current version is " << g_version_info.code_version << std::endl;
         return false;
     }
     return true;
