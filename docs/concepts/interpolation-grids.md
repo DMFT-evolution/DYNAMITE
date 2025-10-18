@@ -27,6 +27,38 @@ and the monotone arctan‑based mapping
 
 Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowding; any choice that yields sufficient density near $0$ and $1$ for your $t_{\max}$ is acceptable. This mapping is analytically invertible and yields near‑endpoint spacings that satisfy the resolution condition (paper Eq. (2)).
 
+Optional index remapping (alpha/delta): In addition to the paper‑exact grid above, the implementation allows a smooth non‑linear remapping of the fractional index prior to evaluating $\theta$ via two parameters: `alpha` ∈ [0,1] (blend toward the non‑linear map) and `delta ≥ 0` (softness). The default `alpha=0, delta=0` reproduces the paper grid exactly. Non‑zero `alpha` slightly re‑distributes nodes while preserving monotonicity. If used, the values are persisted in `Grid_data/<subdir>/grid_params.txt` as `alpha` and `delta`.
+
+### Closed form of the remapping
+
+Let $L$ be the grid length and let $x\in[1, L]$ denote the 1‑based fractional index at which the original paper mapping $\Theta(x)$ (the function that produces $\theta\in[0,1]$) is evaluated. Define
+
+\[
+\begin{aligned}
+s(x) &\equiv \frac{2x - L - 1}{L - 1}\in[-1,1],\\
+c &\equiv \frac{L - 1}{2},\\
+g_\delta(s) &\equiv \operatorname{sign}(s)\left[(|s|^3 + \delta^3)^{1/3} - \delta\right],\\
+g_1 &\equiv (1 + \delta^3)^{1/3} - \delta,\\
+\varphi(x;\delta) &\equiv c\left( \frac{g_\delta(s(x))}{g_1} + 1 \right) + 1.
+\end{aligned}
+\]
+
+With a blend parameter $\alpha\in[0,1]$ and softness $\delta\ge 0$, the remapped index is
+
+\[
+x_\alpha \;\equiv\; \alpha\,\varphi(x;\delta) + (1-\alpha)\,x,
+\]
+
+and the modified grid is obtained by composition with the original mapping:
+
+\[
+\Theta_{\alpha,\delta}(x) \;\equiv\; \Theta\!\big(\, \alpha\,\varphi(x;\delta) + (1-\alpha)\,x \,\big).
+\]
+
+Remarks:
+- $\alpha=0$ (any $\delta$) yields the identity in index space, i.e., the paper‑exact grid. $\alpha=1$ applies the full non‑linear remapping.
+- The normalization by $g_1$ clamps the transform so that endpoints map to endpoints (monotone, range preserved).
+
 For memory integrals (paper Eq. (3)), two contour families on the same grid are used:
 
 \[
@@ -52,6 +84,7 @@ DMFE uses the following notation in code and data:
 - `posA1y.dat`, `posA2y.dat`, `posB2y.dat` — physical positions of interpolation stencils assembled from θ, ϕ¹, ϕ² (A/B families correspond to distinct directional stencils).
 - `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat` — index maps into the base arrays (C, R, and their derivatives) for fast gathers.
 - `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat` — interpolation weights matching the index maps.
+- `grid_params.txt` — provenance of the generated set: len (N), Tmax, spline order, interpolation method and order, FH window (if rational), optional `alpha` and `delta` for the index remapping, and the command line used.
 
 These datasets jointly define the exact nodes and interpolation/quadrature rules used at runtime; they are identical to those used in the paper’s benchmarks.
 
@@ -69,6 +102,7 @@ Flags:
 - `--len L` selects the grid length (N=L).
 - `--Tmax X` sets the long-time scale used by the θ mapping.
 - `--dir SUBDIR` chooses the output subdirectory under `Grid_data/` (default: the value of L).
+- `--alpha X` in [0,1] and `--delta X ≥ 0` enable the optional smooth index remapping for θ (defaults 0, i.e. paper‑exact). The chosen values are recorded in `grid_params.txt`.
 - `--spline-order n` controls the integration (quadrature) B‑spline degree (default: 5).
 - `--interp-method {poly|rational|bspline}` chooses the interpolation method for metadata.
 - `--interp-order n` sets interpolation degree/order.

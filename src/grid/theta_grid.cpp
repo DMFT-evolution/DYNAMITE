@@ -7,9 +7,34 @@
 
 using dmfe::mp;
 
+// Helper: non-linear index remapping per Mathematica ThetaFunc2 transform.
+// Maps x in [1, len] (1-based fractional index) to x' in [1, len].
+static inline long double remap_index(long double x1based, std::size_t len, double alpha, double delta) {
+    if (alpha == 0.0) return x1based; // identity fast-path
+    const long double N = static_cast<long double>(len);
+    const long double c = (N - 1.0L) / 2.0L;
+    const long double t = 2.0L * x1based - N - 1.0L;     // in [- (N+1), +(N-1)] for x in [1,N]
+    const long double denom = (N - 1.0L);
+    long double s = t / denom;                            // normalized symmetric coordinate in [-1,1]
+    if (s > 1.0L) s = 1.0L; if (s < -1.0L) s = -1.0L;
+    const long double abs_s = std::fabs(s);
+    const long double d = static_cast<long double>(delta);
+    // Smooth odd transform: Sign[s] * ((|s|^3 + d^3)^(1/3) - d)
+    const long double inner = std::pow(abs_s * abs_s * abs_s + d * d * d, 1.0L/3.0L) - d;
+    const long double S = (s < 0 ? -1.0L : (s > 0 ? 1.0L : 0.0L));
+    const long double g = S * inner;
+    const long double g1 = (std::pow(1.0L + d*d*d, 1.0L/3.0L) - d); // normalization at |s|=1
+    long double mapped = c * ( (g / g1) + 1.0L ) + 1.0L; // in [1,N]
+    // Blend with identity via alpha
+    long double out = static_cast<long double>(alpha) * mapped + (1.0L - static_cast<long double>(alpha)) * x1based;
+    // Clamp to [1,N]
+    if (out < 1.0L) out = 1.0L; if (out > N) out = N;
+    return out;
+}
+
 // Compute exact analytical theta value at fractional index using high-precision arithmetic
 // Now exposed as a public function and accepts real (fractional) indices
-long double theta_of_index(double idx, std::size_t len, double Tmax) {
+long double theta_of_index(double idx, std::size_t len, double Tmax, double alpha, double delta) {
     const mp pi = dmfe::mp_pi();
     const mp mp_len = mp(len);
     const mp mp_Tmax = mp(Tmax);
@@ -19,7 +44,10 @@ long double theta_of_index(double idx, std::size_t len, double Tmax) {
     const mp Wm1 = dmfe::lambertWm1_mp(argW);
     const mp eta = -(mp(2) / mp_len) * Wm1;
 
-    const mp mp_idx = mp(idx + 1.0);  // Convert to 1-based index
+    // Map to 1-based fractional index and apply optional non-linear remapping
+    long double x1 = static_cast<long double>(idx) + 1.0L; // [1, len]
+    long double x1_map = remap_index(x1, len, alpha, delta);
+    const mp mp_idx = mp(static_cast<double>(x1_map));
 
     // Use the exact algebraic layout from the Mathematica expression
     const mp t1 = (mp_idx - (mp_len / mp(2)) - mp(1)/mp(2)) * eta;
@@ -41,7 +69,8 @@ long double theta_of_index(double idx, std::size_t len, double Tmax) {
 // Vectorized version: compute theta for multiple indices efficiently
 // by computing Wm1 and other len/Tmax-dependent quantities only once
 void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tmax,
-                  std::vector<long double>& theta_values) {
+                  std::vector<long double>& theta_values,
+                  double alpha, double delta) {
     const mp pi = dmfe::mp_pi();
     const mp mp_len = mp(len);
     const mp mp_Tmax = mp(Tmax);
@@ -62,10 +91,12 @@ void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tm
 
     // Compute theta for each index
     for (std::size_t k = 0; k < indices.size(); ++k) {
-        const mp mp_idx = mp(indices[k] + 1.0);  // Convert to 1-based index
+        long double x1 = static_cast<long double>(indices[k]) + 1.0L;
+        long double x1_map = remap_index(x1, len, alpha, delta);
+        const mp mp_idx = mp(static_cast<double>(x1_map));  // 1-based mapped index
         
         const mp t1 = (mp_idx - (mp_len / mp(2)) - mp(1)/mp(2)) * eta;
-    const mp term1 = (mp(2)/pi) * atan(mp(1) / exp(t1));
+        const mp term1 = (mp(2)/pi) * atan(mp(1) / exp(t1));
         const mp num = (mp(1) - term1) - (mp(1) - term_ref);
 
         mp th = num / den;
@@ -76,7 +107,8 @@ void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tm
     }
 }
 
-void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>& theta) {
+void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>& theta,
+                         double alpha, double delta) {
     // Build indices vector [0, 1, 2, ..., len-1]
     std::vector<double> indices(len);
     for (std::size_t i = 0; i < len; ++i) {
@@ -84,7 +116,7 @@ void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>&
     }
     
     // Use vectorized version for efficiency
-    theta_of_vec(indices, len, Tmax, theta);
+    theta_of_vec(indices, len, Tmax, theta, alpha, delta);
     
     // Ensure strictly non-decreasing due to numerical noise
     for (std::size_t i = 1; i < len; ++i) {

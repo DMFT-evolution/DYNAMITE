@@ -51,6 +51,7 @@ Usage:
 
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+							[--alpha X] [--delta X] \
 							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
 # METHODS: poly | rational | bspline
 							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
@@ -71,6 +72,9 @@ Examples:
 
 # Generate with B-spline of degree 9 (global collocation weights)
 ./RG-Evo grid -L 512 --interp-method bspline --interp-order 9
+
+# Apply optional index remapping (alpha in [0,1], delta >= 0) to slightly re-distribute theta nodes
+./RG-Evo grid -L 512 --alpha 0.25 --delta 0.5 --dir 512-custom
 ```
 
 Outputs written to `Grid_data/<SUBDIR>/` include:
@@ -88,6 +92,9 @@ Notes on methods:
 - rational (Floater–Hormann) defaults to m=n+1 (like poly). Set --fh-stencil m (m ≥ n+1) to blend multiple degree-n stencils over a window for extra stability on irregular nodes; each entry then stores m weights.
 - bspline writes dense weights per entry (global map). Prefer poly/rational when y changes frequently between evaluations.
 
+Notes on alpha/delta (optional):
+- The base grid follows the paper exactly. You can optionally apply a smooth non-linear remapping in index space controlled by `--alpha` (blend toward the non-linear map) and `--delta` (softness near the center). Defaults are `--alpha 0 --delta 0`, i.e., the paper grid. Any non-zero `alpha` will slightly re-distribute nodes while preserving monotonicity. The chosen values are recorded in `Grid_data/<SUBDIR>/grid_params.txt` as `alpha` and `delta`.
+
 ### Automatic grid provisioning at startup
 
 When you start a simulation, the code ensures that interpolation grids for the requested length `-L` are available:
@@ -97,6 +104,15 @@ When you start a simulation, the code ensures that interpolation grids for the r
 - If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
 
 This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
+
+### I/O architecture and progress UI
+
+The I/O layer is modular and reports progress via a compact TUI:
+
+- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
+- Runtime-optional HDF5: the program tries to load system `libhdf5`/`libhdf5_hl` at runtime. It prints which libraries were loaded; if unavailable or an error occurs, it falls back to `data.bin` automatically.
+- Save telemetry windows (fraction of the save task): main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line reaches 1.0 when all outputs are complete.
+- TUI messages: a "Save started" line is printed (without filename unless `--debug true`) and a final "Save finished: <dir>" line when done. In async mode, the simulation continues while saving in the background.
 
 ## Documentation
 
@@ -199,7 +215,7 @@ cmake -S . -B build \
 	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
 	- `-s BOOL` save outputs (default true; pass `false` to disable)
 	- `-S, --serk2 BOOL` use SERK2 method (default true)
-	- `-a, --aggressive-sparsify BOOL` enable aggressive sparsification (default true)
+	- `-w, --sparsify-sweeps INT` set number of sparsification sweeps per maintenance pass (`-1` auto [default], `0` off, `>0` fixed count)
 	- `-D BOOL` debug messages (default true)
 	- `-g, --gpu BOOL` enable GPU acceleration (default true)
 	- `-A, --async-export BOOL` enable asynchronous data export (default true)
@@ -208,6 +224,14 @@ cmake -S . -B build \
 	- `-c, --check FILE` check version compatibility of a params file and exit
 
 GPU/CPU: By default, the program attempts to use GPU acceleration if compatible hardware is detected (`--gpu true`). You can explicitly disable GPU acceleration with `--gpu false` to force CPU-only execution. The program will automatically fall back to CPU if GPU is disabled or if no compatible GPU hardware is found.
+
+### Sparsification sweeps (auto/default)
+
+If you don't specify `--sparsify-sweeps`, the program picks sweeps automatically:
+- CPU: 1 sweep
+- GPU: 1 sweep normally, 2 sweeps if GPU memory usage exceeds 50% of total
+
+Set `--sparsify-sweeps 0` to disable sparsification entirely.
 
 ## Data Export Modes
 

@@ -24,6 +24,12 @@ Note: At present, the mixed spherical p-spin equations are hardcoded as in the p
 - `-s` save outputs (default true) and `-o` output directory root.
 - `-D` debug logging; `-v` print build/version; `-I` allow resume across incompatible versions (use with care).
 
+Sparsification:
+- `-w, --sparsify-sweeps INT`: number of sparsify sweeps per maintenance pass.
+	- `-1` (default): auto — CPU: 1 sweep; GPU: 1 sweep normally, 2 sweeps if GPU memory usage > 50%.
+	- `0`: disable sparsification.
+	- `>0`: fixed number of sweeps.
+
 ## Inputs (grids)
 
 Interpolation weights/indices are loaded from `Grid_data/<L>/`:
@@ -40,6 +46,7 @@ Use the built-in grid generator to create or refresh `Grid_data/<L>/`:
 
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+							[--alpha X] [--delta X] \
 							[--spline-order n] [--interp-method METHOD] [--interp-order n]
 # METHODS: poly | rational | bspline
 ```
@@ -53,6 +60,9 @@ This writes:
 	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
 	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
 
+Alpha/Delta (optional):
+- `--alpha` in [0,1] blends a smooth non-linear index remapping into the default mapping; `--delta >= 0` controls the softness. Defaults are 0, preserving the paper grid exactly. The chosen values are recorded in `grid_params.txt`.
+
 Method notes and trade‑offs:
 - `poly`: local barycentric Lagrange of order n (degree n). Minimal weights per entry (n+1). Good accuracy for smooth data; fastest when the sample values change often.
 - `rational`: barycentric rational variant with the same interface and locality as `poly`, typically slightly more robust on irregular grids.
@@ -63,6 +73,10 @@ Method notes and trade‑offs:
 - HDF5 `data.h5` when available; else `data.bin` plus text summaries.
 - Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see concepts/eoms-and-observables.md).
 - Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`.
+
+I/O behavior and TUI:
+- HDF5 is loaded at runtime when possible; on failure the code writes `data.bin` instead. The console prints which HDF5 libraries were loaded (if any).
+- Save progress is staged: main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line advances accordingly, and a final "Save finished: <dir>" is printed.
 
 Resume: automatic if a compatible checkpoint is found (version policy documented in concepts/version-compatibility.md).
 

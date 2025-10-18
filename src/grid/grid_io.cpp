@@ -201,7 +201,9 @@ std::string write_grid_generation_params(std::size_t len,
                                          int interp_order,
                                          int fh_stencil,
                                          const std::string& subdir,
-                                         const std::string& cmdline) {
+                                         const std::string& cmdline,
+                                         double alpha,
+                                         double delta) {
     std::string base = "Grid_data/" + subdir;
     ensure_dir("Grid_data");
     ensure_dir(base);
@@ -218,6 +220,10 @@ std::string write_grid_generation_params(std::size_t len,
     ofs << "interp_method=" << interp_method << "\n";
     ofs << "interp_order=" << interp_order << "\n";
     if (fh_stencil > 0) ofs << "fh_stencil=" << fh_stencil << "\n";
+    ofs.setf(std::ios::scientific);
+    ofs.precision(17);
+    ofs << "alpha=" << alpha << "\n";
+    ofs << "delta=" << delta << "\n";
     ofs << "subdir=" << subdir << "\n";
     if (!cmdline.empty()) ofs << "command_line=" << cmdline << "\n";
     return path;

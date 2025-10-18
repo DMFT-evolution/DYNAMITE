@@ -20,6 +20,7 @@ Outputs (under `Grid_data/512/`):
 
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+              [--alpha X] [--delta X] \
               [--spline-order s] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
 # METHODS: poly | rational | bspline
 # Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
@@ -36,6 +37,9 @@ Outputs (under `Grid_data/512/`):
 - `--interp-order n`: interpolation degree/order (default 9).
 - `--fh-stencil m`: (rational only) window size used for FH blending. Default m=n+1. Typical choices on highly irregular grids: m=n+3..n+7.
 - `--validate, -V`: Do not write outputs. Recompute θ/ϕ/int with current code and compare to the saved files under `Grid_data/SUBDIR/`. Exit code 0 on success; nonzero on mismatch or missing files.
+
+Alpha/Delta (optional):
+- `--alpha` ∈ [0,1] blends a smooth non‑linear remapping of the fractional index into the default mapping; `--delta ≥ 0` sets the softness around the center. Defaults are 0 (paper‑exact grid). If set, the values are recorded in `Grid_data/<subdir>/grid_params.txt`.
 
 ## Choosing a method
 

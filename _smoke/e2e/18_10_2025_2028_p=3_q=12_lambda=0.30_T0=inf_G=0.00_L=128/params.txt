@@ -1,0 +1,67 @@
+# DMFE Simulation Parameters
+# =========================
+
+# Version Information
+code_version = v1.0.0-dev
+git_hash = unknown
+git_branch = unknown
+git_dirty = true
+build_date = Oct 18 2025
+build_time = 20:19:13
+compiler_version = GCC 4.2.1
+cuda_version = CUDA 11.8
+
+# Command Line Arguments
+command_line = /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo -o /home/jlang/Nextcloud/Spin-glass/Codes/DMFE/_smoke/e2e -L 128 -s true -g false -t 1.2e-6 -d 1e-7 -e 1e-3 -m 80
+
+# System Information
+hostname = l19
+timestamp = 2025-10-18 20:29:24
+config.gpu device = None (CPU only)
+execution mode = CPU
+
+# Performance Metrics
+runtime seconds = 0.02
+runtime formatted = 0.02s
+peak memory usage = 0 KB
+peak memory (kb) = 0
+loops per second = 695.94
+
+# Physical Parameters
+p = 3
+p2 = 12
+lambda = 0.3
+T0 = 1e+50
+Gamma = 0
+
+# Numerical Parameters
+len = 128
+tmax = 1.2e-06
+delta_t_min = 1e-07
+delta_max = 0.001
+use_serk2 = true
+aggressive_sparsify = true
+maxLoop = 80
+rmax = [3, 13, 20, 80, 180, 320, 500, 720, 980, 1280, 1620]
+
+# Grid Generation Parameters
+grid_subdir = 128
+grid_len = 128
+grid_Tmax = 1.00000000000000000e+05
+grid_spline_order = 5
+grid_interp_method = poly
+grid_interp_order = 9
+grid_alpha = 0.00000000000000000e+00
+grid_delta = 0.00000000000000000e+00
+
+# Current Simulation State
+current_time = 1.21004e-06
+current_loop = 12
+current_delta = 1.57651673731937e-14
+current_delta_t = 1.030301e-07
+current_method = N/A (async)
+current_t1grid_size = 13
+current_QK0 = 0.9999999999931911
+current_QR0 = 0.9999999999931911
+current_r = 0.0001252391399934927
+current_energy = -1.125337199943153e-05

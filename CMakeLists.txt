@@ -212,7 +212,11 @@ set(CPU_SOURCES
     src/interpolation/index_mat.cpp
     src/interpolation/interpolation_core.cpp
     src/io/io_input.cpp
-    src/io/io_output.cpp
+    src/io/io_save_params.cpp
+    src/io/io_save_binary.cpp
+    src/io/io_save_hdf5.cpp
+    src/io/io_save_compressed.cpp
+    src/io/io_save_driver.cpp
     src/io/io_utils.cpp
     src/math/math_ops.cpp
     src/simulation/simulation_control.cpp

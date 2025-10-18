@@ -4,12 +4,17 @@
 #include <string>
 
 // Compute the theta grid as defined by the Mathematica construction in the project docs.
+// Optionally apply a smooth, parameterized non-linear remapping of the index via (alpha, delta),
+// matching the transformation used by \[Theta]func2 in Mathematica. Defaults keep identity mapping.
 // Inputs:
 //  - len: grid length (N)
 //  - Tmax: maximum time scale (Tmax)
+//  - alpha: blend between non-linear map and identity (default 0.0 => identity)
+//  - delta: softness parameter in the non-linear map (default 0.0)
 // Output:
 //  - theta: filled with 'len' values in [0,1], monotonically increasing
-void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>& theta);
+void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>& theta,
+                         double alpha = 0.0, double delta = 0.0);
 
 // Compute exact analytical theta value at a given fractional index using high-precision arithmetic.
 // This function uses Boost multiprecision (100 digits) to compute the theta value with maximum accuracy.
@@ -19,7 +24,8 @@ void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>&
 //  - Tmax: maximum time scale (Tmax)
 // Output:
 //  - theta value in [0,1] corresponding to the given fractional index
-long double theta_of_index(double idx, std::size_t len, double Tmax);
+long double theta_of_index(double idx, std::size_t len, double Tmax,
+                           double alpha = 0.0, double delta = 0.0);
 
 // Compute exact analytical theta values for a vector of fractional indices (vectorized version).
 // This is more efficient than calling theta_of_index repeatedly because it computes the
@@ -31,7 +37,8 @@ long double theta_of_index(double idx, std::size_t len, double Tmax);
 // Output:
 //  - theta_values: filled with theta values in [0,1] corresponding to the input indices
 void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tmax, 
-                  std::vector<long double>& theta_values);
+                  std::vector<long double>& theta_values,
+                  double alpha = 0.0, double delta = 0.0);
 
 // Write the theta grid to Grid_data/<subdir>/theta.dat, creating the directory if needed.
 // Returns the absolute/relative output path written.

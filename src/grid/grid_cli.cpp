@@ -20,6 +20,8 @@ static void print_grid_usage(const char* prog) {
               << "Options:\n"
               << "  -L, --len N                  Grid length (default: 512)\n"
               << "  -M, --Tmax X                 Long-time scale Tmax used for theta mapping (default: 100000)\n"
+              << "  -a, --alpha X                Nonlinear index blend alpha in [0,1] (default: 0)\n"
+              << "  -D, --delta X                Nonlinear index softness delta >= 0 (default: 0)\n"
               << "  -d, --dir SUBDIR             Output subdirectory under Grid_data/ (default: <len>)\n"
               << "  -V, --validate               Do not write; validate generated theta/phi/int against saved files in SUBDIR\n"
               << "  -s, --spline-order n         Quadrature spline order for int.dat (default: 5)\n"
@@ -35,6 +37,8 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
 
     std::size_t len = 512;
     double Tmax = 1e5;
+    double alpha = 0.0;
+    double delta = 0.0;
     std::string subdir;
     bool validate = false;
     int spline_order = 5;
@@ -52,12 +56,14 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
 
     for (int i = 2; i < argc; ++i) {
         std::string a = argv[i];
-        auto read_next = [&](double &dst){ if (i+1 < argc) { dst = std::stod(argv[++i]); return true;} return false; };
+    auto read_next = [&](double &dst){ if (i+1 < argc) { dst = std::stod(argv[++i]); return true;} return false; };
         auto read_next_size = [&](std::size_t &dst){ if (i+1 < argc) { dst = static_cast<std::size_t>(std::stoll(argv[++i])); return true;} return false; };
         auto read_next_str = [&](std::string &dst){ if (i+1 < argc) { dst = argv[++i]; return true;} return false; };
         auto read_next_int = [&](int &dst){ if (i+1 < argc) { dst = std::stoi(argv[++i]); return true;} return false; };
     if ((a == "--len" || a == "-L") && !read_next_size(len)) { std::cerr << dmfe::console::ERR() << "Missing value for --len" << std::endl; exitCode = 1; return true; }
     else if ((a == "--Tmax" || a == "-M") && !read_next(Tmax)) { std::cerr << dmfe::console::ERR() << "Missing value for --Tmax" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--alpha" || a == "-a") && !read_next(alpha)) { std::cerr << dmfe::console::ERR() << "Missing value for --alpha" << std::endl; exitCode = 1; return true; }
+    else if ((a == "--delta" || a == "-D") && !read_next(delta)) { std::cerr << dmfe::console::ERR() << "Missing value for --delta" << std::endl; exitCode = 1; return true; }
     else if ((a == "--dir" || a == "-d") && !read_next_str(subdir)) { std::cerr << dmfe::console::ERR() << "Missing value for --dir" << std::endl; exitCode = 1; return true; }
         else if (a == "--validate" || a == "-V") { validate = true; }
     else if ((a == "--spline-order" || a == "-s") && !read_next_int(spline_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --spline-order" << std::endl; exitCode = 1; return true; }
@@ -70,7 +76,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     if (subdir.empty()) subdir = std::to_string(len);
 
     std::vector<long double> theta;
-    generate_theta_grid(len, Tmax, theta);
+    generate_theta_grid(len, Tmax, theta, alpha, delta);
 
     // Generate phi grids
     std::vector<long double> phi1, phi2;
@@ -83,7 +89,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     // Position grids (A1y, A2y, B2y) from theta and phi using interpolation-based inverse
     std::vector<double> posA1y, posA2y, posB2y;
     // Use long double inputs directly (internals operate in long double; outputs remain double)
-    generate_pos_grids(len, Tmax, theta, phi1, phi2, posA1y, posA2y, posB2y);
+    generate_pos_grids(len, Tmax, theta, phi1, phi2, posA1y, posA2y, posB2y, alpha, delta);
 
     // Compute interpolation weights for mapping theta -> phi1 and theta -> phi2 entries (N*N queries each)
     // For each entry (row-major), take query xq = phiX[i*N+j].
@@ -158,7 +164,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         // Unified writer for all grids
     GridPaths paths = write_all_grids(theta, phi1, phi2, wint, posA1y, posA2y, posB2y, len, subdir);
         // Save generation parameters for provenance
-        write_grid_generation_params(len, Tmax, spline_order, interp_method, n, mFH, subdir, cmdline);
+    write_grid_generation_params(len, Tmax, spline_order, interp_method, n, mFH, subdir, cmdline, alpha, delta);
         // Write interpolation metadata for A1 and A2
         auto ip = write_A1_interp_metadata(inds, weights_flat, len, subdir);
         auto ip2 = write_A2_interp_metadata(indsA2, weightsA2_flat, len, subdir);

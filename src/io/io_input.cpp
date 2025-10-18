@@ -31,6 +31,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <unordered_map>
 
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
@@ -111,7 +112,7 @@ void import(SimulationData &sim, size_t len_param, int& ord_ref)
 bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
                               int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param,
                               size_t len_param, double delta_t_min_param, double delta_max_param,
-                              bool use_serk2_param, bool aggressive_sparsify_param,
+                              bool use_serk2_param,
                               LoadedStateParams& loaded_params)
 {
     std::ifstream file(filename, std::ios::binary);
@@ -177,7 +178,7 @@ bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
 bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
                             int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param,
                             size_t len_param, double delta_t_min_param, double delta_max_param,
-                            bool use_serk2_param, bool aggressive_sparsify_param,
+                            bool use_serk2_param,
                             LoadedStateParams& loaded_params)
 {
 #if defined(H5_RUNTIME_OPTIONAL)
@@ -185,7 +186,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     auto file = h5rt::open_file_readonly(filename.c_str());
     if (file < 0) return false;
     double file_T0=0, file_lambda=0, file_Gamma=0; int file_p=0, file_p2=0, file_len=0;
-    double file_delta_t_min=0, file_delta_t_max=0; int file_use_serk2=0, file_aggressive_sparsify=0;
+    double file_delta_t_min=0, file_delta_t_max=0; int file_use_serk2=0;
     if (!h5rt::read_attr_double(file, "T0", file_T0) ||
         !h5rt::read_attr_double(file, "lambda", file_lambda) ||
         !h5rt::read_attr_int(file, "p", file_p) ||
@@ -196,11 +197,10 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     h5rt::read_attr_double(file, "delta_t_min", file_delta_t_min);
     h5rt::read_attr_double(file, "delta_max", file_delta_t_max);
     h5rt::read_attr_int(file, "use_serk2", file_use_serk2);
-    h5rt::read_attr_int(file, "aggressive_sparsify", file_aggressive_sparsify);
     if (file_p != p_param || file_p2 != p2_param || std::abs(file_lambda - lambda_param) > 1e-10 || std::abs(file_T0 - T0_param) > 1e-10 ||
         std::abs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
-        std::abs(file_delta_t_min - delta_t_min_param) > 1e-10 || std::abs(file_delta_t_max - delta_max_param) > 1e-10 ||
-        file_use_serk2 != (use_serk2_param ? 1 : 0) || file_aggressive_sparsify != (aggressive_sparsify_param ? 1 : 0)) {
+    std::abs(file_delta_t_min - delta_t_min_param) > 1e-10 || std::abs(file_delta_t_max - delta_max_param) > 1e-10 ||
+    file_use_serk2 != (use_serk2_param ? 1 : 0)) {
     std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
         h5rt::close_file(file);
         return false;
@@ -250,7 +250,7 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     {
         H5::H5File file(filename, H5F_ACC_RDONLY);
         double file_T0, file_lambda, file_Gamma = 0; int file_p, file_p2, file_len = 0;
-        double file_delta_t_min = 0, file_delta_t_max = 0; int file_use_serk2 = 0, file_aggressive_sparsify = 0;
+    double file_delta_t_min = 0, file_delta_t_max = 0; int file_use_serk2 = 0;
         file.openAttribute("T0").read(H5::PredType::NATIVE_DOUBLE, &file_T0);
         file.openAttribute("lambda").read(H5::PredType::NATIVE_DOUBLE, &file_lambda);
         file.openAttribute("p").read(H5::PredType::NATIVE_INT, &file_p);
@@ -261,11 +261,11 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         try { file.openAttribute("delta_t_min").read(H5::PredType::NATIVE_DOUBLE, &file_delta_t_min); } catch (...) {}
         try { file.openAttribute("delta_max").read(H5::PredType::NATIVE_DOUBLE, &file_delta_t_max); } catch (...) {}
         try { file.openAttribute("use_serk2").read(H5::PredType::NATIVE_INT, &file_use_serk2); } catch (...) {}
-        try { file.openAttribute("aggressive_sparsify").read(H5::PredType::NATIVE_INT, &file_aggressive_sparsify); } catch (...) {}
+    // aggressive_sparsify attribute deprecated; ignore if present
         if (file_p != p_param || file_p2 != p2_param || fabs(file_lambda - lambda_param) > 1e-10 || fabs(file_T0 - T0_param) > 1e-10 ||
             fabs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
             fabs(file_delta_t_min - delta_t_min_param) > 1e-10 || fabs(file_delta_t_max - delta_max_param) > 1e-10 ||
-            file_use_serk2 != (use_serk2_param ? 1 : 0) || file_aggressive_sparsify != (aggressive_sparsify_param ? 1 : 0)) {
+            file_use_serk2 != (use_serk2_param ? 1 : 0)) {
         std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
             return false;
         }
@@ -318,8 +318,25 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
 
 bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_param, double lambda_param, 
                          double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param,
-                         bool use_serk2_param, bool aggressive_sparsify_param)
+                         bool use_serk2_param)
 {
+    // Helper: parse simple key = value file into map
+    auto parse_kv_file = [](const std::string& path, std::unordered_map<std::string, std::string>& out) -> bool {
+        out.clear();
+        std::ifstream in(path);
+        if (!in) return false;
+        std::string line;
+        auto trim = [](const std::string& s){ auto a = s.find_first_not_of(" \t\r\n"); if (a==std::string::npos) return std::string(); auto b = s.find_last_not_of(" \t\r\n"); return s.substr(a, b-a+1); };
+        while (std::getline(in, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            auto eq = line.find('=');
+            if (eq == std::string::npos) continue;
+            std::string k = trim(line.substr(0, eq));
+            std::string v = trim(line.substr(eq + 1));
+            if (!k.empty()) out[k] = v;
+        }
+        return !out.empty();
+    };
     auto format_double = [](double d) -> std::string {
         std::ostringstream oss;
         oss << std::scientific << std::setprecision(12) << d;
@@ -334,7 +351,10 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     int file_p = -1, file_p2 = -1, file_len = -1;
     double file_lambda = -1.0, file_T0 = -1.0, file_Gamma = -1.0, file_delta_t_min = -1.0, file_delta_max = -1.0;
     bool file_use_serk2 = false;
-    bool file_aggressive_sparsify = false;
+    int file_sparsify_sweeps = -1; // default: -1 (auto)
+    bool have_file_sparsify_sweeps = false; // track presence to preserve backward-compat
+    // Capture saved grid provenance mirrored into params.txt (if present)
+    std::unordered_map<std::string, std::string> saved_grid; // keys without prefix: len, Tmax, spline_order, interp_method, interp_order, fh_stencil, alpha, delta
     std::string line;
     while (std::getline(paramFile, line))
     {
@@ -370,10 +390,34 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
             iss >> val;
             file_use_serk2 = (val == "true");
         }
-        else if (name == "aggressive_sparsify") {
+        else if (name == "sparsify_sweeps") {
+            iss >> file_sparsify_sweeps;
+            have_file_sparsify_sweeps = true;
+        }
+        // Capture any grid_* entries mirrored from grid_params.txt into saved_grid
+        else if (name.rfind("grid_", 0) == 0) {
             std::string val;
-            iss >> val;
-            file_aggressive_sparsify = (val == "true");
+            std::getline(iss, val);
+            // consume leading spaces if any
+            auto trim = [](const std::string& s){ auto a = s.find_first_not_of(" \t\r\n"); if (a==std::string::npos) return std::string(); auto b = s.find_last_not_of(" \t\r\n"); return s.substr(a, b-a+1); };
+            val = trim(val);
+            if (name == "grid_len") {
+                saved_grid["len"] = val;
+            } else if (name == "grid_Tmax") {
+                saved_grid["Tmax"] = val;
+            } else if (name == "grid_spline_order") {
+                saved_grid["spline_order"] = val;
+            } else if (name == "grid_interp_method") {
+                saved_grid["interp_method"] = val;
+            } else if (name == "grid_interp_order") {
+                saved_grid["interp_order"] = val;
+            } else if (name == "grid_fh_stencil") {
+                saved_grid["fh_stencil"] = val;
+            } else if (name == "grid_alpha") {
+                saved_grid["alpha"] = val;
+            } else if (name == "grid_delta") {
+                saved_grid["delta"] = val;
+            }
         }
     }
     bool match = true;
@@ -404,15 +448,132 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
         mismatch("delta_max", format_double(file_delta_max), format_double(delta_max_param));
     if (file_use_serk2 != use_serk2_param)
         mismatch("use_serk2", file_use_serk2 ? "true" : "false", use_serk2_param ? "true" : "false");
-    if (file_aggressive_sparsify != aggressive_sparsify_param)
-        mismatch("aggressive_sparsify", file_aggressive_sparsify ? "true" : "false", aggressive_sparsify_param ? "true" : "false");
+    // Compare sparsify_sweeps when present in params.txt; skip if absent to keep legacy files loadable
+    if (have_file_sparsify_sweeps && file_sparsify_sweeps != config.sparsify_sweeps) {
+        mismatch("sparsify_sweeps", std::to_string(file_sparsify_sweeps), std::to_string(config.sparsify_sweeps));
+    }
+
+    // Additional: check grid parameters used for this saved run vs the currently available grid
+    // Strategy:
+    // 1) Prefer comparing saved params.txt grid_* values against the current Grid_data/<len>/grid_params.txt.
+    // 2) If Grid_data file is missing, fallback to comparing saved values against runtime config (len, tmax) only.
+    {
+        // Load current grid (by len) if available
+        std::ostringstream gpPath;
+        gpPath << "Grid_data/" << len_param << "/grid_params.txt";
+        std::unordered_map<std::string, std::string> gp; // current grid provenance
+        bool have_gp = parse_kv_file(gpPath.str(), gp);
+
+        auto get_gp = [&](const char* k) -> std::string {
+            auto it = gp.find(k); return (it != gp.end() ? it->second : std::string()); };
+
+        // Compare len
+        if (saved_grid.count("len")) {
+            // saved value must match the current grid (if present) otherwise the runtime len
+            long long saved_len = -1; try { saved_len = std::stoll(saved_grid["len"]); } catch (...) {}
+            if (have_gp && !get_gp("len").empty()) {
+                long long gp_len = -1; try { gp_len = std::stoll(get_gp("len")); } catch (...) {}
+                if (saved_len != gp_len) mismatch("grid_len", std::to_string(saved_len), std::to_string(gp_len));
+            } else {
+                if (saved_len != (long long)len_param) mismatch("grid_len", std::to_string(saved_len), std::to_string(len_param));
+            }
+        }
+
+        // Compare Tmax (tolerant relative)
+        if (saved_grid.count("Tmax")) {
+            double saved_T = std::numeric_limits<double>::quiet_NaN();
+            try { saved_T = std::stod(saved_grid["Tmax"]); } catch (...) {}
+            if (have_gp && !get_gp("Tmax").empty()) {
+                double gpT = std::numeric_limits<double>::quiet_NaN();
+                try { gpT = std::stod(get_gp("Tmax")); } catch (...) {}
+                if (std::isfinite(saved_T) && std::isfinite(gpT)) {
+                    double denom = std::max(std::abs(saved_T), std::abs(gpT));
+                    if (denom == 0) denom = 1.0;
+                    if (std::abs(saved_T - gpT) / denom > 1e-10)
+                        mismatch("grid_Tmax", format_double(saved_T), format_double(gpT));
+                }
+            } else {
+                double curT = config.tmax;
+                if (std::isfinite(saved_T) && std::isfinite(curT)) {
+                    double denom = std::max(std::abs(saved_T), std::abs(curT));
+                    if (denom == 0) denom = 1.0;
+                    if (std::abs(saved_T - curT) / denom > 1e-10)
+                        mismatch("grid_Tmax", format_double(saved_T), format_double(curT));
+                }
+            }
+        }
+
+        // Compare optional fh_stencil if present on both sides (exact string)
+        if (saved_grid.count("fh_stencil")) {
+            if (have_gp && !get_gp("fh_stencil").empty()) {
+                auto a = saved_grid["fh_stencil"]; auto b = get_gp("fh_stencil");
+                if (a != b) mismatch("grid_fh_stencil", a, b);
+            }
+        }
+
+        // Compare alpha (tolerant relative/abs): allow tiny differences
+        if (saved_grid.count("alpha")) {
+            double sa = std::numeric_limits<double>::quiet_NaN();
+            try { sa = std::stod(saved_grid["alpha"]); } catch (...) {}
+            if (have_gp && !get_gp("alpha").empty()) {
+                double ga = std::numeric_limits<double>::quiet_NaN();
+                try { ga = std::stod(get_gp("alpha")); } catch (...) {}
+                if (std::isfinite(sa) && std::isfinite(ga)) {
+                    double diff = std::abs(sa - ga);
+                    double denom = std::max(std::abs(sa), std::abs(ga));
+                    if (denom == 0) denom = 1.0;
+                    if (diff > 1e-12 && diff/denom > 1e-10) mismatch("grid_alpha", format_double(sa), format_double(ga));
+                }
+            }
+        }
+
+        // Compare delta (tolerant relative/abs)
+        if (saved_grid.count("delta")) {
+            double sd = std::numeric_limits<double>::quiet_NaN();
+            try { sd = std::stod(saved_grid["delta"]); } catch (...) {}
+            if (have_gp && !get_gp("delta").empty()) {
+                double gd = std::numeric_limits<double>::quiet_NaN();
+                try { gd = std::stod(get_gp("delta")); } catch (...) {}
+                if (std::isfinite(sd) && std::isfinite(gd)) {
+                    double diff = std::abs(sd - gd);
+                    double denom = std::max(std::abs(sd), std::abs(gd));
+                    if (denom == 0) denom = 1.0;
+                    if (diff > 1e-12 && diff/denom > 1e-10) mismatch("grid_delta", format_double(sd), format_double(gd));
+                }
+            }
+        }
+
+        // Compare spline/interp only when both sides present; strings are compared case-sensitively
+        if (saved_grid.count("spline_order")) {
+            if (have_gp && !get_gp("spline_order").empty()) {
+                auto a = saved_grid["spline_order"]; auto b = get_gp("spline_order");
+                if (a != b) mismatch("grid_spline_order", a, b);
+            }
+        }
+        if (saved_grid.count("interp_method")) {
+            if (have_gp && !get_gp("interp_method").empty()) {
+                auto a = saved_grid["interp_method"]; auto b = get_gp("interp_method");
+                if (a != b) mismatch("grid_interp_method", a, b);
+            }
+        }
+        if (saved_grid.count("interp_order")) {
+            if (have_gp && !get_gp("interp_order").empty()) {
+                auto a = saved_grid["interp_order"]; auto b = get_gp("interp_order");
+                if (a != b) mismatch("grid_interp_order", a, b);
+            }
+        }
+
+        if (!have_gp && config.debug && !saved_grid.empty()) {
+            std::cerr << dmfe::console::WARN() << "Grid parameters file missing: " << gpPath.str() << ". Compared against runtime config where possible." << std::endl;
+        }
+    }
     return match;
 }
 
 bool loadSimulationState(const std::string &filename, SimulationData &sim,
                         int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, 
                         size_t len_param, double delta_t_min_param, double delta_max_param,
-                        bool use_serk2_param, bool aggressive_sparsify_param,
+                        bool use_serk2_param,
                         LoadedStateParams& loaded_params)
 {
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -422,7 +583,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
             std::cerr << dmfe::console::ERR() << "Loading cancelled due to version mismatch." << std::endl;
             return false;
         }
-        if (!checkParametersMatch(paramFilename, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param)) {
+    if (!checkParametersMatch(paramFilename, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param)) {
             std::cerr << dmfe::console::ERR() << "Parameter mismatch: Will not load file " << filename << std::endl;
             return false;
         }
@@ -433,7 +594,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
 
 #if defined(H5_RUNTIME_OPTIONAL)
     if (fileExists(filename) && h5rt::available()) {
-        if (loadSimulationStateHDF5(filename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param, loaded_params)) {
+        if (loadSimulationStateHDF5(filename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, loaded_params)) {
             return true;
         }
     std::cerr << dmfe::console::WARN() << "HDF5 loading failed; trying binary format..." << std::endl;
@@ -441,7 +602,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
 #elif defined(USE_HDF5)
     if (fileExists(filename)) {
         try {
-            if (loadSimulationStateHDF5(filename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param, loaded_params)) {
+            if (loadSimulationStateHDF5(filename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, loaded_params)) {
                 return true;
             }
         } catch (H5::Exception &e) {
@@ -452,7 +613,7 @@ bool loadSimulationState(const std::string &filename, SimulationData &sim,
 
     std::string binFilename = dirPath + "/data.bin";
     if (fileExists(binFilename)) {
-        if (loadSimulationStateBinary(binFilename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param, loaded_params)) {
+        if (loadSimulationStateBinary(binFilename, sim, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, loaded_params)) {
             return true;
         }
     }

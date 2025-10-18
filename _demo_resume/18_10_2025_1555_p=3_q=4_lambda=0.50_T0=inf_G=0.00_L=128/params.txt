@@ -1,0 +1,65 @@
+# DMFE Simulation Parameters
+# =========================
+
+# Version Information
+code_version = v1.3.1.2-4-g372253da-dirty
+git_hash = 372253da3ef3ee3bf683f867bfcf9065492e7222
+git_branch = main
+git_dirty = true
+build_date = Oct 18 2025
+build_time = 15:53:32
+compiler_version = GCC 4.2.1
+cuda_version = CUDA 11.8
+
+# Command Line Arguments
+command_line = ./RG-Evo -m 43 -D true -q 4 -l 0.5 -L 128 -o ./_demo_resume -A false --gpu false
+
+# System Information
+hostname = l19
+timestamp = 2025-10-18 15:57:17
+config.gpu device = None (CPU only)
+execution mode = CPU
+
+# Performance Metrics
+runtime seconds = 0.04
+runtime formatted = 0.04s
+peak memory usage = 0 KB
+peak memory (kb) = 0
+loops per second = 969.52
+
+# Physical Parameters
+p = 3
+p2 = 4
+lambda = 0.5
+T0 = 1e+50
+Gamma = 0
+
+# Numerical Parameters
+len = 128
+tmax = 10000000
+delta_t_min = 1e-05
+delta_max = 1e-10
+use_serk2 = true
+aggressive_sparsify = true
+maxLoop = 43
+rmax = [3, 13, 20, 80, 180, 320, 500, 720, 980, 1280, 1620]
+
+# Grid Generation Parameters
+grid_subdir = 128
+grid_len = 128
+grid_Tmax = 1.00000000000000000e+05
+grid_spline_order = 5
+grid_interp_method = poly
+grid_interp_order = 9
+
+# Current Simulation State
+current_time = 0.0004579054298177043
+current_loop = 43
+current_delta = 1.84297022087776e-14
+current_delta_t = 1.172578644923699e-05
+current_method = N/A (async)
+current_t1grid_size = 44
+current_QK0 = 0.9999996330649811
+current_QR0 = 0.9999996330649811
+current_r = 0.005723812824075919
+current_energy = -0.001602667604182963

@@ -34,7 +34,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"error", required_argument, 0, 'e'},
         {"check", required_argument, 0, 'c'},
         {"out-dir", required_argument, 0, 'o'},
-        {"aggressive-sparsify", required_argument, 0, 'a'},
+    {"sparsify-sweeps", required_argument, 0, 'w'},
         {"gpu", required_argument, 0, 'g'},
         {"async-export", required_argument, 0, 'A'},
         {"help", no_argument, 0, 'h'},
@@ -43,7 +43,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:a:o:g:A:hvc:I:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:w:o:g:A:hvc:I:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = static_cast<int>(std::stod(optarg));
@@ -88,9 +88,16 @@ bool parseCommandLineArguments(int argc, char **argv) {
             case 'S':
                 config.use_serk2 = (std::string(optarg) != "false");
                 break;
-            case 'a':
-                config.aggressive_sparsify = (std::string(optarg) != "false");
+            case 'w': {
+                // sparsify sweeps: -1 = auto; 0 disables; >0 fixed count
+                try {
+                    config.sparsify_sweeps = std::stoi(optarg);
+                } catch (...) {
+                    std::cerr << dmfe::console::WARN() << "Invalid value for --sparsify-sweeps; using auto (-1)" << std::endl;
+                    config.sparsify_sweeps = -1;
+                }
                 break;
+            }
             case 'g':
                 config.gpu = (std::string(optarg) != "false");
                 break;
@@ -168,8 +175,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -o, --out-dir DIR               Set directory for all outputs (overrides defaults)\n"
                           << "  -s BOOL                         Enable output saving (correlation file, simulation state, compressed data)\n"
                           << "  -S, --serk2 BOOL                Use SERK2 method (default: true)\n"
-                          << "  -a, --aggressive-sparsify BOOL  Enable aggressive sparsification (default: " << (config.aggressive_sparsify ? "true" : "false") << ")\n"
-                          << "  -g, --gpu BOOL                 Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
+                          << "  -w, --sparsify-sweeps INT      Number of sparsify sweeps per maintenance pass (-1=auto, 0=off) (default: " << config.sparsify_sweeps << ")\n"
+                          << "  -g, --gpu BOOL                  Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
                           << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
                           << "  -I, --allow-incompatible-versions BOOL  Allow loading data saved with incompatible versions (default: " << (config.allow_incompatible_versions ? "true" : "false") << ")\n"
@@ -199,7 +206,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  debug = " << (config.debug ? "true" : "false") << "\n"
               << "  save_output = " << (config.save_output ? "true" : "false") << "\n"
               << "  use_serk2 = " << (config.use_serk2 ? "true" : "false") << "\n"
-              << "  aggressive_sparsify = " << (config.aggressive_sparsify ? "true" : "false") << "\n"
+              << "  sparsify_sweeps = " << config.sparsify_sweeps << "\n"
               << "  gpu = " << (config.gpu ? "true" : "false") << "\n"
               << "  async_export = " << (config.async_export ? "true" : "false") << "\n"
               << "  allow_incompatible_versions = " << (config.allow_incompatible_versions ? "true" : "false") << "\n"

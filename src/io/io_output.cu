@@ -234,16 +234,20 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         // Copy energy history back to CPU
         thrust::copy(d_energy_history.begin(), d_energy_history.end(), energy_history.begin());
         
-        // Extract QK[0] values for each time step
-        for (size_t i = 0; i < t1len; ++i) {
+        // Extract QK[0] values for each time step (parallelized on CPU side)
+        #pragma omp parallel for schedule(static)
+        for (long long i = 0; i < (long long)t1len; ++i) {
             qk0_history[i] = simulation.h_QKv[i * len_param];  // QKv[i * len] is QK[0] at time step i
         }
     } else {
         // CPU computation of energy history
-        for (size_t i = 0; i < t1len; ++i) {
+        #pragma omp parallel for schedule(static)
+        for (long long i = 0; i < (long long)t1len; ++i) {
             std::vector<double> temp(len_param, 0.0);
-            std::vector<double> QKv_i(simulation.h_QKv.begin() + i * len_param, simulation.h_QKv.begin() + (i + 1) * len_param);
-            std::vector<double> QRv_i(simulation.h_QRv.begin() + i * len_param, simulation.h_QRv.begin() + (i + 1) * len_param);
+            std::vector<double> QKv_i(simulation.h_QKv.begin() + i * len_param,
+                                      simulation.h_QKv.begin() + (i + 1) * len_param);
+            std::vector<double> QRv_i(simulation.h_QRv.begin() + i * len_param,
+                                      simulation.h_QRv.begin() + (i + 1) * len_param);
             SigmaK(QKv_i, temp);
             energy_history[i] = -(ConvA(temp, QRv_i, simulation.h_t1grid[i])[0] + Dflambda(QKv_i[0]) / T0_param);
             qk0_history[i] = QKv_i[0];  // QK[0] at time step i
@@ -253,6 +257,21 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
     // Get directory path from filename
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
     
+    // Progress mapping for histories phase: [0.65 .. 0.80]
+    const double p_start = 0.65;
+    const double p_end   = 0.80;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = simulation.h_t1grid.empty() ? 0.0 : simulation.h_t1grid.back();
+    auto update_hist_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "histories");
+    };
+    size_t total_lines = simulation.h_t1grid.size() * 3; // rvec + energy + qk0
+    size_t done_lines = 0;
+    update_hist_prog(done_lines, total_lines);
+
     // Save rvec history
     std::string rvecFilename = dirPath + "/rvec.txt";
     std::ofstream rvecFile(rvecFilename);
@@ -261,9 +280,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         rvecFile << "# Time\trvec\n";
         for (size_t i = 0; i < t1len; ++i) {
             rvecFile << simulation.h_t1grid[i] << "\t" << simulation.h_rvec[i] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         rvecFile.close();
-    std::cout << dmfe::console::SAVE() << "Saved rvec history to " << rvecFilename << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
     }
@@ -276,9 +295,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         energyFile << "# Time\tEnergy\n";
         for (size_t i = 0; i < t1len; ++i) {
             energyFile << simulation.h_t1grid[i] << "\t" << energy_history[i] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         energyFile.close();
-    std::cout << dmfe::console::SAVE() << "Saved energy history to " << energyFilename << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
     }
@@ -291,14 +310,20 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         qk0File << "# Time\tQK[0]\n";
         for (size_t i = 0; i < t1len; ++i) {
             qk0File << simulation.h_t1grid[i] << "\t" << qk0_history[i] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         qk0File.close();
-    std::cout << dmfe::console::SAVE() << "Saved QK[0] history to " << qk0Filename << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
     
-    std::cout << dmfe::console::SAVE() << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << std::endl;
+    // Consolidated summary line for history files
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0; " << t1len 
+                  << " time points) under " << dirPath << std::endl;
+    }
+    // Ensure we end histories phase at 0.80
+    update_hist_prog(total_lines, total_lines);
 }
 
 // Async version of saveHistory that works with snapshot data (simplified, no GPU operations)
@@ -311,14 +336,32 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
     std::vector<double> energy_history(t1len);
     
     // CPU computation of energy history (same as synchronous version)
-    for (size_t i = 0; i < t1len; ++i) {
+    #pragma omp parallel for schedule(static)
+    for (long long i = 0; i < (long long)t1len; ++i) {
         std::vector<double> temp(snapshot.current_len, 0.0);
-        std::vector<double> QKv_i(snapshot.QKv.begin() + i * snapshot.current_len, snapshot.QKv.begin() + (i + 1) * snapshot.current_len);
-        std::vector<double> QRv_i(snapshot.QRv.begin() + i * snapshot.current_len, snapshot.QRv.begin() + (i + 1) * snapshot.current_len);
+        std::vector<double> QKv_i(snapshot.QKv.begin() + i * snapshot.current_len,
+                                  snapshot.QKv.begin() + (i + 1) * snapshot.current_len);
+        std::vector<double> QRv_i(snapshot.QRv.begin() + i * snapshot.current_len,
+                                  snapshot.QRv.begin() + (i + 1) * snapshot.current_len);
         SigmaK(QKv_i, temp);
         energy_history[i] = -(ConvA(temp, QRv_i, snapshot.t1grid[i])[0] + Dflambda(QKv_i[0]) / snapshot.config_snapshot.T0);
     }
     
+    // Progress mapping for histories phase: [0.65 .. 0.80]
+    const double p_start = 0.65;
+    const double p_end   = 0.80;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
+    auto update_hist_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "histories");
+    };
+    size_t total_lines = snapshot.t1grid.size() * 3;
+    size_t done_lines = 0;
+    update_hist_prog(done_lines, total_lines);
+
     // Save rvec history
     std::string rvecFilename = dirPath + "/rvec.txt";
     std::ofstream rvecFile(rvecFilename);
@@ -327,9 +370,9 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         rvecFile << "# Time\trvec\n";
         for (size_t i = 0; i < t1len; ++i) {
             rvecFile << snapshot.t1grid[i] << "\t" << snapshot.rvec[i] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         rvecFile.close();
-    std::cout << dmfe::console::SAVE() << "Saved rvec history to " << rvecFilename << " (async)" << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
     }
@@ -342,9 +385,9 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         energyFile << "# Time\tEnergy\n";
         for (size_t i = 0; i < t1len; ++i) {
             energyFile << snapshot.t1grid[i] << "\t" << energy_history[i] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         energyFile.close();
-    std::cout << dmfe::console::SAVE() << "Saved energy history to " << energyFilename << " (async)" << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
     }
@@ -357,14 +400,19 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         qk0File << "# Time\tQK[0]\n";
         for (size_t i = 0; i < t1len; ++i) {
             qk0File << snapshot.t1grid[i] << "\t" << snapshot.QKv[i * snapshot.current_len] << "\n";
+            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         qk0File.close();
-    std::cout << dmfe::console::SAVE() << "Saved QK[0] history to " << qk0Filename << " (async)" << std::endl;
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
     
-    std::cout << dmfe::console::SAVE() << "Successfully saved complete history (" << t1len << " time points) to " << dirPath << " (async)" << std::endl;
+    // Consolidated summary line for history files (async)
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0; " << t1len 
+                  << " time points) under " << dirPath << " (async)" << std::endl;
+    }
+    update_hist_prog(total_lines, total_lines);
 }
 
 

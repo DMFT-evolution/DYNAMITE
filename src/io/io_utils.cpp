@@ -70,11 +70,21 @@ void _setSaveStart(const std::string& filename) {
     g_saveTelemetry.in_progress = true;
     g_saveTelemetry.target_file = filename;
     g_saveTelemetry.last_start_time = std::chrono::high_resolution_clock::now();
+    g_saveTelemetry.progress = 0.0;
+    g_saveTelemetry.stage = "start";
     g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
     g_statusAnchorInvalidated.store(true, std::memory_order_relaxed);
     // Print on its own line so TUI can redraw cleanly on next tick
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    std::cout << dmfe::console::SAVE() << "Save started: " << filename << std::endl << std::flush;
+    // In non-debug mode, avoid injecting extra blank lines
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    }
+    // Hide filename if not in debug; show only that a save started
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Save started: " << filename << std::endl << std::flush;
+    } else {
+        std::cout << dmfe::console::SAVE() << "Save started" << std::endl << std::flush;
+    }
 }
 
 void _setSaveEnd(const std::string& filename) {
@@ -82,10 +92,32 @@ void _setSaveEnd(const std::string& filename) {
     g_saveTelemetry.in_progress = false;
     g_saveTelemetry.last_completed_file = filename;
     g_saveTelemetry.last_end_time = std::chrono::high_resolution_clock::now();
+    g_saveTelemetry.progress = 1.0;
+    g_saveTelemetry.stage = "done";
     g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
     g_statusAnchorInvalidated.store(true, std::memory_order_relaxed);
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    std::cout << dmfe::console::DONE() << "Save finished: " << filename << std::endl << std::flush;
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+    }
+    // Derive directory path only
+    std::string dir = filename;
+    auto pos = dir.find_last_of('/');
+    if (pos != std::string::npos) dir = dir.substr(0, pos);
+    std::cout << dmfe::console::DONE() << "Save finished: " << dir << std::endl << std::flush;
+}
+
+void _setSaveProgress(double fraction, double last_t, const std::string& stage_label) {
+    std::lock_guard<std::mutex> lock(saveMutex);
+    g_saveTelemetry.progress = std::max(0.0, std::min(1.0, fraction));
+    g_saveTelemetry.last_t_exported = last_t;
+    g_saveTelemetry.stage = stage_label;
+    g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
+}
+
+void _setSaveLastT(double last_t) {
+    std::lock_guard<std::mutex> lock(saveMutex);
+    g_saveTelemetry.last_t_exported = last_t;
+    g_saveTelemetryDirty.store(true, std::memory_order_relaxed);
 }
 
 void markSaveTelemetryDirty() {
@@ -104,10 +136,90 @@ bool consumeStatusAnchorInvalidated() {
     return g_statusAnchorInvalidated.exchange(false, std::memory_order_acq_rel);
 }
 
+// Decide and ensure output root directory
+void setupOutputDirectory()
+{
+    // Decide output root based on WHERE THE EXECUTABLE LIVES (not CWD)
+    char* homeDir = getenv("HOME");
+    std::string exePath;
+    {
+        char exeBuf[PATH_MAX];
+        ssize_t n = readlink("/proc/self/exe", exeBuf, sizeof(exeBuf) - 1);
+        if (n > 0) { exeBuf[n] = '\0'; exePath = exeBuf; }
+    }
+
+    auto canonicalize = [](const std::string& p) -> std::string {
+        char buf[PATH_MAX];
+        if (!p.empty() && realpath(p.c_str(), buf)) return std::string(buf);
+        return p;
+    };
+
+    std::string exeCanon = canonicalize(exePath);
+    std::string homeCanon = (homeDir ? canonicalize(std::string(homeDir)) : std::string());
+    if (!homeCanon.empty() && homeCanon.back() != '/') homeCanon += '/';
+
+    if (!exeCanon.empty() && !homeCanon.empty()) {
+        // If the executable resides under canonical HOME, force using outputDir
+        if (exeCanon.rfind(homeCanon, 0) == 0) {
+            config.resultsDir = config.outputDir;
+        }
+    }
+
+    if (config.debug) {
+        std::cout << dmfe::console::INFO() << "Executable (canonical): " << (exeCanon.empty() ? std::string("<unknown>") : exeCanon) << std::endl;
+        std::cout << dmfe::console::INFO() << "HOME (canonical): " << (homeCanon.empty() ? std::string("<unknown>") : homeCanon) << std::endl;
+        std::cout << dmfe::console::INFO() << "Selected results root: " << config.resultsDir << std::endl;
+    } else {
+        std::cout << dmfe::console::INFO() << "Output root: " << config.resultsDir << std::endl;
+    }
+
+    // Create output root if requested
+    struct stat st = {0};
+    if (stat(config.resultsDir.c_str(), &st) == 0) {
+        if (S_ISDIR(st.st_mode)) {
+            if (config.debug) {
+                std::cout << dmfe::console::INFO() << "Root directory already exists: " << config.resultsDir << std::endl;
+            }
+            if (config.save_output && access(config.resultsDir.c_str(), W_OK) == 0) {
+                if (config.debug) {
+                    std::cout << dmfe::console::INFO() << "Directory is writable." << std::endl;
+                }
+                return;
+            }
+        }
+    } else if (config.save_output) {
+        if (!config.resultsDir.empty() && config.resultsDir[0] == '/') {
+            std::string path = "/";
+            std::string dirPath = config.resultsDir.substr(1);
+            std::istringstream pathStream(dirPath);
+            std::string dir;
+            while (std::getline(pathStream, dir, '/')) {
+                if (!dir.empty()) {
+                    path += dir + "/";
+                    if (stat(path.c_str(), &st) == -1) {
+                        if (mkdir(path.c_str(), 0755) != 0) {
+                            std::cerr << dmfe::console::WARN() << "Could not create directory " << path
+                                      << ": " << strerror(errno) << std::endl;
+                            break;
+                        }
+                    }
+                }
+            }
+        } else if (!config.resultsDir.empty()) {
+            if (mkdir(config.resultsDir.c_str(), 0755) != 0) {
+                std::cerr << dmfe::console::WARN() << "Could not create directory " << config.resultsDir
+                          << ": " << strerror(errno) << std::endl;
+            } else if (config.debug) {
+                std::cout << dmfe::console::DONE() << "Created output directory: " << config.resultsDir << std::endl;
+            }
+        }
+    }
+}
+
 // Helper function to find an existing parameter directory with matching parameters
 std::string findExistingParamDir(const std::string& resultsDir_param, int p_param, int p2_param,
                                 double lambda_param, double T0_param, double Gamma_param, size_t len_param,
-                                double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param) {
+                                double delta_t_min_param, double delta_max_param, bool use_serk2_param) {
     std::vector<std::string> dirs_to_check = {"Results/"};
     std::string resultsDir = resultsDir_param;
     if (!resultsDir.empty() && resultsDir.back() != '/') {
@@ -126,7 +238,7 @@ std::string findExistingParamDir(const std::string& resultsDir_param, int p_para
             if (entry->d_type == DT_DIR && entry->d_name[0] != '.') {
                 std::string subdir = dir + entry->d_name;
                 std::string param_file = subdir + "/params.txt";
-                if (fileExists(param_file) && checkParametersMatch(param_file, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param)) {
+                if (fileExists(param_file) && checkParametersMatch(param_file, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param)) {
                     // Also check version compatibility
                     VersionAnalysis analysis = analyzeVersionCompatibility(param_file);
                     if (analysis.level == VersionCompatibility::IDENTICAL || analysis.level == VersionCompatibility::COMPATIBLE || analysis.level == VersionCompatibility::WARNING) {
@@ -184,11 +296,11 @@ void ensureDirectoryExists(const std::string &dir)
 
 std::string getFilename(const std::string& resultsDir_param, int p_param, int p2_param,
                        double lambda_param, double T0_param, double Gamma_param, size_t len_param,
-                       double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param,
+                       double delta_t_min_param, double delta_max_param, bool use_serk2_param,
                        bool save_output_param)
 {
     // First, try to find an existing directory with matching parameters
-    std::string existing_dir = findExistingParamDir(resultsDir_param, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param);
+    std::string existing_dir = findExistingParamDir(resultsDir_param, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param);
     if (!existing_dir.empty()) {
         return existing_dir + "/data.h5";
     }
@@ -203,7 +315,7 @@ std::string getFilename(const std::string& resultsDir_param, int p_param, int p2
             // no params, assume ok
             break;
         }
-        if (checkParametersMatch(param_file, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param, aggressive_sparsify_param)) {
+    if (checkParametersMatch(param_file, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param)) {
             // match, ok
             break;
         }

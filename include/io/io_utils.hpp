@@ -30,6 +30,10 @@ struct SaveTelemetry {
     std::string last_completed_file;    // last file that finished saving
     std::chrono::high_resolution_clock::time_point last_start_time{}; // last save start
     std::chrono::high_resolution_clock::time_point last_end_time{};   // last save end
+    // Progress info for TUI
+    double progress = 0.0;              // 0.0 .. 1.0 approximate export progress
+    double last_t_exported = 0.0;       // last time-step value exported in the last save
+    std::string stage;                  // human-readable stage label (hdf5/params/histories/compressed)
 };
 
 // Query current save telemetry (thread-safe snapshot)
@@ -37,6 +41,11 @@ SaveTelemetry getSaveTelemetry();
 // Internal: update/save telemetry helpers (defined in io_utils.cpp)
 void _setSaveStart(const std::string& filename);
 void _setSaveEnd(const std::string& filename);
+
+// Update save progress (thread-safe)
+void _setSaveProgress(double fraction, double last_t, const std::string& stage_label);
+// Update only the last exported time value (thread-safe)
+void _setSaveLastT(double last_t);
 
 // Telemetry/UI coordination helpers
 // Mark that save telemetry changed; runner should refresh status immediately.
@@ -65,11 +74,11 @@ std::string getParameterDirPath(const std::string& resultsDir_param, int p_param
                                double lambda_param, double T0_param, double Gamma_param, size_t len_param);
 std::string findExistingParamDir(const std::string& resultsDir_param, int p_param, int p2_param,
                                 double lambda_param, double T0_param, double Gamma_param, size_t len_param,
-                                double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param);
+                                double delta_t_min_param, double delta_max_param, bool use_serk2_param);
 void ensureDirectoryExists(const std::string& dir);
 std::string getFilename(const std::string& resultsDir_param, int p_param, int p2_param, 
                        double lambda_param, double T0_param, double Gamma_param, size_t len_param, 
-                       double delta_t_min_param, double delta_max_param, bool use_serk2_param, bool aggressive_sparsify_param,
+                       double delta_t_min_param, double delta_max_param, bool use_serk2_param,
                        bool save_output_param);
 
 // File existence
@@ -79,22 +88,22 @@ bool fileExists(const std::string& filename);
 bool loadSimulationStateBinary(const std::string& filename, SimulationData& sim,
                               int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param,
                               size_t len_param, double delta_t_min_param, double delta_max_param,
-                              bool use_serk2_param, bool aggressive_sparsify_param,
+                              bool use_serk2_param,
                               LoadedStateParams& loaded_params);
 #if defined(USE_HDF5)
 bool loadSimulationStateHDF5(const std::string& filename, SimulationData& sim,
                             int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param,
                             size_t len_param, double delta_t_min_param, double delta_max_param,
-                            bool use_serk2_param, bool aggressive_sparsify_param,
+                            bool use_serk2_param,
                             LoadedStateParams& loaded_params);
 #endif
 bool checkParametersMatch(const std::string& paramFilename, int p_param, int p2_param, double lambda_param, 
                          double T0_param, double Gamma_param, size_t len_param, double delta_t_min_param, double delta_max_param,
-                         bool use_serk2_param, bool aggressive_sparsify_param);
+                         bool use_serk2_param);
 bool loadSimulationState(const std::string& filename, SimulationData& sim,
                         int p_param, int p2_param, double lambda_param, double T0_param, double Gamma_param, 
                         size_t len_param, double delta_t_min_param, double delta_max_param,
-                        bool use_serk2_param, bool aggressive_sparsify_param,
+                        bool use_serk2_param,
                         LoadedStateParams& loaded_params);
 
 // History saving
@@ -103,9 +112,13 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
 
 // Save functions
 void saveParametersToFile(const std::string& dirPath, double delta, double delta_t);
+// Async variant used by background HDF5 writer
+void saveParametersToFileAsync(const std::string& dirPath, double delta, double delta_t, const SimulationDataSnapshot& snapshot);
 void saveSimulationStateBinary(const std::string& filename, double delta, double delta_t);
-#if defined(USE_HDF5)
+// HDF5-based writers (compile-time or runtime optional)
+#if defined(H5_RUNTIME_OPTIONAL) || defined(USE_HDF5)
 void saveSimulationStateHDF5(const std::string& filename, double delta, double delta_t);
+void saveSimulationStateHDF5Async(const std::string& filename, const SimulationDataSnapshot& snapshot);
 #endif
 SimulationDataSnapshot saveSimulationState(const std::string& filename, double delta, double delta_t);
 void saveCompressedData(const std::string& dirPath);

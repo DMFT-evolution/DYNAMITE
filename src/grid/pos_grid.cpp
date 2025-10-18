@@ -117,7 +117,8 @@ void generate_pos_grids(std::size_t len,
 						const std::vector<long double>& phi2,
 						std::vector<double>& posA1y,
 						std::vector<double>& posA2y,
-						std::vector<double>& posB2y) {
+						std::vector<double>& posB2y,
+						double alpha, double delta) {
 	const std::size_t N = theta.size();
 	if (N != len) throw std::invalid_argument("generate_pos_grids: theta size must match len");
 	if (phi1.size() != N*N || phi2.size() != N*N) throw std::invalid_argument("generate_pos_grids: phi sizes must be N*N");
@@ -153,7 +154,7 @@ void generate_pos_grids(std::size_t len,
 	// theta_of_vec outputs long double; keep as long double for higher internal accuracy
 	std::vector<long double> inv_x_ld;
 	inv_x_ld.reserve(M);
-	theta_of_vec(indices, N, Tmax, inv_x_ld);
+	theta_of_vec(indices, N, Tmax, inv_x_ld, alpha, delta);
 	inv_x.swap(inv_x_ld);
 	
 	// Ensure strict monotonicity in sampled theta
@@ -212,10 +213,11 @@ void generate_pos_grids(std::size_t len,
 						const std::vector<double>& phi2,
 						std::vector<double>& posA1y,
 						std::vector<double>& posA2y,
-						std::vector<double>& posB2y) {
+						std::vector<double>& posB2y,
+						double alpha, double delta) {
 	std::vector<long double> theta_ld(theta.begin(), theta.end());
 	std::vector<long double> phi1_ld(phi1.begin(), phi1.end());
 	std::vector<long double> phi2_ld(phi2.begin(), phi2.end());
-	generate_pos_grids(len, Tmax, theta_ld, phi1_ld, phi2_ld, posA1y, posA2y, posB2y);
+	generate_pos_grids(len, Tmax, theta_ld, phi1_ld, phi2_ld, posA1y, posA2y, posB2y, alpha, delta);
 }
 

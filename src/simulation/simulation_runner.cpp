@@ -121,6 +121,22 @@ int runSimulation() {
     double t = sim->h_t1grid.back();
 #endif
 
+    // Baseline: last time from the loaded state. Used to decide whether to save outputs.
+    const double baseline_t1_last = t;
+    bool skip_save_notice_emitted = false;
+    auto has_progress_beyond_loaded = [&]() -> bool {
+#if DMFE_WITH_CUDA
+        double cur = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back());
+#else
+        double cur = sim->h_t1grid.back();
+#endif
+        // Require strictly greater than baseline with a small numerical tolerance
+        const double atol = 1e-12;
+        const double rtol = 1e-12;
+        const double tol = std::max(atol, rtol * std::fabs(baseline_t1_last));
+        return (cur - baseline_t1_last) > tol;
+    };
+
     // 2) Main loop
     // Status printing control
     const bool continuous_status = (!config.debug) && dmfe::console::stdout_is_tty();
@@ -138,13 +154,30 @@ int runSimulation() {
         }
         return 24; // sensible default
     };
+    auto query_terminal_cols = []() -> int {
+        struct winsize ws{};
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == 0 && ws.ws_col > 0) return ws.ws_col;
+        const char* env = std::getenv("COLUMNS");
+        if (env) {
+            int v = std::atoi(env);
+            if (v > 0) return v;
+        }
+        return 80; // sensible default
+    };
+    // Configure scroll region so bottom 4 lines are reserved for the TUI
     auto set_scroll_region = [&](int rows){
-        if (rows <= 6) return; // too small, skip
-        // Reset region then set top..rows-4 as scrollable
-        std::cout << "\033[r"; // reset to full screen
-        std::cout << "\033[1;" << (rows - 4) << "r";
-        tui_scroll_region_set = true;
-        last_rows = rows;
+        if (rows >= 6) {
+            // Reset any existing region then set [1, rows-4]
+            std::cout << "\033[r"; // reset to full screen
+            std::cout << "\033[1;" << (rows - 4) << "r";
+            tui_scroll_region_set = true;
+            last_rows = rows;
+        } else {
+            // Too few rows: just reset region and mark as not set
+            std::cout << "\033[r";
+            tui_scroll_region_set = false;
+            last_rows = -1;
+        }
     };
     auto ensure_scroll_region = [&](){
         int rows = query_terminal_rows();
@@ -241,58 +274,57 @@ int runSimulation() {
             // Update peak memory
             updatePeakMemory();
             
-            // Check memory usage and adjust sparsify sweeps
-            if (config.gpu) {
-                size_t available = getAvailableGPUMemory();
-                if (peak_gpu_memory_mb > 0.5 * available) {
-                    config.sparsify_sweeps = 2;
-                } else {
-                    config.sparsify_sweeps = 1;
-                }
-            }
+            // Auto mode: choose effective GPU sweep count based on current memory usage
+            // Do not mutate config.sparsify_sweeps unless user provided explicit value.
+            // We decide the effective sweep count below when computing max_sweeps.
 #else
         if (config.loop % 100000 == 0) {
 #endif
             
-            if (config.aggressive_sparsify) {
 #if DMFE_WITH_CUDA
-                size_t prev_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
-                int count = 0;
-                int max_sweeps = config.gpu ? config.sparsify_sweeps : 1; // For CPU, default to 1, but can adjust
-#else
-                size_t prev_size = sim->h_t1grid.size();
-                int count = 0;
-                int max_sweeps = 1;
-#endif
-                while (count < std::min(10, max_sweeps)) {
-#if DMFE_WITH_CUDA
-                    if (config.gpu) {
-                        sparsifyNscaleGPU(config.delta_max);
-                    } else {
-#endif
-                        sparsifyNscale(config.delta_max);
-#if DMFE_WITH_CUDA
-                    }
-                    size_t new_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
-#else
-                    size_t new_size = sim->h_t1grid.size();
-#endif
-                    if (new_size >= prev_size) break;
-                    prev_size = new_size;
-                    count++;
-                }
+            size_t prev_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+            int count = 0;
+            // Determine effective sweeps:
+            // - If user specified (>=0), use that.
+            // - If auto (-1): CPU=1; GPU=1 or 2 depending on >50% GPU mem usage.
+            int effective_sweeps = 1;
+            if (config.sparsify_sweeps >= 0) {
+                effective_sweeps = config.sparsify_sweeps;
             } else {
 #if DMFE_WITH_CUDA
                 if (config.gpu) {
-                    for (int i = 0; i < config.sparsify_sweeps; ++i) {
-                        sparsifyNscaleGPU(config.delta_max);
-                    }
+                    size_t total_gpu_mb = getAvailableGPUMemory();
+                    size_t used_gpu_mb = getGPUMemoryUsage();
+                    effective_sweeps = (total_gpu_mb > 0 && used_gpu_mb > total_gpu_mb * 0.5) ? 2 : 1;
+                } else {
+                    effective_sweeps = 1;
+                }
+#else
+                effective_sweeps = 1;
+#endif
+            }
+            int max_sweeps = effective_sweeps;
+#else
+            size_t prev_size = sim->h_t1grid.size();
+            int count = 0;
+            int max_sweeps = 1;
+#endif
+            while (count < std::min(10, max_sweeps)) {
+#if DMFE_WITH_CUDA
+                if (config.gpu) {
+                    sparsifyNscaleGPU(config.delta_max);
                 } else {
 #endif
                     sparsifyNscale(config.delta_max);
 #if DMFE_WITH_CUDA
                 }
+                size_t new_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+#else
+                size_t new_size = sim->h_t1grid.size();
 #endif
+                if (new_size >= prev_size) break;
+                prev_size = new_size;
+                 count++;
             }
 
 #if DMFE_WITH_CUDA
@@ -323,11 +355,16 @@ int runSimulation() {
                 // Use the same directory as correlation.txt for consistency
                 std::string filename = paramDir + "/data.h5";
                 
-                // Save state before sparsifying (overwriting the same file)
-                saveSimulationState(filename, config.delta, config.delta_t); // Return value ignored for intermediate saves
-                // Notify save (avoid clobbering status line)
-                dmfe::console::end_status_line_if_needed(continuous_status);
-                std::cout << dmfe::console::SAVE() << "Snapshot saved to " << filename << std::endl;
+                // Save state before sparsifying (overwriting the same file),
+                // but only if we actually progressed beyond the loaded t1grid.
+                if (!config.loaded || has_progress_beyond_loaded()) {
+                    saveSimulationState(filename, config.delta, config.delta_t); // Telemetry will print start/finish
+                } else if (!skip_save_notice_emitted) {
+                    std::cout << dmfe::console::INFO()
+                              << "Skipping save: no progress beyond loaded state (t1grid_last="
+                              << std::setprecision(14) << baseline_t1_last << ")" << std::endl;
+                    skip_save_notice_emitted = true;
+                }
             }
         }
 
@@ -461,18 +498,34 @@ int runSimulation() {
                 }
 #endif
 
-                // Save telemetry
+                // Save telemetry -> fourth line shows progress, stage, and last exported t
                 SaveTelemetry st = getSaveTelemetry();
                 std::ostringstream save_line;
                 if (!config.save_output) {
                     save_line << "(save disabled)";
                 } else if (st.in_progress) {
                     double since = std::chrono::duration<double>(now - st.last_start_time).count();
-                    save_line << "save in-progress -> " << st.target_file << " (" << format_hms(since) << ")";
+                    // Build a small progress bar
+                    std::string pbar = make_progress_bar(st.progress, 20);
+                    // Show stage and last t exported
+                    save_line.setf(std::ios::fixed);
+                    save_line << "saving " << (st.stage.empty()?"...":st.stage)
+                              << " " << pbar
+                              << " | t_saved " << std::setprecision(6) << st.last_t_exported
+                              << " | elapsed " << format_hms(since);
+                    if (config.debug && !st.target_file.empty()) {
+                        save_line << " -> " << st.target_file;
+                    }
                 } else if (!st.last_completed_file.empty()) {
                     double ago = (st.last_end_time.time_since_epoch().count() > 0)
                         ? std::chrono::duration<double>(now - st.last_end_time).count() : 0.0;
-                    save_line << "last save: " << st.last_completed_file << " (" << (ago>0?format_hms(ago):"now") << ")";
+                    std::string dir = st.last_completed_file;
+                    auto pos = dir.find_last_of('/');
+                    if (pos != std::string::npos) dir = dir.substr(0, pos);
+                    save_line << "last save: " << dir << " (" << (ago>0?format_hms(ago):"now") << ")";
+                    if (config.debug) {
+                        save_line << " | file " << st.last_completed_file;
+                    }
                 } else {
                     save_line << "save: none yet";
                 }
@@ -495,6 +548,7 @@ int runSimulation() {
 
                 // Ensure scroll region is configured and draw the 4-line TUI pinned to bottom
                 int rows = ensure_scroll_region();
+                int cols = query_terminal_cols();
                 if (rows > 6) {
                     int base = rows - 3; // first TUI line row
                     // Save current cursor, draw TUI using absolute positions, then restore cursor to bottom of scroll region
@@ -505,8 +559,17 @@ int runSimulation() {
                     std::cout << "\033[" << (base + 1) << ";1H" << dmfe::console::STAT() << line2.str() << "\033[K";
                     // Line 3
                     std::cout << "\033[" << (base + 2) << ";1H" << dmfe::console::STAT() << line3.str() << "\033[K";
-                    // Line 4
-                    std::cout << "\033[" << (base + 3) << ";1H" << dmfe::console::STAT() << line4.str() << "\033[K";
+                    // Line 4 (save status): crop to visible width so the beginning remains visible on narrow terminals
+                    {
+                        std::string save_text = line4.str();
+                        // Visible prefix like "[STATUS] " is 9 characters when colors are disabled; with colors it's wrapped but
+                        // we print the prefix separately so only text length matters here for cropping.
+                        int max_text_width = std::max(0, cols - 9); // keep room for the prefix
+                        if (max_text_width > 0 && static_cast<int>(save_text.size()) > max_text_width) {
+                            save_text.erase(static_cast<size_t>(max_text_width));
+                        }
+                        std::cout << "\033[" << (base + 3) << ";1H" << dmfe::console::STAT() << save_text << "\033[K";
+                    }
                     // Restore cursor and move it to bottom of scroll region (rows-4, col 1) for logs
                     std::cout << "\0338\033[u"; // restore cursor
                     std::cout << "\033[" << (rows - 4) << ";1H" << std::flush;
@@ -548,8 +611,8 @@ int runSimulation() {
             }
         }
 
-        // record QK(t,0) to file
-        if (config.save_output) {
+    // record QK(t,0) to file (only if progressed beyond loaded baseline)
+    if (config.save_output && (!config.loaded || has_progress_beyond_loaded())) {
 #if DMFE_WITH_CUDA
             if (config.gpu) {
                 double energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0); 
@@ -570,19 +633,30 @@ int runSimulation() {
     if (config.save_output) {
         // Use the established paramDir for consistency with correlation.txt
         std::string filename = paramDir + "/data.h5";
-        SimulationDataSnapshot snapshot = saveSimulationState(filename, config.delta, config.delta_t);
-        final_snapshot = new SimulationDataSnapshot(snapshot); // Store for final output
-        dmfe::console::end_status_line_if_needed(continuous_status);
-        std::cout << dmfe::console::SAVE() << "Final snapshot saved to " << filename << std::endl;
+        if (!config.loaded || has_progress_beyond_loaded()) {
+            SimulationDataSnapshot snapshot = saveSimulationState(filename, config.delta, config.delta_t);
+            final_snapshot = new SimulationDataSnapshot(snapshot); // Store for final output
+        } else if (!skip_save_notice_emitted) {
+            std::cout << dmfe::console::INFO()
+                      << "Skipping final save: no progress beyond loaded state (t1grid_last="
+                      << std::setprecision(14) << baseline_t1_last << ")" << std::endl;
+            skip_save_notice_emitted = true;
+        }
+    // Final save requested; telemetry and I/O steps will report progress
     }
 
     if (config.save_output) {
-        saveCompressedData(paramDir);
-        dmfe::console::end_status_line_if_needed(continuous_status);
-        std::cout << dmfe::console::SAVE() << "Compressed outputs written under " << paramDir << std::endl;
+        if (!config.loaded || has_progress_beyond_loaded()) {
+            saveCompressedData(paramDir);
+            dmfe::console::end_status_line_if_needed(continuous_status);
+            if (config.debug) {
+                std::cout << dmfe::console::SAVE() << "Compressed outputs written under " << paramDir << std::endl;
+            }
+        } else if (config.debug) {
+            dmfe::console::end_status_line_if_needed(continuous_status);
+            std::cout << dmfe::console::INFO() << "Compressed outputs skipped: no progress beyond loaded state." << std::endl;
+        }
     }
-
-    // Wait for any async saves to complete before terminating (only if async mode is enabled)
     if (config.async_export) {
         waitForAsyncSavesToComplete();
     }

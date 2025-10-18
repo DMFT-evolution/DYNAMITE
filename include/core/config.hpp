@@ -28,8 +28,10 @@ struct SimulationConfig {
     int ord = 0;
     bool gpu = true;
     bool use_serk2 = true;
-    int sparsify_sweeps = 1;
-    bool aggressive_sparsify = true;
+    // Number of sparsification sweeps per maintenance pass.
+    // -1 means "auto": CPU=1; GPU=1 or 2 depending on current GPU memory usage (>50% -> 2).
+    // 0 disables sparsification.
+    int sparsify_sweeps = -1;
     bool async_export = true;  // Enable asynchronous data export by default
     std::vector<std::string> command_line_args;  // Store original command-line arguments
     bool loaded = false;

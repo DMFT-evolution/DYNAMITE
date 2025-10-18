@@ -30,6 +30,12 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <unordered_map>
+
+// Defensive: if some header defined a macro named 'map', neutralize it to avoid surprises
+#ifdef map
+#undef map
+#endif
 
 #include "core/console.hpp"
 
@@ -55,6 +61,32 @@ extern std::chrono::high_resolution_clock::time_point program_start_time;
 extern std::mutex saveMutex;
 extern bool saveInProgress;
 extern std::condition_variable saveCondition;
+
+// Local helper: read grid generation params from Grid_data/<len>/grid_params.txt into a simple dictionary
+static bool readGridParamsForLen(std::size_t len, std::unordered_map<std::string, std::string>& out)
+{
+    out.clear();
+    std::ostringstream p;
+    p << "Grid_data/" << len << "/grid_params.txt";
+    std::ifstream ifs(p.str());
+    if (!ifs) return false;
+    std::string line;
+    auto trim = [](const std::string& s) {
+        auto a = s.find_first_not_of(" \t\r\n");
+        if (a == std::string::npos) return std::string();
+        auto b = s.find_last_not_of(" \t\r\n");
+        return s.substr(a, b - a + 1);
+    };
+    while (std::getline(ifs, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        std::string key = trim(line.substr(0, eq));
+        std::string val = trim(line.substr(eq + 1));
+    if (!key.empty()) out[key] = val;
+    }
+    return !out.empty();
+}
 
 // Forward declarations
 void setupOutputDirectory()
@@ -86,19 +118,28 @@ void setupOutputDirectory()
         }
     }
 
-    std::cout << dmfe::console::INFO() << "Executable (canonical): " << (exeCanon.empty() ? std::string("<unknown>") : exeCanon) << std::endl;
-    std::cout << dmfe::console::INFO() << "HOME (canonical): " << (homeCanon.empty() ? std::string("<unknown>") : homeCanon) << std::endl;
-    std::cout << dmfe::console::INFO() << "Selected results root: " << config.resultsDir << std::endl;
+    if (config.debug) {
+        std::cout << dmfe::console::INFO() << "Executable (canonical): " << (exeCanon.empty() ? std::string("<unknown>") : exeCanon) << std::endl;
+        std::cout << dmfe::console::INFO() << "HOME (canonical): " << (homeCanon.empty() ? std::string("<unknown>") : homeCanon) << std::endl;
+        std::cout << dmfe::console::INFO() << "Selected results root: " << config.resultsDir << std::endl;
+    } else {
+        // Keep non-debug output minimal
+        std::cout << dmfe::console::INFO() << "Output root: " << config.resultsDir << std::endl;
+    }
     
-    // Check if directory already exists
+    // Check if root directory already exists
     struct stat st = {0};
     if (stat(config.resultsDir.c_str(), &st) == 0) {
         // Directory exists
         if (S_ISDIR(st.st_mode)) {
-            std::cout << dmfe::console::INFO() << "Directory already exists: " << config.resultsDir << std::endl;
+            if (config.debug) {
+                std::cout << dmfe::console::INFO() << "Root directory already exists: " << config.resultsDir << std::endl;
+            }
             // Check if it's writable
             if (config.save_output && access(config.resultsDir.c_str(), W_OK) == 0) {
-                std::cout << dmfe::console::INFO() << "Directory is writable." << std::endl;
+                if (config.debug) {
+                    std::cout << dmfe::console::INFO() << "Directory is writable." << std::endl;
+                }
                 return; // Directory exists and is writable, no need to create it
             }
         }
@@ -133,7 +174,9 @@ void setupOutputDirectory()
                           << ": " << strerror(errno) << std::endl;
                 // Keep configured resultsDir; do not silently change output location
             } else {
-                std::cout << dmfe::console::DONE() << "Created output directory: " << config.resultsDir << std::endl;
+                if (config.debug) {
+                    std::cout << dmfe::console::DONE() << "Created output directory: " << config.resultsDir << std::endl;
+                }
             }
         }
     }
@@ -166,6 +209,20 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     }
 #endif
     
+    // Progress mapping for params write: [0.50 .. 0.65]
+    const double p_start_params = 0.50;
+    const double p_end_params   = 0.65;
+    const double p_span_params  = (p_end_params - p_start_params);
+    const double last_t1_params = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    auto update_params_prog = [&](int step, int total_steps){
+        if (total_steps <= 0) return;
+        double frac = p_start_params + p_span_params * std::min(std::max(0, step), total_steps) / (double)total_steps;
+        _setSaveProgress(frac, last_t1_params, "params");
+    };
+    int params_steps_total = 8; // rough sections below
+    int params_step = 0;
+    update_params_prog(params_step, params_steps_total);
+
     params << std::setprecision(16);
     params << "# DMFE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
@@ -185,6 +242,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "compiler_version = " << g_version_info.compiler_version << std::endl;
     params << "cuda_version = " << g_version_info.cuda_version << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
 
     // Command Line Arguments
     params << "# Command Line Arguments" << std::endl;
@@ -198,6 +256,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
         params << "command_line = (none stored)" << std::endl;
     }
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
 
     // System and Performance Information
     params << "# System Information" << std::endl;
@@ -206,6 +265,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "config.gpu device = " << getGPUInfo() << std::endl;
     params << "execution mode = " << (config.gpu ? "GPU" : "CPU") << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
     
     params << "# Performance Metrics" << std::endl;
     double runtime_seconds = getRuntimeSeconds();
@@ -220,6 +280,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "loops per second = " << std::fixed << std::setprecision(2) << (runtime_seconds > 0 ? config.loop / runtime_seconds : 0.0) << std::endl;
     params << std::setprecision(16) << std::defaultfloat;  // Reset again
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
     
     params << "# Physical Parameters" << std::endl;
     params << "p = " << config.p << std::endl;
@@ -229,6 +290,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "T0 = " << config.T0 << std::endl;
     params << "Gamma = " << config.Gamma << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
     
     params << "# Numerical Parameters" << std::endl;
     params << "len = " << config.len << std::endl;
@@ -236,7 +298,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "delta_t_min = " << config.delta_t_min << std::endl;
     params << "delta_max = " << config.delta_max << std::endl;
     params << "use_serk2 = " << (config.use_serk2 ? "true" : "false") << std::endl;
-    params << "aggressive_sparsify = " << (config.aggressive_sparsify ? "true" : "false") << std::endl;
+    params << "sparsify_sweeps = " << config.sparsify_sweeps << std::endl;
     params << "maxLoop = " << config.maxLoop << std::endl;
     params << "rmax = [";
     for (size_t i = 0; i < config.rmax.size(); ++i) {
@@ -245,6 +307,33 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     }
     params << "]" << std::endl;
     params << std::endl;
+
+    // Grid Generation Parameters (provenance for Grid_data used)
+    {
+        std::unordered_map<std::string, std::string> gp;
+        if (readGridParamsForLen(config.len, gp)) {
+            params << "# Grid Generation Parameters" << std::endl;
+            // Mirror keys from grid_params.txt with grid_ prefix
+            auto writeIfRaw = [&](const char* k, const char* outKey){ auto it = gp.find(k); if (it != gp.end()) params << outKey << " = " << it->second << std::endl; };
+            auto writeIfDouble = [&](const char* k, const char* outKey){ auto it = gp.find(k); if (it != gp.end()) { try { double v = std::stod(it->second); params << outKey << " = " << std::setprecision(16) << std::defaultfloat << v << std::endl; } catch(...) { params << outKey << " = " << it->second << std::endl; } } };
+            writeIfRaw("subdir", "grid_subdir");
+            writeIfRaw("len", "grid_len");
+            writeIfDouble("Tmax", "grid_Tmax");
+            writeIfRaw("spline_order", "grid_spline_order");
+            writeIfRaw("interp_method", "grid_interp_method");
+            writeIfRaw("interp_order", "grid_interp_order");
+            writeIfRaw("fh_stencil", "grid_fh_stencil");
+            writeIfDouble("alpha", "grid_alpha");
+            writeIfDouble("delta", "grid_delta");
+            params << std::endl;
+            update_params_prog(++params_step, params_steps_total);
+        } else {
+            params << "# Grid Generation Parameters" << std::endl;
+            params << "# grid_params.txt not found for len=" << config.len << std::endl;
+            params << std::endl;
+            update_params_prog(++params_step, params_steps_total);
+        }
+    }
     
     params << "# Current Simulation State" << std::endl;
     params << "current_time = " << sim->h_t1grid.back() << std::endl;
@@ -259,9 +348,13 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "current_energy = " << energy << std::endl;
     
     params.close();
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << std::endl;
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+        invalidateStatusAnchor();
+        std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << std::endl;
+    }
+    // Ensure we end params phase at 0.65
+    update_params_prog(params_steps_total, params_steps_total);
 }
 
 // Async version of saveParametersToFile that works with snapshot data
@@ -273,11 +366,26 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     std::cerr << dmfe::console::ERR() << "Could not open parameter file " << filename << std::endl;
         return;
     }
+
+    // Progress mapping for params write (async): [0.50 .. 0.65]
+    const double p_start_params = 0.50;
+    const double p_end_params   = 0.65;
+    const double p_span_params  = (p_end_params - p_start_params);
+    const double last_t1_params = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
+    auto update_params_prog = [&](int step, int total_steps){
+        if (total_steps <= 0) return;
+        double frac = p_start_params + p_span_params * std::min(std::max(0, step), total_steps) / (double)total_steps;
+        _setSaveProgress(frac, last_t1_params, "params");
+    };
+    int params_steps_total = 8; // mirror rough sections in sync writer
+    int params_step = 0;
+    update_params_prog(params_step, params_steps_total);
     
     params << std::setprecision(16);
     params << "# DMFE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
 
     // VERSION INFORMATION - Add this section first
     params << "# Version Information" << std::endl;
@@ -293,6 +401,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "compiler_version = " << snapshot.compiler_version << std::endl;
     params << "cuda_version = " << snapshot.cuda_version << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
 
     // Command Line Arguments
     params << "# Command Line Arguments" << std::endl;
@@ -306,6 +415,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
         params << "command_line = (none stored)" << std::endl;
     }
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
 
     // System and Performance Information
     params << "# System Information" << std::endl;
@@ -314,6 +424,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "config.gpu device = " << getGPUInfo() << std::endl;
     params << "execution mode = " << (snapshot.config_snapshot.gpu ? "GPU" : "CPU") << std::endl;
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
     
     params << "# Performance Metrics" << std::endl;
     auto now = std::chrono::system_clock::now();
@@ -330,6 +441,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "loops per second = " << std::fixed << std::setprecision(2) << (runtime_seconds > 0 ? snapshot.current_loop / runtime_seconds : 0.0) << std::endl;
     params << std::setprecision(16) << std::defaultfloat;  // Reset again
     params << std::endl;
+    update_params_prog(++params_step, params_steps_total);
     
     params << "# Physical Parameters" << std::endl;
     params << "p = " << snapshot.config_snapshot.p << std::endl;
@@ -345,7 +457,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "delta_t_min = " << snapshot.config_snapshot.delta_t_min << std::endl;
     params << "delta_max = " << snapshot.config_snapshot.delta_max << std::endl;
     params << "use_serk2 = " << (snapshot.config_snapshot.use_serk2 ? "true" : "false") << std::endl;
-    params << "aggressive_sparsify = " << (snapshot.config_snapshot.aggressive_sparsify ? "true" : "false") << std::endl;
+    params << "sparsify_sweeps = " << snapshot.config_snapshot.sparsify_sweeps << std::endl;
     params << "maxLoop = " << snapshot.config_snapshot.maxLoop << std::endl;
     params << "rmax = [";
     for (size_t i = 0; i < snapshot.config_snapshot.rmax.size(); ++i) {
@@ -354,6 +466,32 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     }
     params << "]" << std::endl;
     params << std::endl;
+
+    // Grid Generation Parameters (async snapshot)
+    {
+        std::unordered_map<std::string, std::string> gp;
+        if (readGridParamsForLen(snapshot.current_len, gp)) {
+            params << "# Grid Generation Parameters" << std::endl;
+            auto writeIfRaw = [&](const char* k, const char* outKey){ auto it = gp.find(k); if (it != gp.end()) params << outKey << " = " << it->second << std::endl; };
+            auto writeIfDouble = [&](const char* k, const char* outKey){ auto it = gp.find(k); if (it != gp.end()) { try { double v = std::stod(it->second); params << outKey << " = " << std::setprecision(16) << std::defaultfloat << v << std::endl; } catch(...) { params << outKey << " = " << it->second << std::endl; } } };
+            writeIfRaw("subdir", "grid_subdir");
+            writeIfRaw("len", "grid_len");
+            writeIfDouble("Tmax", "grid_Tmax");
+            writeIfRaw("spline_order", "grid_spline_order");
+            writeIfRaw("interp_method", "grid_interp_method");
+            writeIfRaw("interp_order", "grid_interp_order");
+            writeIfRaw("fh_stencil", "grid_fh_stencil");
+            writeIfDouble("alpha", "grid_alpha");
+            writeIfDouble("delta", "grid_delta");
+            params << std::endl;
+            update_params_prog(++params_step, params_steps_total);
+        } else {
+            params << "# Grid Generation Parameters" << std::endl;
+            params << "# grid_params.txt not found for len=" << snapshot.current_len << std::endl;
+            params << std::endl;
+            update_params_prog(++params_step, params_steps_total);
+        }
+    }
     
     params << "# Current Simulation State" << std::endl;
     params << "current_time = " << snapshot.t_current << std::endl;
@@ -369,9 +507,13 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "current_energy = " << snapshot.energy << std::endl;
     
     params.close();
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << " (async)" << std::endl;
+    // Ensure we end params phase at 0.65
+    update_params_prog(params_steps_total, params_steps_total);
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+        invalidateStatusAnchor();
+        std::cout << dmfe::console::SAVE() << "Saved parameters to " << filename << " (async)" << std::endl;
+    }
 }
 
 void saveSimulationStateBinary(const std::string& filename, double delta, double delta_t)
@@ -404,6 +546,27 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
         return;
     }
     
+    // Progress mapping for main file write: [0.10 .. 0.50]
+    const double p_start = 0.10;
+    const double p_end   = 0.50;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+
+    auto update_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "binary");
+    };
+
+    // Total elements written for progress accounting (header/params ignored)
+    size_t total_elems = sim->h_t1grid.size()
+                       + sim->h_QKv.size() + sim->h_QRv.size()
+                       + sim->h_dQKv.size() + sim->h_dQRv.size()
+                       + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t done_elems = 0;
+    update_prog(done_elems, total_elems);
+
     // Write header with metadata
     int header_version = 1;
     file.write(reinterpret_cast<char*>(&header_version), sizeof(int));
@@ -427,16 +590,38 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     
     // Write time grid
     file.write(reinterpret_cast<const char*>(sim->h_t1grid.data()), sim->h_t1grid.size() * sizeof(double));
+    done_elems += sim->h_t1grid.size();
+    update_prog(done_elems, total_elems);
     
     // Write vectors
     file.write(reinterpret_cast<const char*>(sim->h_QKv.data()), sim->h_QKv.size() * sizeof(double));
+    done_elems += sim->h_QKv.size();
+    update_prog(done_elems, total_elems);
     file.write(reinterpret_cast<const char*>(sim->h_QRv.data()), sim->h_QRv.size() * sizeof(double));
+    done_elems += sim->h_QRv.size();
+    update_prog(done_elems, total_elems);
     file.write(reinterpret_cast<const char*>(sim->h_dQKv.data()), sim->h_dQKv.size() * sizeof(double));
+    done_elems += sim->h_dQKv.size();
+    update_prog(done_elems, total_elems);
     file.write(reinterpret_cast<const char*>(sim->h_dQRv.data()), sim->h_dQRv.size() * sizeof(double));
+    done_elems += sim->h_dQRv.size();
+    update_prog(done_elems, total_elems);
     file.write(reinterpret_cast<const char*>(sim->h_rvec.data()), sim->h_rvec.size() * sizeof(double));
+    done_elems += sim->h_rvec.size();
+    update_prog(done_elems, total_elems);
     file.write(reinterpret_cast<const char*>(sim->h_drvec.data()), sim->h_drvec.size() * sizeof(double));
+    done_elems += sim->h_drvec.size();
+    update_prog(done_elems, total_elems);
+    // Ensure data hits disk before marking 50%
+    file.flush();
+    // Ensure we end the main file section at p_end after flush
+    update_prog(total_elems, total_elems);
     
-    std::cout << dmfe::console::SAVE() << "Saved binary data to " << filename << std::endl;
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+        invalidateStatusAnchor();
+        std::cout << dmfe::console::SAVE() << "Saved binary data to " << filename << std::endl;
+    }
     
     // Also write parameters to a separate text file
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -487,14 +672,37 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
     };
 
-    // Datasets (fail fast if any write fails)
+    // Progress mapping for main file write: [0.10 .. 0.50]
+    const double p_start = 0.10;
+    const double p_end   = 0.50;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    auto update_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "hdf5");
+    };
+    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
+                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t done_elems = 0;
+    update_prog(done_elems, total_elems);
+
+    // Datasets (fail fast if any write fails); update progress after each
     if (!h5rt::write_dataset_1d_double(file, "QKv", sim->h_QKv.data(), sim->h_QKv.size())) { fail_and_fallback("QKv"); return; }
+    done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "QRv", sim->h_QRv.data(), sim->h_QRv.size())) { fail_and_fallback("QRv"); return; }
+    done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->h_dQKv.data(), sim->h_dQKv.size())) { fail_and_fallback("dQKv"); return; }
+    done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->h_dQRv.data(), sim->h_dQRv.size())) { fail_and_fallback("dQRv"); return; }
+    done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->h_t1grid.data(), sim->h_t1grid.size())) { fail_and_fallback("t1grid"); return; }
+    done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "rvec", sim->h_rvec.data(), sim->h_rvec.size())) { fail_and_fallback("rvec"); return; }
+    done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "drvec", sim->h_drvec.data(), sim->h_drvec.size())) { fail_and_fallback("drvec"); return; }
+    done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
 
     // Attributes
     double t_current = sim->h_t1grid.back();
@@ -512,11 +720,17 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (!h5rt::write_attr_double(file, "delta_t_min", config.delta_t_min)) { fail_and_fallback("attr delta_t_min"); return; }
     if (!h5rt::write_attr_double(file, "delta_max", config.delta_max)) { fail_and_fallback("attr delta_max"); return; }
     if (!h5rt::write_attr_int(file, "use_serk2", config.use_serk2 ? 1 : 0)) { fail_and_fallback("attr use_serk2"); return; }
-    if (!h5rt::write_attr_int(file, "aggressive_sparsify", config.aggressive_sparsify ? 1 : 0)) { fail_and_fallback("attr aggressive_sparsify"); return; }
+    // aggressive_sparsify attribute removed; not written anymore
     if (!h5rt::write_attr_double(file, "energy", energy)) { fail_and_fallback("attr energy"); return; }
 
     h5rt::close_file(file);
-    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << std::endl;
+    // Ensure we end the main file section at p_end before moving on to params
+    update_prog(total_elems, total_elems);
+    if (config.debug) {
+        dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+        invalidateStatusAnchor();
+        std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << std::endl;
+    }
     saveParametersToFile(dirPath, delta, delta_t);
 #if DMFE_WITH_CUDA
     saveHistory(filename, delta, delta_t, *sim, config.len, config.T0, config.gpu);
@@ -549,10 +763,31 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     std::string binFilename = dirPath + "/data.bin";
     if (fileExists(binFilename)) {
         std::remove(binFilename.c_str());
-    std::cout << dmfe::console::INFO() << "Removed existing binary file: " << binFilename << std::endl;
+        if (config.debug) {
+            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
+            invalidateStatusAnchor();
+            std::cout << dmfe::console::INFO() << "Removed existing binary file: " << binFilename << std::endl;
+        }
     }
     
-    // Create HDF5 file
+    // Progress mapping for main file write: [0.10 .. 0.50]
+    const double p_start = 0.10;
+    const double p_end   = 0.50;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    auto update_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "hdf5");
+    };
+    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
+                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t done_elems = 0;
+    update_prog(done_elems, total_elems);
+
+    // Create HDF5 file in a local scope so it closes before we mark 50%
+    {
     H5::H5File file(filename, H5F_ACC_TRUNC);
     
     // Base compression settings
@@ -572,6 +807,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("QKv", H5::PredType::NATIVE_DOUBLE, qkv_space, plist)
             .write(sim->h_QKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write QRv dataset with appropriate chunking
@@ -586,6 +822,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("QRv", H5::PredType::NATIVE_DOUBLE, qrv_space, plist)
             .write(sim->h_QRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write dQKv dataset with appropriate chunking
@@ -600,6 +837,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("dQKv", H5::PredType::NATIVE_DOUBLE, dqkv_space, plist)
             .write(sim->h_dQKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write dQRv dataset with appropriate chunking
@@ -614,6 +852,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("dQRv", H5::PredType::NATIVE_DOUBLE, dqrv_space, plist)
             .write(sim->h_dQRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write t1grid dataset with appropriate chunking
@@ -628,6 +867,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("t1grid", H5::PredType::NATIVE_DOUBLE, t1_space, plist)
             .write(sim->h_t1grid.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
     }
     
     // Write rvec dataset with appropriate chunking
@@ -642,6 +882,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("rvec", H5::PredType::NATIVE_DOUBLE, r_space, plist)
             .write(sim->h_rvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
     }
     
     // Write drvec dataset with appropriate chunking
@@ -656,6 +897,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         
         file.createDataSet("drvec", H5::PredType::NATIVE_DOUBLE, dr_space, plist)
             .write(sim->h_drvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
     }
 
     // Add metadata as attributes
@@ -703,15 +945,19 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &config.delta_max);
     int use_serk2_int = config.use_serk2 ? 1 : 0;
     add_attr("use_serk2", H5::PredType::NATIVE_INT, &use_serk2_int);
-    int aggressive_sparsify_int = config.aggressive_sparsify ? 1 : 0;
-    add_attr("aggressive_sparsify", H5::PredType::NATIVE_INT, &aggressive_sparsify_int);
+    // aggressive_sparsify attribute removed; not written anymore
     add_attr("energy", H5::PredType::NATIVE_DOUBLE, &energy);
     
-    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
-              << " (time=" << t_current 
-              << ", vectors=" << sim->h_QKv.size() / config.len << "×" << config.len 
-              << ", energy=" << energy
-              << ")" << std::endl;
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
+                  << " (time=" << t_current 
+                  << ", vectors=" << sim->h_QKv.size() / config.len << "×" << config.len 
+                  << ", energy=" << energy
+                  << ")" << std::endl;
+    }
+    } // file closed here (destructor)
+    // Ensure we end the main file section at p_end only after file is closed
+    update_prog(total_elems, total_elems);
 
     // Save parameter text file directly
     saveParametersToFile(dirPath, delta, delta_t);
@@ -744,14 +990,37 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         throw std::runtime_error(std::string("HDF5 write failed: ") + why);
     };
 
-    // Datasets (fail fast if any write fails)
+    // Progress mapping for main file write: [0.10 .. 0.50]
+    const double p_start = 0.10;
+    const double p_end   = 0.50;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
+    auto update_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "hdf5");
+    };
+    size_t total_elems = snapshot.QKv.size() + snapshot.QRv.size() + snapshot.dQKv.size() + snapshot.dQRv.size()
+                       + snapshot.t1grid.size() + snapshot.rvec.size() + snapshot.drvec.size();
+    size_t done_elems = 0;
+    update_prog(done_elems, total_elems);
+
+    // Datasets (fail fast if any write fails); update progress after each
     if (!h5rt::write_dataset_1d_double(file, "QKv", snapshot.QKv.data(), snapshot.QKv.size())) { fail_and_fallback("QKv"); }
+    done_elems += snapshot.QKv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "QRv", snapshot.QRv.data(), snapshot.QRv.size())) { fail_and_fallback("QRv"); }
+    done_elems += snapshot.QRv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "dQKv", snapshot.dQKv.data(), snapshot.dQKv.size())) { fail_and_fallback("dQKv"); }
+    done_elems += snapshot.dQKv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "dQRv", snapshot.dQRv.data(), snapshot.dQRv.size())) { fail_and_fallback("dQRv"); }
+    done_elems += snapshot.dQRv.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "t1grid", snapshot.t1grid.data(), snapshot.t1grid.size())) { fail_and_fallback("t1grid"); }
+    done_elems += snapshot.t1grid.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "rvec", snapshot.rvec.data(), snapshot.rvec.size())) { fail_and_fallback("rvec"); }
+    done_elems += snapshot.rvec.size(); update_prog(done_elems, total_elems);
     if (!h5rt::write_dataset_1d_double(file, "drvec", snapshot.drvec.data(), snapshot.drvec.size())) { fail_and_fallback("drvec"); }
+    done_elems += snapshot.drvec.size(); update_prog(done_elems, total_elems);
 
     // Attributes
     if (!h5rt::write_attr_double(file, "time", snapshot.t_current)) { fail_and_fallback("attr time"); }
@@ -767,11 +1036,15 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     if (!h5rt::write_attr_double(file, "delta_t_min", snapshot.config_snapshot.delta_t_min)) { fail_and_fallback("attr delta_t_min"); }
     if (!h5rt::write_attr_double(file, "delta_max", snapshot.config_snapshot.delta_max)) { fail_and_fallback("attr delta_max"); }
     if (!h5rt::write_attr_int(file, "use_serk2", snapshot.config_snapshot.use_serk2 ? 1 : 0)) { fail_and_fallback("attr use_serk2"); }
-    if (!h5rt::write_attr_int(file, "aggressive_sparsify", snapshot.config_snapshot.aggressive_sparsify ? 1 : 0)) { fail_and_fallback("attr aggressive_sparsify"); }
+    // aggressive_sparsify attribute removed; not written anymore
     if (!h5rt::write_attr_double(file, "energy", snapshot.energy)) { fail_and_fallback("attr energy"); }
 
     h5rt::close_file(file);
-    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << " (async)" << std::endl;
+    update_prog(total_elems, total_elems);
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << " (async)" << std::endl;
+    }
+    // keep progress at end of main file section
     
     // For async, we need to reconstruct the SimulationData for saveHistory
     // This is a bit hacky, but necessary since saveHistory expects the global sim
@@ -791,7 +1064,24 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
 #endif
 
 #elif defined(USE_HDF5)
-    // Create HDF5 file
+    // Progress mapping for main file write: [0.10 .. 0.50]
+    const double p_start = 0.10;
+    const double p_end   = 0.50;
+    const double p_span  = (p_end - p_start);
+    const double last_t1 = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
+    auto update_prog = [&](size_t done, size_t total){
+        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
+        if (frac > p_end) frac = p_end;
+        if (frac < p_start) frac = p_start;
+        _setSaveProgress(frac, last_t1, "hdf5");
+    };
+    size_t total_elems = snapshot.QKv.size() + snapshot.QRv.size() + snapshot.dQKv.size() + snapshot.dQRv.size()
+                       + snapshot.t1grid.size() + snapshot.rvec.size() + snapshot.drvec.size();
+    size_t done_elems = 0;
+    update_prog(done_elems, total_elems);
+
+    // Create HDF5 file in a local scope so it closes before we mark 50%
+    {
     H5::H5File file(filename, H5F_ACC_TRUNC);
     
     // Base compression settings
@@ -808,6 +1098,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("QKv", H5::PredType::NATIVE_DOUBLE, qkv_space, plist)
             .write(snapshot.QKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.QKv.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -818,6 +1109,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("QRv", H5::PredType::NATIVE_DOUBLE, qrv_space, plist)
             .write(snapshot.QRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.QRv.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -828,6 +1120,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("dQKv", H5::PredType::NATIVE_DOUBLE, dqkv_space, plist)
             .write(snapshot.dQKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.dQKv.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -838,6 +1131,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("dQRv", H5::PredType::NATIVE_DOUBLE, dqrv_space, plist)
             .write(snapshot.dQRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.dQRv.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -848,6 +1142,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("t1grid", H5::PredType::NATIVE_DOUBLE, t1_space, plist)
             .write(snapshot.t1grid.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.t1grid.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -858,6 +1153,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("rvec", H5::PredType::NATIVE_DOUBLE, r_space, plist)
             .write(snapshot.rvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.rvec.size(); update_prog(done_elems, total_elems);
     }
     
     {
@@ -868,6 +1164,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         plist.setChunk(1, chunk_dims);
         file.createDataSet("drvec", H5::PredType::NATIVE_DOUBLE, dr_space, plist)
             .write(snapshot.drvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += snapshot.drvec.size(); update_prog(done_elems, total_elems);
     }
 
     // Add metadata as attributes
@@ -910,15 +1207,19 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &snapshot.config_snapshot.delta_max);
     int use_serk2_int = snapshot.config_snapshot.use_serk2 ? 1 : 0;
     add_attr("use_serk2", H5::PredType::NATIVE_INT, &use_serk2_int);
-    int aggressive_sparsify_int = snapshot.config_snapshot.aggressive_sparsify ? 1 : 0;
-    add_attr("aggressive_sparsify", H5::PredType::NATIVE_INT, &aggressive_sparsify_int);
+    // aggressive_sparsify attribute removed; not written anymore
     add_attr("energy", H5::PredType::NATIVE_DOUBLE, &snapshot.energy);
     
-    std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
-              << " (time=" << snapshot.t_current 
-              << ", vectors=" << snapshot.QKv.size() / snapshot.current_len << "×" << snapshot.current_len 
-              << ", energy=" << snapshot.energy
-              << ") (async)" << std::endl;
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
+                  << " (time=" << snapshot.t_current 
+                  << ", vectors=" << snapshot.QKv.size() / snapshot.current_len << "×" << snapshot.current_len 
+                  << ", energy=" << snapshot.energy
+                  << ") (async)" << std::endl;
+    }
+    } // file closed here (destructor)
+    // Ensure we end the main file section at p_end only after file is closed
+    update_prog(total_elems, total_elems);
 
     // For async, we need to reconstruct the SimulationData for saveHistory
     SimulationData temp_sim;
@@ -944,15 +1245,9 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
     
     // Wait for any ongoing save to complete
     {
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::INFO() << "Waiting for ongoing save to complete..." << std::endl << std::flush;
         std::unique_lock<std::mutex> lock(saveMutex);
         saveCondition.wait(lock, []{ return !saveInProgress; });
         saveInProgress = true;
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::INFO() << "Save lock acquired, proceeding with snapshot creation" << std::endl << std::flush;
     }
 
     // Mark save started for telemetry immediately after acquiring the lock
@@ -971,9 +1266,7 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
     if (config.async_export) {
         // For asynchronous saving, use the snapshot in background thread for I/O operations
     auto saveAsync = [filename, dirPath, delta, delta_t, snapshot]() {
-            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-            invalidateStatusAnchor();
-            std::cout << dmfe::console::INFO() << "Background save thread started for " << filename << std::endl << std::flush;
+            // Background save thread started (quiet)
             try {
 #if defined(H5_RUNTIME_OPTIONAL)
                 if (h5rt::available()) {
@@ -992,16 +1285,12 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
                 saveCompressedDataAsync(dirPath, snapshot);
 #endif
             } catch (const std::exception& e) {
-                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-                invalidateStatusAnchor();
                 std::cerr << dmfe::console::ERR() << "Error in background save: " << e.what() << std::endl << std::flush;
                 // Fallback to synchronous binary save
                 try {
                     saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
                     saveCompressedDataAsync(dirPath, snapshot);
                 } catch (...) {
-                    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-                    invalidateStatusAnchor();
                     std::cerr << dmfe::console::ERR() << "Fallback save also failed" << std::endl << std::flush;
                 }
             }
@@ -1010,9 +1299,7 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
             {
                 std::lock_guard<std::mutex> lock(saveMutex);
                 saveInProgress = false;
-                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-                invalidateStatusAnchor();
-                std::cout << dmfe::console::DONE() << "Background save completed for " << filename << ", saveInProgress set to false" << std::endl << std::flush;
+                // Save finished line will be printed by telemetry in _setSaveEnd
             }
             _setSaveEnd(filename);
             saveCondition.notify_one();
@@ -1022,14 +1309,10 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
         std::thread saveThread(saveAsync);
         saveThread.detach();
         
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::SAVE() << "Created snapshot and started background save to " << filename << std::endl << std::flush;
+    // Concise status: snapshot created and save started already printed by telemetry
     } else {
         // Synchronous saving mode
-    dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-    invalidateStatusAnchor();
-    std::cout << dmfe::console::INFO() << "Performing synchronous save to " << filename << std::endl << std::flush;
+    // Synchronous save (quiet here; Save started/finished printed by telemetry)
     try {
 #if defined(H5_RUNTIME_OPTIONAL)
             if (h5rt::available()) {
@@ -1048,16 +1331,12 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
             saveCompressedDataAsync(dirPath, snapshot);
 #endif
         } catch (const std::exception& e) {
-            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-            invalidateStatusAnchor();
             std::cerr << dmfe::console::ERR() << "Error in synchronous save: " << e.what() << std::endl << std::flush;
             // Fallback to synchronous binary save
             try {
                 saveSimulationStateBinary(dirPath + "/data.bin", delta, delta_t);
                 saveCompressedDataAsync(dirPath, snapshot);
             } catch (...) {
-                dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-                invalidateStatusAnchor();
                 std::cerr << dmfe::console::ERR() << "Fallback save also failed" << std::endl << std::flush;
             }
         }
@@ -1066,9 +1345,7 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
         {
             std::lock_guard<std::mutex> lock(saveMutex);
             saveInProgress = false;
-            dmfe::console::end_status_line_if_needed(dmfe::console::stdout_is_tty());
-            invalidateStatusAnchor();
-            std::cout << dmfe::console::DONE() << "Synchronous save completed for " << filename << ", saveInProgress set to false" << std::endl << std::flush;
+            // Save finished line will be printed by telemetry in _setSaveEnd
         }
     _setSaveEnd(filename);
         saveCondition.notify_one();
@@ -1094,6 +1371,25 @@ void saveCompressedData(const std::string& dirPath)
     }
 #endif
     
+    // Progress mapping for compressed outputs: [0.80 .. 0.90]
+    const double p_start_cmp = 0.80;
+    const double p_end_cmp   = 0.90;
+    const double p_span_cmp  = (p_end_cmp - p_start_cmp);
+    const double last_t1_cmp = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    auto update_cmp_prog = [&](size_t done, size_t total){
+        double frac = p_start_cmp + (total ? (p_span_cmp * (double)done / (double)total) : 0.0);
+        if (frac > p_end_cmp) frac = p_end_cmp;
+        if (frac < p_start_cmp) frac = p_start_cmp;
+        _setSaveProgress(frac, last_t1_cmp, "compressed");
+    };
+    // Total bytes approximation: headers + binary arrays + theta text
+    size_t total_bytes = sizeof(size_t)*4
+                       + sim->h_QKB1int.size()*sizeof(double)
+                       + sim->h_QRB1int.size()*sizeof(double)
+                       + sim->h_theta.size()*24; // approx per-line
+    size_t done_bytes = 0;
+    update_cmp_prog(done_bytes, total_bytes);
+
     // Save QKB1int to QK_compressed
     std::string qk_filename = dirPath + "/QK_compressed";
     std::ofstream qk_file(qk_filename, std::ios::binary);
@@ -1105,11 +1401,14 @@ void saveCompressedData(const std::string& dirPath)
     // Write header (dimensions information)
     size_t rows = config.len;
     size_t cols = config.len;
-    qk_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t));
-    qk_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t));
+    qk_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t)); done_bytes += sizeof(size_t);
+    qk_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t)); done_bytes += sizeof(size_t);
+    update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
     qk_file.write(reinterpret_cast<const char*>(sim->h_QKB1int.data()), sim->h_QKB1int.size() * sizeof(double));
+    done_bytes += sim->h_QKB1int.size() * sizeof(double);
+    update_cmp_prog(done_bytes, total_bytes);
     qk_file.close();
     
     // Save QRB1int to QR_compressed
@@ -1121,11 +1420,14 @@ void saveCompressedData(const std::string& dirPath)
     }
     
     // Write header (dimensions information)
-    qr_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t));
-    qr_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t));
+    qr_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t)); done_bytes += sizeof(size_t);
+    qr_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t)); done_bytes += sizeof(size_t);
+    update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
     qr_file.write(reinterpret_cast<const char*>(sim->h_QRB1int.data()), sim->h_QRB1int.size() * sizeof(double));
+    done_bytes += sim->h_QRB1int.size() * sizeof(double);
+    update_cmp_prog(done_bytes, total_bytes);
     qr_file.close();
     
     // Save (last t1) * theta to t1_compressed.txt
@@ -1140,15 +1442,40 @@ void saveCompressedData(const std::string& dirPath)
     t1_file << std::fixed << std::setprecision(16);
     for (size_t i = 0; i < sim->h_theta.size(); ++i) {
         t1_file << last_t1 * sim->h_theta[i] << "\n";
+        // rough per-line size update to show progress
+        done_bytes += 24;
+        if ((i & 0x3FF) == 0) update_cmp_prog(done_bytes, total_bytes); // throttle
     }
     t1_file.close();
     
-    std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << std::endl;
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << std::endl;
+    }
+    // Ensure we end compressed phase at 0.90
+    update_cmp_prog(total_bytes, total_bytes);
 }
 
 // Async version of saveCompressedData that works with snapshot data
 void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSnapshot& snapshot)
 {
+    // Progress mapping for compressed outputs: [0.80 .. 0.90]
+    const double p_start_cmp = 0.80;
+    const double p_end_cmp   = 0.90;
+    const double p_span_cmp  = (p_end_cmp - p_start_cmp);
+    const double last_t1_cmp = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
+    auto update_cmp_prog = [&](size_t done, size_t total){
+        double frac = p_start_cmp + (total ? (p_span_cmp * (double)done / (double)total) : 0.0);
+        if (frac > p_end_cmp) frac = p_end_cmp;
+        if (frac < p_start_cmp) frac = p_start_cmp;
+        _setSaveProgress(frac, last_t1_cmp, "compressed");
+    };
+    size_t total_bytes = sizeof(size_t)*4
+                       + snapshot.QKB1int.size()*sizeof(double)
+                       + snapshot.QRB1int.size()*sizeof(double)
+                       + snapshot.theta.size()*24;
+    size_t done_bytes = 0;
+    update_cmp_prog(done_bytes, total_bytes);
+
     // Save QKB1int to QK_compressed
     std::string qk_filename = dirPath + "/QK_compressed";
     std::ofstream qk_file(qk_filename, std::ios::binary);
@@ -1160,11 +1487,14 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     // Write header (dimensions information)
     size_t rows = snapshot.current_len;
     size_t cols = snapshot.current_len;
-    qk_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t));
-    qk_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t));
+    qk_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t)); done_bytes += sizeof(size_t);
+    qk_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t)); done_bytes += sizeof(size_t);
+    update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
     qk_file.write(reinterpret_cast<const char*>(snapshot.QKB1int.data()), snapshot.QKB1int.size() * sizeof(double));
+    done_bytes += snapshot.QKB1int.size() * sizeof(double);
+    update_cmp_prog(done_bytes, total_bytes);
     qk_file.close();
     
     // Save QRB1int to QR_compressed
@@ -1176,11 +1506,14 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     }
     
     // Write header (dimensions information)
-    qr_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t));
-    qr_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t));
+    qr_file.write(reinterpret_cast<const char*>(&rows), sizeof(size_t)); done_bytes += sizeof(size_t);
+    qr_file.write(reinterpret_cast<const char*>(&cols), sizeof(size_t)); done_bytes += sizeof(size_t);
+    update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
     qr_file.write(reinterpret_cast<const char*>(snapshot.QRB1int.data()), snapshot.QRB1int.size() * sizeof(double));
+    done_bytes += snapshot.QRB1int.size() * sizeof(double);
+    update_cmp_prog(done_bytes, total_bytes);
     qr_file.close();
     
     // Save (last t1) * theta to t1_compressed.txt
@@ -1195,8 +1528,13 @@ void saveCompressedDataAsync(const std::string& dirPath, const SimulationDataSna
     t1_file << std::fixed << std::setprecision(16);
     for (size_t i = 0; i < snapshot.theta.size(); ++i) {
         t1_file << last_t1 * snapshot.theta[i] << "\n";
+        done_bytes += 24;
+        if ((i & 0x3FF) == 0) update_cmp_prog(done_bytes, total_bytes);
     }
     t1_file.close();
     
-    std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << " (async)" << std::endl;
+    if (config.debug) {
+        std::cout << dmfe::console::SAVE() << "Saved compressed data to " << qk_filename << ", " << qr_filename << ", and " << t1_filename << " (async)" << std::endl;
+    }
+    update_cmp_prog(total_bytes, total_bytes);
 }

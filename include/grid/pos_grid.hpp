@@ -27,7 +27,8 @@ void generate_pos_grids(std::size_t len,
 						const std::vector<long double>& phi2,
 						std::vector<double>& posA1y,
 						std::vector<double>& posA2y,
-						std::vector<double>& posB2y);
+						std::vector<double>& posB2y,
+						double alpha = 0.0, double delta = 0.0);
 
 // Legacy wrapper: accepts double inputs and promotes to long double internally,
 // preserving on-disk double outputs for compatibility.
@@ -38,6 +39,7 @@ void generate_pos_grids(std::size_t len,
 						const std::vector<double>& phi2,
 						std::vector<double>& posA1y,
 						std::vector<double>& posA2y,
-						std::vector<double>& posB2y);
+						std::vector<double>& posB2y,
+						double alpha = 0.0, double delta = 0.0);
 
 // Writing is centralized in grid_io.hpp (write_all_grids)

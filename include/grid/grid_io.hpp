@@ -41,7 +41,9 @@ std::string write_grid_generation_params(std::size_t len,
                                          int interp_order,
                                          int fh_stencil,
                                          const std::string& subdir,
-                                         const std::string& cmdline);
+                                         const std::string& cmdline,
+                                         double alpha = 0.0,
+                                         double delta = 0.0);
 
 // Centralized grid readers (used by validation code)
 // Reads a whitespace-separated vector file into 'out'; returns true on success with non-empty data

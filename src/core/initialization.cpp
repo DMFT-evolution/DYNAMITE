@@ -186,14 +186,14 @@ void init()
     import(*sim, config.len, config.ord);
 
     // Generate filename based on parameters
-    std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.aggressive_sparsify, config.save_output);
+    std::string filename = getFilename(config.resultsDir, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.save_output);
     bool loaded = false;
     LoadedStateParams loaded_params;  // Declare the structure to hold loaded parameters
 
     // Try to load existing simulation data
     if (fileExists(filename) || fileExists(filename.substr(0, filename.find_last_of('.')) + ".bin")) {
     std::cout << dmfe::console::INFO() << "Found existing simulation file. Attempting to load..." << std::endl;
-        loaded = loadSimulationState(filename, *sim, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, config.aggressive_sparsify, loaded_params);
+    loaded = loadSimulationState(filename, *sim, config.p, config.p2, config.lambda, config.T0, config.Gamma, config.len, config.delta_t_min, config.delta_max, config.use_serk2, loaded_params);
         if (loaded) {
             config.loaded = true;
             std::string dirPath = filename.substr(0, filename.find_last_of('/'));
