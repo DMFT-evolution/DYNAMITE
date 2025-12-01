@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Convolution icon"/> Convolution
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Convolution icon"/> EOMs and Observables
 
 and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the arXiv paper's conventions; DYNAMITE implements those definitions directly.
 
