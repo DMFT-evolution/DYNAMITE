@@ -1,6 +1,6 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, arXiv:2504.06849)
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, arXiv:2504.06849)
 
-This section summarizes the numerical renormalization algorithm implemented in DMFE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
+This section summarizes the numerical renormalization algorithm implemented in DYNAMITE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
 
 ## Dynamical equations
 
@@ -21,7 +21,7 @@ For the spherical mixed p-spin model (representative), the functionals \(\mathca
 
 This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to sublinear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
 
-Important: DMFE uses exactly the non-equidistant, nested grid defined in the arXiv paper. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
+Important: DYNAMITE uses exactly the non-equidistant, nested grid defined in the arXiv paper. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
 
 ## Discrete scheme and data layout
 
@@ -48,20 +48,28 @@ Time stepping follows the adaptive RK54 default and automatically switches to SS
 
 ## Pseudocode
 
-```
-Initialize grids and data (C, R) at t = 0
-while t < t_max and steps < m_max:
-  dt <- propose_step(tolerance=e, min_step=d)
-  H <- interpolate_history(C, R, t, dt, structures=L)
-  dC, dR <- EOMs(H, params)
-  C_next, R_next <- step_active_integrator(C, R, dC, dR, dt)
-  update_diagonal_observables(C_next, R_next)
-  if sparsify_due(t):
-    C, R <- sparsify(C_next, R_next, criterion)
-  else:
-    C, R <- C_next, R_next
-  save_if_needed()
-  t <- t + dt
+```mermaid
+flowchart TD
+  start([Start: set initial C, R])
+  init[Initialize sparse grids<br/>precompute interpolation structures]
+  propose[Propose Δ<br/>local error control]
+  interp[Interpolate history<br/>with sparse maps]
+  eoms[Evaluate EOMs<br/>compute ∂ₜ C, ∂ₜ R]
+  step[Advance active integrator<br/>RK54 / SSPRK104 / SERK2]
+  diag[Update diagonal observables<br/>and cached outputs]
+  sparsify_check{Sparsify due?}
+  sparsify[Sparsify history layers<br/>renormalize grid]
+  persist[Persist diagnostics<br/>and optional checkpoints]
+  advance[t = t + Δt]
+  continue_check{Reached stop criteria?}
+  stop([Stop])
+
+  start --> init --> propose --> interp --> eoms --> step --> diag --> sparsify_check
+  sparsify_check -->|Yes| sparsify --> persist
+  sparsify_check -->|No| persist
+  persist --> advance --> continue_check
+  continue_check -->|No| propose
+  continue_check -->|Yes| stop
 ```
 
 ## Error control and accuracy

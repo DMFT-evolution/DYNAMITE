@@ -77,9 +77,13 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	sim.temp7.resize(len);
 	sim.temp8.resize(len);
 	sim.temp9.resize(len);
+	sim.temp10.resize(len);
+	sim.temp11.resize(len);
+	sim.temp12.resize(len);
 
 	sim.Stemp0.resize(len);
 	sim.Stemp1.resize(len);
+	sim.Stemp2.resize(len);
 
 	sim.error_result.resize(1, 0.0);
 
@@ -159,7 +163,8 @@ void clearAllDeviceVectors(SimulationData& sim) {
 	cl(sim.convR_1); cl(sim.convR_2); cl(sim.convR_3); cl(sim.convR_4);
 	cl(sim.temp0); cl(sim.temp1); cl(sim.temp2); cl(sim.temp3); cl(sim.temp4);
 	cl(sim.temp5); cl(sim.temp6); cl(sim.temp7); cl(sim.temp8); cl(sim.temp9);
-	cl(sim.Stemp0); cl(sim.Stemp1);
+	cl(sim.temp10); cl(sim.temp11); cl(sim.temp12);
+	cl(sim.Stemp0); cl(sim.Stemp1); cl(sim.Stemp2);
 	cl(sim.error_result);
 	std::cout << dmfe::console::INFO() << "Cleared device vectors." << std::endl;
 }

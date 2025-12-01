@@ -112,7 +112,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     update_params_prog(params_step, params_steps_total);
 
     params << std::setprecision(16);
-    params << "# DMFE Simulation Parameters" << std::endl;
+    params << "# DYNAMITE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
     params << std::endl;
 
@@ -185,6 +185,10 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     params << "delta_t_min = " << config.delta_t_min << std::endl;
     params << "delta_max = " << config.delta_max << std::endl;
     params << "use_serk2 = " << (config.use_serk2 ? "true" : "false") << std::endl;
+    // Interpolation mode for QR/dQR
+    params << "log_response_interp = " << (config.log_response_interp ? "true" : "false") << std::endl;
+    // Tail-fit stabilization toggle
+    params << "tail_fit_enabled = " << (config.tail_fit_enabled ? "true" : "false") << std::endl;
     params << "sparsify_sweeps = " << config.sparsify_sweeps << std::endl;
     params << "maxLoop = " << config.maxLoop << std::endl;
     params << "rmax = [";
@@ -267,7 +271,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     update_params_prog(params_step, params_steps_total);
 
     params << std::setprecision(16);
-    params << "# DMFE Simulation Parameters" << std::endl;
+    params << "# DYNAMITE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
     params << std::endl;
     update_params_prog(++params_step, params_steps_total);
@@ -341,6 +345,10 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "delta_t_min = " << snapshot.config_snapshot.delta_t_min << std::endl;
     params << "delta_max = " << snapshot.config_snapshot.delta_max << std::endl;
     params << "use_serk2 = " << (snapshot.config_snapshot.use_serk2 ? "true" : "false") << std::endl;
+    // Interpolation mode for QR/dQR
+    params << "log_response_interp = " << (snapshot.config_snapshot.log_response_interp ? "true" : "false") << std::endl;
+    // Tail-fit stabilization toggle
+    params << "tail_fit_enabled = " << (snapshot.config_snapshot.tail_fit_enabled ? "true" : "false") << std::endl;
     params << "sparsify_sweeps = " << snapshot.config_snapshot.sparsify_sweeps << std::endl;
     params << "maxLoop = " << snapshot.config_snapshot.maxLoop << std::endl;
     params << "rmax = [";

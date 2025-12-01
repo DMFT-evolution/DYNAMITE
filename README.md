@@ -1,8 +1,8 @@
-# DMFE
+# DYNAMITE
 
-[![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DMFE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
 
-DMFE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; arXiv:2504.06849), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
+DYNAMITE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; arXiv:2504.06849), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
 
 Key features:
 - GPU‑accelerated kernels with a CPU fallback
@@ -135,7 +135,7 @@ Licensed under the Apache License, Version 2.0. See the `LICENSE` file for detai
 
 ## Cite
 
-If you use DMFE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, arXiv:2504.06849.
+If you use DYNAMITE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, arXiv:2504.06849.
 
 ## Build options
 
@@ -205,13 +205,14 @@ cmake -S . -B build \
 	- `-p INT` primary parameter p
 	- `-q INT` secondary parameter p2
 	- `-l, --lambda FLOAT` coupling lambda
-	- `-T, --T0 FLOAT|inf` temperature scale (use `inf` for infinity)
-	- `-G, --Gamma FLOAT` Gamma
+	- `-T, --T0 FLOAT|inf` initial temperature (use `inf` for infinity)
+	- `-G, --Gamma FLOAT` final temperature
 	- `-L INT` grid length L (must match available data, e.g. 512/1024/2048)
 	- `-m INT` max number of loops
 	- `-t FLOAT` max simulation time
 	- `-d FLOAT` minimum time step
 	- `-e, --error FLOAT` max error per step
+	- `-R, --log-response-interp BOOL` interpolate QR/dQR in log space (default false; auto-fallback to linear if any QR<=0)
 	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
 	- `-s BOOL` save outputs (default true; pass `false` to disable)
 	- `-S, --serk2 BOOL` use SERK2 method (default true)
@@ -283,6 +284,7 @@ Files produced (depending on HDF5 availability and flags):
 	- Attributes: `time`, `iteration`, `len`, `delta`, `delta_t`, `T0`, `lambda`, `p`, `p2`, `energy`, plus build/version metadata
 - `data.bin` — binary fallback when HDF5 is not available
 - `params.txt` — human-readable parameters, runtime stats, environment, version info
+	- includes `log_response_interp = true|false` when present (legacy files may omit; treated as false)
 - `correlation.txt` — tab-separated time, energy, QK[0] samples during run
 - `energy.txt`, `rvec.txt`, `qk0.txt` — histories derived at save time
 - `QK_compressed`, `QR_compressed` — compact binary snapshots of selected arrays

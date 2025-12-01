@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Usage icon"/> Usage
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Usage icon"/> Usage
 
 Entry point: `./RG-Evo`. Show all options with `-h`.
 
@@ -6,8 +6,8 @@ Entry point: `./RG-Evo`. Show all options with `-h`.
 
 - `-p`, `-q` (integers): model orders (e.g., spherical mixed p-spin). Use `p>=2`; common: `p=3, q=4`.
 - `-l, --lambda` (float): coupling strength (dimensionless). Typical 0–1; study transitions by sweeping.
-- `-T, --T0` (float|inf): initial/thermal scale; use `inf` for zero-noise quenches.
-- `-G, --Gamma` (float): damping or mass-like scale where applicable.
+- `-T, --T0` (float|inf): initial temperature; use `inf` for zero-noise quenches.
+- `-G, --Gamma` (float): final temperature.
 
 Note: At present, the mixed spherical p-spin equations are hardcoded as in the paper; other models are not yet configurable. This will be relaxed in a future release.
 
@@ -23,6 +23,9 @@ Note: At present, the mixed spherical p-spin equations are hardcoded as in the p
 - `-A, --async-export` boolean: asynchronous I/O to avoid blocking the integrator (default true).
 - `-s` save outputs (default true) and `-o` output directory root.
 - `-D` debug logging; `-v` print build/version; `-I` allow resume across incompatible versions (use with care).
+
+Interpolation mode:
+- `-R, --log-response-interp` boolean: interpolate QR and dQR in log space when safe (default false). If enabled, the code interpolates f=log(QR) and g=dQR/QR and exponentiates back; it automatically falls back to linear when any stencil QR<=0. QK/dQK remain linear.
 
 Sparsification:
 - `-w, --sparsify-sweeps INT`: number of sparsify sweeps per maintenance pass.

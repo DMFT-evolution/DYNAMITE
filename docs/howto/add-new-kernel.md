@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/convolution.svg" alt="Kernel icon"/> How-to: Add a New Kernel
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Kernel icon"/> How-to: Add a New Kernel
 
 1) Start with a header in `include/` and CPU path `.cpp` in `src/`.
 2) Add a CUDA path `.cu` in `src/` guarded by `DMFE_WITH_CUDA`.

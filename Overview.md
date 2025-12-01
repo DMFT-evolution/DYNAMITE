@@ -1,4 +1,4 @@
-## DMFE Overview
+## DYNAMITE Overview
 
 High-performance CUDA/C++ implementation for DMFE simulations. The code builds a reusable core library and a single executable that drives the simulation.
 

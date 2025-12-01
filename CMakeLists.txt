@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.24)
 # Optional CUDA support with tri-state behavior (AUTO/ON/OFF)
 option(DMFE_WITH_CUDA "Enable CUDA support" ON)
 
+# Optional tail-fit debug output
+option(DMFE_TAIL_FIT_DEBUG "Enable tail-fit debug output" OFF)
+
 # Prefer clang++-14 as CUDA host compiler only if explicitly requested
 option(DMFE_PREFER_CLANG_HOST "Prefer clang++ as CUDA host compiler for nvcc" OFF)
 
@@ -24,18 +27,18 @@ if(DMFE_WITH_CUDA)
                 message(STATUS "Using ${CLANGPP_14} as CUDA host compiler")
             endif()
         endif()
-        project(DMFE LANGUAGES C CXX CUDA)
+        project(DYNAMITE LANGUAGES C CXX CUDA)
         set(DMFE_WITH_CUDA ON)
         # Now find the CUDA toolkit after CUDA language is enabled
         find_package(CUDAToolkit REQUIRED)
     else()
         message(WARNING "CUDA compiler not found; building CPU-only version")
         set(DMFE_WITH_CUDA OFF)
-        project(DMFE LANGUAGES C CXX)
+        project(DYNAMITE LANGUAGES C CXX)
     endif()
 else()
     message(STATUS "CUDA support disabled; building CPU-only version")
-    project(DMFE LANGUAGES C CXX)
+    project(DYNAMITE LANGUAGES C CXX)
 endif()
 
 find_package(OpenMP REQUIRED)
@@ -195,6 +198,7 @@ if(DMFE_WITH_CUDA)
         src/EOMs/runge_kutta.cu
         src/search/search_utils.cu
         src/sparsify/sparsify_utils.cu
+    src/simulation/tail_fit.cu
     )
 endif()
 
@@ -202,6 +206,7 @@ endif()
 set(CPU_SOURCES
     src/core/config.cpp
     src/core/initialization.cpp
+    src/core/program_start_time.cpp
     src/math/math_sigma.cpp
     src/math/lambert_w.cpp
     src/search/search_utils.cpp
@@ -221,6 +226,8 @@ set(CPU_SOURCES
     src/math/math_ops.cpp
     src/simulation/simulation_control.cpp
     src/simulation/simulation_runner.cpp
+    src/simulation/tail_fit.cpp
+    src/ui/simulation_text_ui.cpp
     src/version/version_info.cpp
     src/version/version_compat.cpp
     src/EOMs/time_steps.cpp
@@ -271,7 +278,14 @@ if(DMFE_WITH_CUDA)
     set_source_files_properties(
         src/simulation/simulation_control.cpp
         src/simulation/simulation_runner.cpp
+        # These C++ sources reference thrust::device_vector APIs (e.g., energyGPU)
+        # and must be compiled with the CUDA toolchain to ensure ABI/Name mangling
+        # matches the definitions in .cu files when using NVHPC toolchains.
+        src/io/io_save_params.cpp
+        src/io/io_output.cpp
         PROPERTIES LANGUAGE CUDA)
+    # Explicitly force the UI implementation as C++ (not CUDA) even when CUDA is enabled
+    set_source_files_properties(src/ui/simulation_text_ui.cpp PROPERTIES LANGUAGE CXX)
 endif()
 
 add_library(DFME-core ${GPU_SOURCES} ${CPU_SOURCES})
@@ -286,6 +300,12 @@ if(DMFE_WITH_CUDA)
     target_compile_definitions(DFME-core PUBLIC DMFE_WITH_CUDA=1)
 else()
     target_compile_definitions(DFME-core PUBLIC DMFE_WITH_CUDA=0)
+endif()
+
+if(DMFE_TAIL_FIT_DEBUG)
+    target_compile_definitions(DFME-core PUBLIC DMFE_TAIL_FIT_DEBUG=1)
+else()
+    target_compile_definitions(DFME-core PUBLIC DMFE_TAIL_FIT_DEBUG=0)
 endif()
 
 if(OpenMP_CXX_FOUND)

@@ -1,6 +1,6 @@
 <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
-	<img src="assets/logo-dmfe.svg" alt="DMFE logo" width="144" height="144"/>
-	<h1 style="margin:0;">DMFE: Dynamical Mean-Field Evolution Toolkit</h1>
+	<img src="assets/logo-dmfe.svg" alt="DYNAMITE logo" width="144" height="144"/>
+	<h1 style="margin:0;">DYNAMITE: Dynamical Mean-Field Evolution Toolkit</h1>
 </div>
 
 <p style="margin-top:0;color:#455a64;"><b>
@@ -18,7 +18,7 @@ $$
 
 The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to sublinear in simulated time while controlling accuracy relevant to aging observables.
 
-## What DMFE provides
+## What DYNAMITE provides
 
 - Non-stationary DMFT time evolution after quenches for mean-field glassy and related models.
 - Two-dimensional sparse interpolation for memory kernels on the causal triangle, with controlled error.
@@ -31,7 +31,7 @@ When you should use it
 - Your DMFT equations close in terms of C and R with memory integrals/convolutions over the past.
 - You need long-time, high-accuracy trajectories at feasible cost (sublinear scaling in simulated time).
 
-What DMFE assumes (scope)
+What DYNAMITE assumes (scope)
 - Causal, single-site effective dynamics admitting closed DMFT equations on the triangular domain t ≥ t'.
 - History terms expressed as integrals/convolutions evaluable on a 2D interpolation grid.
 - Model-specific closures supplied through an EOM module (examples provided). See concepts/eoms-and-observables.md.
@@ -81,7 +81,7 @@ What DMFE assumes (scope)
 - Recommended starting grids are provided in concepts/interpolation-grids.md; refine based on your observable tolerances.
 - CPU path is the reference; enable GPU when available for additional speedups after validating on your model.
 
-## Cite DMFE
+## Cite DYNAMITE
 
 If this toolkit supports your research, please cite:
 

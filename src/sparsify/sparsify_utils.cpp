@@ -3,6 +3,8 @@
 #include "core/config.hpp"
 #include <vector>
 #include <cmath>
+// Prefer C math overloads to avoid namespace issues
+using ::log;
 
 extern SimulationConfig config;
 extern SimulationData* sim;
@@ -30,9 +32,14 @@ void sparsifyNscale(double threshold) {
         }
 
         for (int j = 0; j < config.len; ++j) {
-            double df_term1 = sim->h_dQRv[(i - 1) * config.len + j];
-            double df_term2 = sim->h_dQRv[(i + 1) * config.len + j];
-            double f_term1 = sim->h_QRv[i * config.len + j] - sim->h_QRv[(i - 2) * config.len + j];
+            // QR/dQR contribution must be measured in linear domain even when interpolation uses log(QR)
+            const double QR_im2 = sim->h_QRv[(i - 2) * config.len + j];
+            const double QR_i   = sim->h_QRv[i * config.len + j];
+            const double dQR_im1 = sim->h_dQRv[(i - 1) * config.len + j];
+            const double dQR_ip1 = sim->h_dQRv[(i + 1) * config.len + j];
+            const double f_term1 = QR_i - QR_im2;
+            const double df_term1 = dQR_im1;
+            const double df_term2 = dQR_ip1;
             val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
         }
 

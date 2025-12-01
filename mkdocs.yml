@@ -1,7 +1,7 @@
-site_name: DMFE Docs
-site_url: https://dmft-evolution.github.io/DMFE/
-repo_url: https://github.com/DMFT-evolution/DMFE
-repo_name: DMFT-evolution/DMFE
+site_name: DYNAMITE Docs
+site_url: https://dmft-evolution.github.io/DYNAMITE/
+repo_url: https://github.com/DMFT-evolution/DYNAMITE
+repo_name: DMFT-evolution/DYNAMITE
 
 theme:
   name: material
@@ -34,7 +34,11 @@ markdown_extensions:
   - def_list
   - md_in_html
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.emoji:
@@ -56,6 +60,8 @@ plugins:
 extra_javascript:
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - assets/mermaid-init.js
 extra_css:
   - assets/overrides.css
 
@@ -87,6 +93,7 @@ nav:
     - Overview: reference/index.md
     - Cite: reference/cite.md
     - Bibliography: reference/bibliography.md
+    - API: reference/api.md
   - Developer:
     - Contributors: dev/contributors.md
     - Contributing: dev/contributing.md

@@ -1,6 +1,6 @@
 # Generate interpolation grids and metadata
 
-This how-to walks you through generating the θ/ϕ grids, integration weights, positional maps, and interpolation metadata used by DMFE.
+This how-to walks you through generating the θ/ϕ grids, integration weights, positional maps, and interpolation metadata used by DYNAMITE.
 
 ## TL;DR
 

@@ -1,6 +1,6 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
-DMFE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (arXiv:2504.06849). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
+DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (arXiv:2504.06849). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
 
 Why this matters: The algorithm’s sublinear scaling depends critically on this grid. Although not extremely sensitive to tiny details, using a highly non‑equidistant grid with nested blocks is essential; equidistant grids defeat the renormalization gains and dramatically increase cost.
 
@@ -69,7 +69,7 @@ For memory integrals (paper Eq. (3)), two contour families on the same grid are 
 
 These generate the “mixed” directions required by the convolution structure and define the 2D interpolation stencils used at runtime.
 
-DMFE uses the following notation in code and data:
+DYNAMITE uses the following notation in code and data:
 
 - $\theta \equiv \{\phi_k\}$ (stored in `theta.dat`).
 - $\varphi^{(1)} \equiv \{\rho_k^{(1)}(\alpha_j)\}$ (stored in `phi1.dat`).

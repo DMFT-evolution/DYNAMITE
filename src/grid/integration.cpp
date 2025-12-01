@@ -100,7 +100,7 @@ static void banded_lu(std::vector<long double>& A, int N, int p) {
 }
 
 // Solve A x = b using LU factors in A (unit-lower L and upper U embedded), band p.
-static void banded_lu_solve(const std::vector<long double>& A, int N, int p,
+[[maybe_unused]] static void banded_lu_solve(const std::vector<long double>& A, int N, int p,
                             const std::vector<long double>& b,
                             std::vector<long double>& x) {
     x = b;

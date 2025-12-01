@@ -37,6 +37,10 @@ struct SimulationConfig {
     bool loaded = false;
     std::string paramDir;
     bool allow_incompatible_versions = false;  // Allow loading data saved with incompatible versions
+    // Interpolate response QR and dQR in log space (safer when QR varies exponentially)
+    bool log_response_interp = false;
+    // Enable/disable QK tail-fit stabilization near theta->1
+    bool tail_fit_enabled = false;
 };
 
 // Command line argument parsing

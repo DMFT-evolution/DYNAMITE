@@ -1,14 +1,12 @@
 INHERIT: mkdocs.yml
 
-# Allow API content in dev preview by overriding top-level 'exclude'
-exclude: []
-
 nav:
   - Home: index.md
   - Install: install.md
   - Usage: usage.md
   - Tutorials:
     - First run: tutorials/first-run.md
+    - Generate grids: tutorials/generate-grids.md
     - CPU-only: tutorials/cpu-only.md
     - Cluster portable build: tutorials/cluster-portable-build.md
     - Parameter sweep: tutorials/parameter-sweep.md
@@ -28,6 +26,11 @@ nav:
     - Add new IO format: howto/add-new-io-format.md
   - Reference:
     - Overview: reference/index.md
-    - API: reference/api/index.md
     - Cite: reference/cite.md
-  - Bibliography: reference/bibliography.md
+    - Bibliography: reference/bibliography.md
+    - API: reference/api.md
+  - Developer:
+    - Contributors: dev/contributors.md
+    - Contributing: dev/contributing.md
+    - Testing: dev/testing.md
+    - Release: dev/release.md

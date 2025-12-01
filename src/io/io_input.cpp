@@ -186,7 +186,9 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     auto file = h5rt::open_file_readonly(filename.c_str());
     if (file < 0) return false;
     double file_T0=0, file_lambda=0, file_Gamma=0; int file_p=0, file_p2=0, file_len=0;
-    double file_delta_t_min=0, file_delta_t_max=0; int file_use_serk2=0;
+    double file_delta_t_min=0, file_delta_t_max=0; int file_use_serk2=0; int file_log_response_interp=0;
+    // Default tail_fit_enabled to current config for backward compatibility when attribute is absent
+    int file_tail_fit_enabled = (config.tail_fit_enabled ? 1 : 0);
     if (!h5rt::read_attr_double(file, "T0", file_T0) ||
         !h5rt::read_attr_double(file, "lambda", file_lambda) ||
         !h5rt::read_attr_int(file, "p", file_p) ||
@@ -197,10 +199,16 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     h5rt::read_attr_double(file, "delta_t_min", file_delta_t_min);
     h5rt::read_attr_double(file, "delta_max", file_delta_t_max);
     h5rt::read_attr_int(file, "use_serk2", file_use_serk2);
+    // Optional attribute present in newer files
+    h5rt::read_attr_int(file, "log_response_interp", file_log_response_interp);
+    // Optional attribute: tail fit flag
+    h5rt::read_attr_int(file, "tail_fit_enabled", file_tail_fit_enabled);
     if (file_p != p_param || file_p2 != p2_param || std::abs(file_lambda - lambda_param) > 1e-10 || std::abs(file_T0 - T0_param) > 1e-10 ||
         std::abs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
     std::abs(file_delta_t_min - delta_t_min_param) > 1e-10 || std::abs(file_delta_t_max - delta_max_param) > 1e-10 ||
-    file_use_serk2 != (use_serk2_param ? 1 : 0)) {
+    file_use_serk2 != (use_serk2_param ? 1 : 0) ||
+    ((file_log_response_interp != 0) != (config.log_response_interp ? true : false)) ||
+    ((file_tail_fit_enabled != 0) != (config.tail_fit_enabled ? true : false))) {
     std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
         h5rt::close_file(file);
         return false;
@@ -250,7 +258,9 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
     {
         H5::H5File file(filename, H5F_ACC_RDONLY);
         double file_T0, file_lambda, file_Gamma = 0; int file_p, file_p2, file_len = 0;
-    double file_delta_t_min = 0, file_delta_t_max = 0; int file_use_serk2 = 0;
+    double file_delta_t_min = 0, file_delta_t_max = 0; int file_use_serk2 = 0; int file_log_response_interp = 0;
+        // Default tail_fit_enabled to current config for backward compatibility when attribute is absent
+        int file_tail_fit_enabled = (config.tail_fit_enabled ? 1 : 0);
         file.openAttribute("T0").read(H5::PredType::NATIVE_DOUBLE, &file_T0);
         file.openAttribute("lambda").read(H5::PredType::NATIVE_DOUBLE, &file_lambda);
         file.openAttribute("p").read(H5::PredType::NATIVE_INT, &file_p);
@@ -260,12 +270,17 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         try { file.openAttribute("len").read(H5::PredType::NATIVE_INT, &file_len); } catch (...) {}
         try { file.openAttribute("delta_t_min").read(H5::PredType::NATIVE_DOUBLE, &file_delta_t_min); } catch (...) {}
         try { file.openAttribute("delta_max").read(H5::PredType::NATIVE_DOUBLE, &file_delta_t_max); } catch (...) {}
-        try { file.openAttribute("use_serk2").read(H5::PredType::NATIVE_INT, &file_use_serk2); } catch (...) {}
+    try { file.openAttribute("use_serk2").read(H5::PredType::NATIVE_INT, &file_use_serk2); } catch (...) {}
+    try { file.openAttribute("log_response_interp").read(H5::PredType::NATIVE_INT, &file_log_response_interp); } catch (...) {}
+        // Optional attribute: tail fit flag
+        try { file.openAttribute("tail_fit_enabled").read(H5::PredType::NATIVE_INT, &file_tail_fit_enabled); } catch (...) {}
     // aggressive_sparsify attribute deprecated; ignore if present
         if (file_p != p_param || file_p2 != p2_param || fabs(file_lambda - lambda_param) > 1e-10 || fabs(file_T0 - T0_param) > 1e-10 ||
             fabs(file_Gamma - Gamma_param) > 1e-10 || file_len != (int)len_param || 
             fabs(file_delta_t_min - delta_t_min_param) > 1e-10 || fabs(file_delta_t_max - delta_max_param) > 1e-10 ||
-            file_use_serk2 != (use_serk2_param ? 1 : 0)) {
+            file_use_serk2 != (use_serk2_param ? 1 : 0) ||
+            ((file_log_response_interp != 0) != (config.log_response_interp ? true : false)) ||
+            ((file_tail_fit_enabled != 0) != (config.tail_fit_enabled ? true : false))) {
         std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
             return false;
         }
@@ -351,6 +366,10 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     int file_p = -1, file_p2 = -1, file_len = -1;
     double file_lambda = -1.0, file_T0 = -1.0, file_Gamma = -1.0, file_delta_t_min = -1.0, file_delta_max = -1.0;
     bool file_use_serk2 = false;
+    bool file_log_response_interp = false; // default for legacy files
+    bool have_file_log_response_interp = false;
+    bool file_tail_fit_enabled = true; // default (current code default true)
+    bool have_file_tail_fit_enabled = false; // track presence
     int file_sparsify_sweeps = -1; // default: -1 (auto)
     bool have_file_sparsify_sweeps = false; // track presence to preserve backward-compat
     // Capture saved grid provenance mirrored into params.txt (if present)
@@ -393,6 +412,16 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
         else if (name == "sparsify_sweeps") {
             iss >> file_sparsify_sweeps;
             have_file_sparsify_sweeps = true;
+        }
+        else if (name == "log_response_interp") {
+            std::string val; iss >> val;
+            have_file_log_response_interp = true;
+            file_log_response_interp = (val == "true");
+        }
+        else if (name == "tail_fit_enabled") {
+            std::string val; iss >> val;
+            have_file_tail_fit_enabled = true;
+            file_tail_fit_enabled = (val == "true");
         }
         // Capture any grid_* entries mirrored from grid_params.txt into saved_grid
         else if (name.rfind("grid_", 0) == 0) {
@@ -448,9 +477,17 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
         mismatch("delta_max", format_double(file_delta_max), format_double(delta_max_param));
     if (file_use_serk2 != use_serk2_param)
         mismatch("use_serk2", file_use_serk2 ? "true" : "false", use_serk2_param ? "true" : "false");
+    // Compare log_response_interp when present in params.txt; skip if absent for backward compatibility
+    if (have_file_log_response_interp && file_log_response_interp != config.log_response_interp) {
+        mismatch("log_response_interp", file_log_response_interp ? "true" : "false", config.log_response_interp ? "true" : "false");
+    }
     // Compare sparsify_sweeps when present in params.txt; skip if absent to keep legacy files loadable
     if (have_file_sparsify_sweeps && file_sparsify_sweeps != config.sparsify_sweeps) {
         mismatch("sparsify_sweeps", std::to_string(file_sparsify_sweeps), std::to_string(config.sparsify_sweeps));
+    }
+    // Compare tail_fit_enabled when present (backward-compatible skip if absent)
+    if (have_file_tail_fit_enabled && file_tail_fit_enabled != config.tail_fit_enabled) {
+        mismatch("tail_fit_enabled", file_tail_fit_enabled ? "true" : "false", config.tail_fit_enabled ? "true" : "false");
     }
 
     // Additional: check grid parameters used for this saved run vs the currently available grid

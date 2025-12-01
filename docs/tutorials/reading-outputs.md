@@ -1,6 +1,6 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/file.svg" alt="File icon"/> Tutorial: Reading Outputs
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="File icon"/> Tutorial: Reading Outputs
 
-DMFE writes either HDF5 (`data.h5`) or binary (`data.bin`) plus text summaries.
+DYNAMITE writes either HDF5 (`data.h5`) or binary (`data.bin`) plus text summaries.
 
 - HDF5 datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec`
 - Attributes: parameters, time, iteration, version info

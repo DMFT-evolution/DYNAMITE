@@ -157,7 +157,8 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
                                      const double* __restrict__ dQKv,
                                      const double* __restrict__ dQRv,
                                      unsigned char* __restrict__ flags,
-                                     double threshold, size_t len, size_t n) {
+                                     double threshold, size_t len, size_t n,
+                                     bool use_log) {
     size_t i = blockIdx.x * blockDim.x + threadIdx.x + 2;
     if (i + 1 >= n) return;
     if (i/2 * 2 != i) return; // Ensure i is even
@@ -180,9 +181,14 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
         double df2_qk = dQKv[idx_ip1];
         double f_qk = QKv[idx_i] - QKv[idx_im2];
 
-        double df1_qr = dQRv[idx_im1];
-        double df2_qr = dQRv[idx_ip1];
-        double f_qr = QRv[idx_i] - QRv[idx_im2];
+    // QR/dQR metric: always measured in linear domain
+    double QR_im2 = QRv[idx_im2];
+    double QR_i   = QRv[idx_i];
+    double dQR_im1 = dQRv[idx_im1];
+    double dQR_ip1 = dQRv[idx_ip1];
+    double f_qr  = QR_i - QR_im2;
+    double df1_qr = dQR_im1;
+    double df2_qr = dQR_ip1;
 
         val += fabs(scale * (2.0 * f_qk - tdiff2 * (df1_qk / tdiff1 + df2_qk / tdiff3)));
         val += fabs(scale * (2.0 * f_qr - tdiff2 * (df1_qr / tdiff1 + df2_qr / tdiff3)));
@@ -204,7 +210,8 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
         thrust::raw_pointer_cast(sim->d_dQKv.data()),
         thrust::raw_pointer_cast(sim->d_dQRv.data()),
         thrust::raw_pointer_cast(flags.data()),
-        threshold, config.len, t1len);
+        threshold, config.len, t1len,
+        config.log_response_interp);
 
     auto pol = thrust::cuda::par.on(stream);
 

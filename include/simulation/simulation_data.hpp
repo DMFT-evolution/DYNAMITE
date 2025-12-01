@@ -23,9 +23,9 @@ struct SimulationData {
     thrust::device_vector<double> d_QKA1int, d_QRA1int, d_QKB1int, d_QRB1int, d_QKA2int, d_QRA2int, d_QKB2int, d_QRB2int;
     thrust::device_vector<double> convA1_1, convA2_1, convA1_2, convA2_2, convR_1, convR_2, convR_3, convR_4;
 
-    thrust::device_vector<double> temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9;
+    thrust::device_vector<double> temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12;
 
-    thrust::device_vector<size_t> Stemp0, Stemp1;
+    thrust::device_vector<size_t> Stemp0, Stemp1, Stemp2;
 
     thrust::device_vector<double> error_result;
 #endif

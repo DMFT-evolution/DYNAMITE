@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: >-
-  If you use DMFE in your research, please cite this software using the
+  If you use DYNAMITE in your research, please cite this software using the
   metadata below. You can also cite a specific release DOI once available.
-title: DMFE: Dynamical Mean-Field Evolution
-repository-code: https://github.com/DMFT-evolution/DMFE
-url: https://dmft-evolution.github.io/DMFE/
+title: DYNAMITE: Dynamical Mean-Field Evolution
+repository-code: https://github.com/DMFT-evolution/DYNAMITE
+url: https://dmft-evolution.github.io/DYNAMITE/
 version: 0.1.0
 authors:
   - name: DMFT-evolution Contributors
@@ -13,6 +13,6 @@ license: Apache-2.0
 date-released: 2025-10-10
 preferred-citation:
   type: software
-  title: DMFE: Dynamical Mean-Field Evolution
-  url: https://github.com/DMFT-evolution/DMFE
+  title: DYNAMITE: Dynamical Mean-Field Evolution
+  url: https://github.com/DMFT-evolution/DYNAMITE
   notes: Cite the specific release tag if available; include the commit hash for reproducibility.

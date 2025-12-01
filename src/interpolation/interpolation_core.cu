@@ -82,24 +82,42 @@ void interpolateGPU(
 
     // cudaDeviceSynchronize(); //removed  // Ensure all kernels are complete before returning
 
-    // Interpolate QKA1int and QRA1int using centralized LN3 GPU path
-    indexVecLN3GPU(sim->d_weightsA1y, sim->d_indsA1y, sim->d_QKv, sim->d_QRv, len, sim->d_QKA1int, sim->d_QRA1int, (*pool)[2]);
-    if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU A1");
-
-    // Interpolate QKA2int and QRA2int using centralized LN3 GPU path
-    indexVecLN3GPU(sim->d_weightsA2y, sim->d_indsA2y, sim->d_QKv, sim->d_QRv, len, sim->d_QKA2int, sim->d_QRA2int, (*pool)[3]);
-    if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU A2");
+    if (!config.log_response_interp) {
+        // Linear-domain LN3
+        indexVecLN3GPU(sim->d_weightsA1y, sim->d_indsA1y, sim->d_QKv, sim->d_QRv, len, sim->d_QKA1int, sim->d_QRA1int, (*pool)[2]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU A1");
+        indexVecLN3GPU(sim->d_weightsA2y, sim->d_indsA2y, sim->d_QKv, sim->d_QRv, len, sim->d_QKA2int, sim->d_QRA2int, (*pool)[3]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU A2");
+    } else {
+        // Log-domain LN3: precompute separate log slices into temp11 (A1 stream) and temp12 (A2 stream)
+        prepareLN3LogSliceGPU_into(len, sim->d_QRv, sim->temp11, (*pool)[2]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("prepareLN3LogSliceGPU_into A1");
+        prepareLN3LogSliceGPU_into(len, sim->d_QRv, sim->temp12, (*pool)[3]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("prepareLN3LogSliceGPU_into A2");
+        indexVecLN3GPU_log_cached(sim->d_weightsA1y, sim->d_indsA1y, sim->d_QKv, sim->d_QRv, sim->temp11, len, sim->d_QKA1int, sim->d_QRA1int, (*pool)[2]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU_log_cached A1");
+        indexVecLN3GPU_log_cached(sim->d_weightsA2y, sim->d_indsA2y, sim->d_QKv, sim->d_QRv, sim->temp12, len, sim->d_QKA2int, sim->d_QRA2int, (*pool)[3]);
+        if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecLN3GPU_log_cached A2");
+    }
 
     // Interpolate QKB1int and QRB1int
     diffNfloor(sim->d_posB1xOld, sim->Stemp0, sim->temp0, (*pool)[0]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("diffNfloor B1");
-    indexVecNGPU(sim->temp0, sim->Stemp0, sim->d_delta_t_ratio, sim->d_QKB1int, sim->d_QRB1int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[0]);
+    if (!config.log_response_interp) {
+        indexVecNGPU(sim->temp0, sim->Stemp0, sim->d_delta_t_ratio, sim->d_QKB1int, sim->d_QRB1int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[0]);
+    } else {
+        indexVecNGPU_log(sim->temp0, sim->Stemp0, sim->d_delta_t_ratio, sim->d_QKB1int, sim->d_QRB1int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[0]);
+    }
     if (config.debug) DMFE_CUDA_POSTLAUNCH("indexVecNGPU B1");
 
-    cudaDeviceSynchronize();  // stronger sync in debug
+    // cudaDeviceSynchronize(); //removed  // Ensure all kernels are complete before returning
 
     // Interpolate QKB2int and QRB2int
-    indexMatAllGPU(sim->d_posB2xOld, sim->d_indsB2y, sim->d_weightsB2y, sim->d_delta_t_ratio, sim->d_QKB2int, sim->d_QRB2int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[1]);
+    if (!config.log_response_interp) {
+        indexMatAllGPU(sim->d_posB2xOld, sim->d_indsB2y, sim->d_weightsB2y, sim->d_delta_t_ratio, sim->d_QKB2int, sim->d_QRB2int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[1]);
+    } else {
+        indexMatAllGPU_log(sim->d_posB2xOld, sim->d_indsB2y, sim->d_weightsB2y, sim->d_delta_t_ratio, sim->d_QKB2int, sim->d_QRB2int, sim->d_QKv, sim->d_QRv, sim->d_dQKv, sim->d_dQRv, len, (*pool)[1]);
+    }
     if (config.debug) DMFE_CUDA_POSTLAUNCH("indexMatAllGPU B2");
 
     // Interpolate rInt
@@ -137,5 +155,5 @@ void interpolateGPU(
         len*len);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("computeSigmaKandRKernel B2");
 
-    // cudaDeviceSynchronize(); //removed  // Ensure all kernels are complete before returning
+    cudaDeviceSynchronize(); // Ensure all kernels are complete before returning
 }

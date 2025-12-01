@@ -1,4 +1,4 @@
-# Contributing to DMFE
+# Contributing to DYNAMITE
 
 We welcome contributions! Please:
 

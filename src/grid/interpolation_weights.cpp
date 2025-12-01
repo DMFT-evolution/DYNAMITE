@@ -13,7 +13,9 @@ inline int pick_stencil_start(const std::vector<long double>& x, int n, long dou
     const int N = static_cast<int>(x.size());
     const int m = n + 1;
     int hi = static_cast<int>(std::lower_bound(x.begin(), x.end(), xq) - x.begin());
-    int start = std::clamp(hi - m / 2, 0, N - m);
+    int start = hi - m / 2;
+    if (start < 0) start = 0;
+    if (start > N - m) start = N - m;
     // Small local search to minimize the max distance to stencil ends
     auto spread = [&](int s) -> long double {
         int e = s + n;
@@ -43,6 +45,28 @@ inline void barycentric_node_weights(const std::vector<long double>& nodes,
         }
         w[j] = 1.0L / denom;
     }
+}
+
+// Pick a size-m window around xq that minimizes the max distance to the window ends (like poly)
+inline int pick_window_start(const std::vector<long double>& x, int m, long double xq) {
+    const int N = static_cast<int>(x.size());
+    int hi = static_cast<int>(std::lower_bound(x.begin(), x.end(), xq) - x.begin());
+    int start = hi - m / 2;
+    if (start < 0) start = 0;
+    if (start > N - m) start = N - m;
+    auto spread = [&](int s) -> long double {
+        long double a = x[s];
+        long double b = x[s + m - 1];
+        long double left  = fabsl(xq - a);
+        long double right = fabsl(xq - b);
+        return left < right ? right : left;
+    };
+    long double best = spread(start);
+    for (int s = std::max(0, start - 2); s <= std::min(N - m, start + 2); ++s) {
+        long double val = spread(s);
+        if (val < best) { best = val; start = s; }
+    }
+    return start;
 }
 
 // Floater–Hormann weights on a local window xn of size m and order d.
@@ -151,16 +175,14 @@ compute_barycentric_rational_weights(const std::vector<long double>& x,
     std::vector<long double> tmp; tmp.reserve(m);
 
     for (long double q : xq) {
-        // Choose centered window of size m
-        int hi = (int)(std::lower_bound(x.begin(), x.end(), q) - x.begin());
-        int start = std::clamp(hi - m / 2, 0, N - m);
-
+        // Choose a near-optimal window of size m (minimize spread)
+        int start = pick_window_start(x, m, q);
         xn.clear(); xn.reserve(m);
         for (int j = 0; j < m; ++j) xn.push_back(x[start + j]);
 
-        // Exact hit (with tolerance relative to local span)
-        long double span = std::max(1.0L, xn.back() - xn.front());
-        long double tol = 64 * std::numeric_limits<long double>::epsilon() * span;
+    // Exact hit (with tolerance relative to true local span; avoid over-large tol)
+    long double span = xn.back() - xn.front();
+    long double tol = 64 * std::numeric_limits<long double>::epsilon() * (span > 0.0L ? span : 1.0L);
         int hit = -1;
         for (int j = 0; j < m; ++j) {
             if (fabsl(q - xn[j]) <= tol) { hit = j; break; }
@@ -173,29 +195,82 @@ compute_barycentric_rational_weights(const std::vector<long double>& x,
             continue;
         }
 
-        // Local FH weights on this window
-        floater_hormann_local_weights(xn, d, wfh);
+        // Normalize window to reduce scale disparities: y = (x - c) / s
+    long double a = xn.front();
+    long double b = xn.back();
+        long double c = 0.5L * (a + b);
+    long double s = b - a;
+    if (s <= 0.0L) s = 1.0L; // degenerate safety; otherwise use true span
+        std::vector<long double> yn(m);
+        for (int j = 0; j < m; ++j) yn[j] = (xn[j] - c) / s;
+        long double qn = (q - c) / s;
 
-        // Barycentric evaluation on the window
-        long double den = 0.0L;
+        // Local FH weights on normalized nodes
+        floater_hormann_local_weights(yn, d, wfh);
+
+        // Evaluate FH with Neumaier compensated sum
         tmp.assign(m, 0.0L);
+        long double denFH = 0.0L, compFH = 0.0L, sumabsFH = 0.0L;
         for (int j = 0; j < m; ++j) {
-            long double v = wfh[j] / (q - xn[j]);
-            tmp[j] = v;
-            den += v;
+            long double v = wfh[j] / (qn - yn[j]);
+            tmp[j] = v; // reuse tmp for FH v_j
+            sumabsFH += fabsl(v);
+            long double t = denFH + v;
+            if (fabsl(denFH) >= fabsl(v)) compFH += (denFH - t) + v; else compFH += (v - t) + denFH;
+            denFH = t;
+        }
+        denFH += compFH;
+        std::vector<double> alphaFH(m, 0.0), alphaPoly(m, 0.0);
+        long double lebesgueFH = std::numeric_limits<long double>::infinity();
+        if ((denFH == denFH) && std::isfinite(denFH)) {
+            long double invden = 1.0L / denFH;
+            lebesgueFH = 0.0L;
+            for (int j = 0; j < m; ++j) {
+                double aj = (double)(tmp[j] * invden);
+                alphaFH[j] = aj;
+                lebesgueFH += std::fabs(aj);
+            }
         }
 
-        if (den == 0.0L) {
-            // Fallback (should be rare): use polynomial barycentric on this window
-            std::vector<long double> wloc;
-            barycentric_node_weights(xn, wloc);
-            long double den2 = 0.0L;
-            for (int j = 0; j < m; ++j) { tmp[j] = wloc[j] / (q - xn[j]); den2 += tmp[j]; }
-            long double invden2 = 1.0L / den2;
-            for (int j = 0; j < m; ++j) alpha[j] = (double)(tmp[j] * invden2);
+        // Compute polynomial barycentric on same normalized window (reference, also compensated)
+        std::vector<long double> wloc;
+        barycentric_node_weights(yn, wloc);
+        long double denPL = 0.0L, compPL = 0.0L;
+        for (int j = 0; j < m; ++j) {
+            long double v = wloc[j] / (qn - yn[j]);
+            // overwrite tmp to reuse memory, but after FH alpha already formed
+            tmp[j] = v;
+            long double t = denPL + v;
+            if (fabsl(denPL) >= fabsl(v)) compPL += (denPL - t) + v; else compPL += (v - t) + denPL;
+            denPL = t;
+        }
+        denPL += compPL;
+        long double lebesguePL = std::numeric_limits<long double>::infinity();
+        if ((denPL == denPL) && std::isfinite(denPL)) {
+            long double invden2 = 1.0L / denPL;
+            lebesguePL = 0.0L;
+            for (int j = 0; j < m; ++j) {
+                double aj = (double)(tmp[j] * invden2);
+                alphaPoly[j] = aj;
+                lebesguePL += std::fabs(aj);
+            }
+        }
+
+        // Decide: use polynomial if FH is ill-conditioned or clearly worse by Lebesgue sum
+        const long double cancel_tol = 1e-10L; // fallback when |den| << sum of terms
+        bool fh_bad = !(denFH == denFH) || !std::isfinite(denFH) || (sumabsFH > 0.0L && fabsl(denFH) <= cancel_tol * sumabsFH);
+        bool take_poly = fh_bad;
+        if (!take_poly) {
+            if (lebesguePL < std::numeric_limits<long double>::infinity() && lebesgueFH < std::numeric_limits<long double>::infinity()) {
+                // Prefer the weights with smaller Lebesgue sum; require a margin to avoid flip-flop
+                if (lebesgueFH > 2.0L * lebesguePL) take_poly = true;
+            }
+        }
+
+        if (take_poly) {
+            alpha = std::move(alphaPoly);
         } else {
-            long double invden = 1.0L / den;
-            for (int j = 0; j < m; ++j) alpha[j] = (double)(tmp[j] * invden);
+            alpha = std::move(alphaFH);
         }
 
         out.push_back(BarycentricStencil{ start, std::move(alpha) });

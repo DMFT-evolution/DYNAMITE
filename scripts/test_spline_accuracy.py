@@ -19,7 +19,7 @@ def main():
         ['./RG-Evo', 'grid', '--len', '512', '--Tmax', '1e5', '--dir', 'spline_test'],
         capture_output=True,
         text=True,
-        cwd='/home/jlang/Nextcloud/Spin-glass/Codes/DMFE'
+        cwd='/home/jlang/Nextcloud/Spin-glass/Codes/DYNAMITE'
     )
     
     if result.returncode != 0:
@@ -32,7 +32,7 @@ def main():
     
     # Load the generated position grids
     import os
-    base_dir = '/home/jlang/Nextcloud/Spin-glass/Codes/DMFE/Grid_data/spline_test'
+    base_dir = '/home/jlang/Nextcloud/Spin-glass/Codes/DYNAMITE/Grid_data/spline_test'
     
     if not os.path.exists(base_dir):
         print(f"[FAIL] Output directory not found: {base_dir}")

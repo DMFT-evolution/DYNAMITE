@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/time.svg" alt="Time integration icon"/> Time integration
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/time.svg" alt="Time integration icon"/> Time integration
 
 Default strategy: adaptive Dormand–Prince RK54. When the adaptive step approaches the RK54 stability limit, the solver switches to SSPRK(10,4) for stability at larger steps. After each sparsification event, the code may attempt SERK2; this trial can be disabled via CLI.
 
@@ -7,6 +7,32 @@ Default strategy: adaptive Dormand–Prince RK54. When the adaptive step approac
 - RK54 = Dormand–Prince (adaptive default): embedded error estimate controls local error and proposes Δt.
 - SSPRK(10,4) (auto‑switch): engaged when RK54 reaches its absolute‑stability bound to continue with stable steps at late times.
 - SERK2 (optional): attempted after sparsification to exploit extended stability; can be turned off with the command‑line flag `--serk2=false`.
+
+```mermaid
+flowchart TD
+  start([Start step with RK54])
+  estimate[Estimate error<br/>and spectral bound]
+  within{Within RK54<br/>stability?}
+  rk54[Advance with RK54]
+  switch["Switch to SSPRK(10,4)"<br/>halve Δt once]
+  ssprk["Advance with SSPRK(10,4)"]
+  sparsify{Sparsification<br/>just happened?}
+  serk2_trial[Trial SERK2 step]
+  accept{Trial accepted?}
+  serk2[Continue with SERK2]
+  revert[Revert to prior scheme]
+  exit([Next time step])
+
+  start --> estimate
+  estimate --> within
+  within -->|Yes| rk54 --> exit
+  within -->|No| switch --> ssprk --> exit
+  exit --> sparsify
+  sparsify -->|No| start
+  sparsify -->|Yes| serk2_trial --> accept
+  accept -->|Yes| serk2 --> start
+  accept -->|No| revert --> start
+```
 
 ## Error and stability controls (paper supplemental and code)
 

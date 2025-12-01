@@ -53,7 +53,7 @@ void interpolate(const vector<double>& posB1xIn, const vector<double>& posB2xIn,
     }
     SigmaR(sim->h_QKA2int, sim->h_QRA2int, sim->h_SigmaRA2int);
 
-    // Interpolate QKB1int and QRB1int
+    // Interpolate QKB1int and QRB1int (indexVecN handles log-space if enabled)
     // Compute `floor` vector
     double maxPosB1x = posB1x[0];
     for (size_t i = 1; i < posB1x.size(); ++i) {
@@ -93,7 +93,7 @@ void interpolate(const vector<double>& posB1xIn, const vector<double>& posB2xIn,
     SigmaK(sim->h_QKB1int, sim->h_SigmaKB1int);
     SigmaR(sim->h_QKB1int, sim->h_QRB1int, sim->h_SigmaRB1int);
 
-    // Interpolate QKB2int and QRB2int
+    // Interpolate QKB2int and QRB2int (indexMatAll handles log-space if enabled)
     if (sim->h_t1grid.back() > 0) {
         indexMatAll(sim->h_posB2xOld, sim->h_indsB2y, sim->h_weightsB2y, sim->h_delta_t_ratio, sim->h_QKB2int, sim->h_QRB2int);
     }

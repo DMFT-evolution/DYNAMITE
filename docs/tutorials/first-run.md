@@ -1,6 +1,6 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/file.svg" alt="Tutorial icon"/> Tutorial: First Run
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="Tutorial icon"/> Tutorial: First Run
 
-Goal: build and run DMFE in Release on L=512 grid and inspect outputs.
+Goal: build and run DYNAMITE in Release on L=512 grid and inspect outputs.
 
 1) Build:
 ```bash

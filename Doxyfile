@@ -1,6 +1,6 @@
-# Doxygen configuration for DMFE
+# Doxygen configuration for DYNAMITE
 
-PROJECT_NAME           = DMFE
+PROJECT_NAME           = DYNAMITE
 OUTPUT_DIRECTORY       = docs/reference/doxygen
 GENERATE_HTML          = NO
 GENERATE_LATEX         = NO

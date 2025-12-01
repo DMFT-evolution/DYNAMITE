@@ -132,6 +132,24 @@ void ConvAGPU_Stream(const thrust::device_vector<double>& f,
         thrust::raw_pointer_cast(out.data()), t, length, depth);
 }
 
+// Const-pointer overload
+void ConvAGPU_Stream(const thrust::device_vector<double>& f,
+                     const thrust::device_ptr<const double>& g,
+                     thrust::device_vector<double>& out,
+                     double t,
+                     const thrust::device_vector<double>& integ,
+                     const thrust::device_vector<double>& theta,
+                     cudaStream_t stream) {
+    size_t length = integ.size(); size_t depth = f.size() / length;
+    int threads = 64; size_t shmem = threads * sizeof(double);
+    ConvAGPUKernel<<<depth, threads, shmem, stream>>>(
+        thrust::raw_pointer_cast(f.data()),
+        thrust::raw_pointer_cast(g),
+        thrust::raw_pointer_cast(integ.data()),
+        (theta.size()==depth? thrust::raw_pointer_cast(theta.data()): nullptr),
+        thrust::raw_pointer_cast(out.data()), t, length, depth);
+}
+
 // ---- ConvR kernels ----
 __global__ void ConvRKernel(const double* __restrict__ f,
                             const double* __restrict__ g,

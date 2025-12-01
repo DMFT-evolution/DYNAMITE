@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/algorithm.svg" alt="Testing icon"/> Testing
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Testing icon"/> Testing
 
 Lightweight validation strategy:
 

@@ -210,7 +210,7 @@ std::string write_grid_generation_params(std::size_t len,
     std::string path = base + "/grid_params.txt";
     std::ofstream ofs(path);
     if (!ofs) throw std::runtime_error(std::string("Failed to open ") + path + ": " + std::strerror(errno));
-    ofs << "# DMFE grid generation parameters\n";
+    ofs << "# DYNAMITE grid generation parameters\n";
     ofs << "len=" << len << "\n";
     ofs << std::scientific;
     ofs.precision(17);

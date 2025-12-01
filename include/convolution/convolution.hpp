@@ -44,6 +44,15 @@ void ConvAGPU_Stream(const thrust::device_vector<double>& f,
                      const thrust::device_vector<double>& theta,
                      cudaStream_t stream = 0);
 
+// Const-pointer overload for ConvA stream variant
+void ConvAGPU_Stream(const thrust::device_vector<double>& f,
+                     const thrust::device_ptr<const double>& g,
+                     thrust::device_vector<double>& out,
+                     double t,
+                     const thrust::device_vector<double>& integ,
+                     const thrust::device_vector<double>& theta,
+                     cudaStream_t stream = 0);
+
 // ConvR (QR-style) GPU interfaces
 thrust::device_vector<double> ConvRGPU(const thrust::device_vector<double>& f,
                                        const thrust::device_vector<double>& g,

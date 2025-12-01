@@ -99,6 +99,10 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (!h5rt::write_attr_double(file, "delta_t_min", config.delta_t_min)) { fail_and_fallback("attr delta_t_min"); return; }
     if (!h5rt::write_attr_double(file, "delta_max", config.delta_max)) { fail_and_fallback("attr delta_max"); return; }
     if (!h5rt::write_attr_int(file, "use_serk2", config.use_serk2 ? 1 : 0)) { fail_and_fallback("attr use_serk2"); return; }
+    // Interpolation mode flag for QR/dQR
+    if (!h5rt::write_attr_int(file, "log_response_interp", config.log_response_interp ? 1 : 0)) { fail_and_fallback("attr log_response_interp"); return; }
+    // Tail-fit stabilization flag
+    if (!h5rt::write_attr_int(file, "tail_fit_enabled", config.tail_fit_enabled ? 1 : 0)) { fail_and_fallback("attr tail_fit_enabled"); return; }
     if (!h5rt::write_attr_double(file, "energy", energy)) { fail_and_fallback("attr energy"); return; }
 
     h5rt::close_file(file);
@@ -198,7 +202,11 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         add_attr("p2", H5::PredType::NATIVE_INT, &config.p2);
         add_attr("Gamma", H5::PredType::NATIVE_DOUBLE, &config.Gamma);
         add_attr("delta_t_min", H5::PredType::NATIVE_DOUBLE, &config.delta_t_min);
-        add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &config.delta_max);
+    add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &config.delta_max);
+    // Interpolation mode flag for QR/dQR
+    int logR = config.log_response_interp ? 1 : 0; add_attr("log_response_interp", H5::PredType::NATIVE_INT, &logR);
+    // Tail-fit stabilization flag
+    int tailF = config.tail_fit_enabled ? 1 : 0; add_attr("tail_fit_enabled", H5::PredType::NATIVE_INT, &tailF);
     int use_serk2_int = config.use_serk2 ? 1 : 0; add_attr("use_serk2", H5::PredType::NATIVE_INT, &use_serk2_int);
         add_attr("energy", H5::PredType::NATIVE_DOUBLE, &energy);
     }
@@ -258,6 +266,10 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     if (!h5rt::write_attr_double(file, "delta_t_min", snapshot.config_snapshot.delta_t_min)) { fail_and_fallback("attr delta_t_min"); }
     if (!h5rt::write_attr_double(file, "delta_max", snapshot.config_snapshot.delta_max)) { fail_and_fallback("attr delta_max"); }
     if (!h5rt::write_attr_int(file, "use_serk2", snapshot.config_snapshot.use_serk2 ? 1 : 0)) { fail_and_fallback("attr use_serk2"); }
+    // Interpolation mode flag for QR/dQR
+    if (!h5rt::write_attr_int(file, "log_response_interp", snapshot.config_snapshot.log_response_interp ? 1 : 0)) { fail_and_fallback("attr log_response_interp"); }
+    // Tail-fit stabilization flag
+    if (!h5rt::write_attr_int(file, "tail_fit_enabled", snapshot.config_snapshot.tail_fit_enabled ? 1 : 0)) { fail_and_fallback("attr tail_fit_enabled"); }
     if (!h5rt::write_attr_double(file, "energy", snapshot.energy)) { fail_and_fallback("attr energy"); }
     h5rt::close_file(file);
     update_prog(total_elems, total_elems);
@@ -296,8 +308,12 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         add_attr("p2", H5::PredType::NATIVE_INT, &snapshot.config_snapshot.p2);
         add_attr("Gamma", H5::PredType::NATIVE_DOUBLE, &snapshot.config_snapshot.Gamma);
         add_attr("delta_t_min", H5::PredType::NATIVE_DOUBLE, &snapshot.config_snapshot.delta_t_min);
-        add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &snapshot.config_snapshot.delta_max);
+    add_attr("delta_max", H5::PredType::NATIVE_DOUBLE, &snapshot.config_snapshot.delta_max);
     int use_serk2_int = snapshot.config_snapshot.use_serk2 ? 1 : 0; add_attr("use_serk2", H5::PredType::NATIVE_INT, &use_serk2_int);
+    // Interpolation mode flag for QR/dQR
+    int logR = snapshot.config_snapshot.log_response_interp ? 1 : 0; add_attr("log_response_interp", H5::PredType::NATIVE_INT, &logR);
+    // Tail-fit stabilization flag
+    int tailF = snapshot.config_snapshot.tail_fit_enabled ? 1 : 0; add_attr("tail_fit_enabled", H5::PredType::NATIVE_INT, &tailF);
     // aggressive_sparsify attribute removed; not written anymore
     add_attr("energy", H5::PredType::NATIVE_DOUBLE, &snapshot.energy);
     }

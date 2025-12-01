@@ -1,10 +1,10 @@
-# Cite DMFE
+# Cite DYNAMITE
 
-If you use DMFE in your research, please cite the software:
+If you use DYNAMITE in your research, please cite the software:
 
-- Software: DMFE — Dynamical Mean-Field Evolution (Apache-2.0)
-- Project page: https://github.com/DMFT-evolution/DMFE
-- Docs: https://dmft-evolution.github.io/DMFE/
+- Software: DYNAMITE — Dynamical Mean-Field Evolution (Apache-2.0)
+- Project page: https://github.com/DMFT-evolution/DYNAMITE
+- Docs: https://dmft-evolution.github.io/DYNAMITE/
 - Citation metadata (CITATION.cff) is provided at the repository root; many tools (GitHub, Zotero) can ingest it directly.
 
 Preferred citation
@@ -17,4 +17,4 @@ Related paper
 
 Acknowledgment
 
-If DMFE or its documentation helped your work, please acknowledge the project. Bug reports and feature requests are welcome.
+If DYNAMITE or its documentation helped your work, please acknowledge the project. Bug reports and feature requests are welcome.

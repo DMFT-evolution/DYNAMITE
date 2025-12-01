@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
 
 Sparsification preserves asymptotic efficiency by pruning history with controlled error. The pruning criterion and reconstruction exactly match the implementation in `src/sparsify/`.
 
@@ -43,3 +43,24 @@ $$
 - Start from the default (tuned for len and ε) and validate on short runs by comparing C and R slices and derived observables (energy, gFDR/FDT diagnostics) with sparsification off. Increase threshold for more compression; decrease for more accuracy.
 
 Implementation references: `include/sparsify/sparsify_utils.hpp`, `src/sparsify/sparsify_utils.cpp` (CPU), `src/sparsify/sparsify_utils.cu` (GPU). Post‑prune, interpolation is re‑initialized automatically by downstream calls.
+
+```mermaid
+flowchart TD
+  start([Start sparsification sweep])
+  gather[Gather stencil<br/>&lbrace;i-2, i-1, i, i+1&rbrace;]
+  compute[Compute smoothness<br/>metric using QK/QR/derivatives]
+  threshold{Metric &lt; threshold?}
+  erase[Mark node erasable]
+  keep[Keep node]
+  next{More interior nodes?}
+  rebuild[Rebuild kept index lists<br/>inds, indsD]
+  scale[Rescale derivatives<br/>with tfac]
+  compress[Write compressed histories<br/>update Δt ratios]
+  done([Sparsification complete])
+
+  start --> gather --> compute --> threshold
+  threshold -->|Yes| erase --> next
+  threshold -->|No| keep --> next
+  next -->|Yes| gather
+  next -->|No| rebuild --> scale --> compress --> done
+```

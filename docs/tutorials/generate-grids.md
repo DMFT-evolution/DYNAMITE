@@ -1,23 +1,40 @@
-# Tutorial: Generate grids quickly
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Tutorial: Generate Grids
 
-This short tutorial shows how to create a ready-to-use grid folder under `Grid_data/<L>/` for a first run.
+Goal: create a ready-to-use interpolation grid folder `Grid_data/<L>/` (paper defaults) for a first simulation.
 
 ## Quick command
 
 ```bash
 ./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
-  --spline-order 5 --interp-method poly --interp-order 9
+  --interp-method poly --interp-order 9 --spline-order 5
 ```
 
-This produces:
+Outputs (`Grid_data/512/`):
+
 - `theta.dat`, `phi1.dat`, `phi2.dat` (grids)
-- `int.dat` (B-spline quadrature, degree 5 by default)
-- `posA1y.dat`, `posA2y.dat`, `posB2y.dat`
-- `inds*.dat` and `weights*.dat` (interpolation metadata)
+- `int.dat` (quadrature weights)
+- `posA*`, `posB*` (stencil positions)
+- `inds*`, `weights*` (interpolation metadata)
+- `grid_params.txt` (provenance & CLI)
 
-## Tips
-- Use `--len 1024` or `2048` for larger grids.
-- `--interp-method rational --interp-order 9 --fh-stencil 14` can improve stability on irregular nodes.
-- Use `--validate` to compare newly computed grids with an existing folder without writing files.
+Point runs at the folder via `-L 512` (length) and ensure the directory exists.
 
-For more detail, see How-to → Generate new grids.
+## Optional tweaks
+
+- Larger grid: use `--len 1024` (or `2048`).
+- Rational interpolation: `--interp-method rational --fh-stencil 15` for extra stability.
+- Index remapping: `--alpha 0.2 --delta 0.25` (recorded; default 0 keeps paper grid).
+- Validate without writing: append `--validate` to compare with existing files.
+
+## Troubleshooting
+
+- Missing folder: rerun the quick command above.
+- Mismatch after code updates: regenerate with `--validate` then rebuild.
+- Disk space: remove unused large folders (keep only the L values you need).
+
+## See also
+
+- How-to → Generate new grids (full flag reference & theory)
+- Concepts → Interpolation grids (mathematical background)
+- Tutorial → First Run (integrating the grid in a simulation)
+

@@ -40,10 +40,12 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"help", no_argument, 0, 'h'},
         {"serk2", required_argument, 0, 'S'},
         {"allow-incompatible-versions", required_argument, 0, 'I'},
+    {"log-response-interp", required_argument, 0, 'R'},
+        {"tail-fit", required_argument, 0, 'F'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
-    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:w:o:g:A:hvc:I:", long_opts, &long_index)) != -1) {
+    while ((opt = getopt_long(argc, argv, "p:q:l:T:G:m:t:d:e:L:D:s:S:w:o:g:A:hvc:I:R:F:", long_opts, &long_index)) != -1) {
         switch (opt) {
             case 'p':
                 config.p = static_cast<int>(std::stod(optarg));
@@ -159,14 +161,22 @@ bool parseCommandLineArguments(int argc, char **argv) {
             case 'I':
                 config.allow_incompatible_versions = (std::string(optarg) != "false");
                 break;
+            case 'R':
+                // Accept true/false
+                config.log_response_interp = (std::string(optarg) != "false");
+                break;
+            case 'F':
+                // Enable/disable tail-fit blending near theta->1
+                config.tail_fit_enabled = (std::string(optarg) != "false");
+                break;
             case 'h':
                 std::cout << dmfe::console::INFO() << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
                           << "  -p INT                          Set p parameter (default: " << config.p << ")\n"
                           << "  -q INT                          Set p2 parameter (default: " << config.p2 << ")\n"
                           << "  -l, --lambda F                  Set lambda parameter (default: " << config.lambda << ")\n"
-                          << "  -T, --T0 F                      Set T0 parameter (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
-                          << "  -G, --Gamma F                   Set Gamma parameter (default: " << config.Gamma << ")\n"
+                          << "  -T, --T0 F                      Set initial temperature T0 (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
+                          << "  -G, --Gamma F                   Set final temperature Gamma (default: " << config.Gamma << ")\n"
                           << "  -m INT                          Set maximum number of loops (default: " << config.maxLoop << ")\n"
                           << "  -L INT                          Set grid length N (default: " << config.len << ")\n"
                           << "  -t FLOAT                        Set maximum simulation time (default: " << config.tmax << ")\n"
@@ -178,6 +188,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -w, --sparsify-sweeps INT      Number of sparsify sweeps per maintenance pass (-1=auto, 0=off) (default: " << config.sparsify_sweeps << ")\n"
                           << "  -g, --gpu BOOL                  Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
                           << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
+                          << "  -R, --log-response-interp BOOL Interpolate log(QR) and log(dQR) instead of linear (default: " << (config.log_response_interp ? "true" : "false") << ")\n"
+                          << "  -F, --tail-fit BOOL            Enable QK tail-fit near theta->1 (default: " << (config.tail_fit_enabled ? "true" : "false") << ")\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
                           << "  -I, --allow-incompatible-versions BOOL  Allow loading data saved with incompatible versions (default: " << (config.allow_incompatible_versions ? "true" : "false") << ")\n"
                           << "  -v                              Display version information and exit\n"
@@ -210,6 +222,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  gpu = " << (config.gpu ? "true" : "false") << "\n"
               << "  async_export = " << (config.async_export ? "true" : "false") << "\n"
               << "  allow_incompatible_versions = " << (config.allow_incompatible_versions ? "true" : "false") << "\n"
+              << "  log_response_interp = " << (config.log_response_interp ? "true" : "false") << "\n"
+              << "  tail_fit_enabled = " << (config.tail_fit_enabled ? "true" : "false") << "\n"
               << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }

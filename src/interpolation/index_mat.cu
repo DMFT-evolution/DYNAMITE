@@ -145,6 +145,87 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_specialized(const dou
     }
 }
 
+// Dynamic-depth kernel for log-space QR (QK stays linear). Uses f=log(QR), g=dQR/QR.
+__global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic_log(const double* __restrict__ posx,
+                                          const size_t* __restrict__ indsy,
+                                          const double* __restrict__ weightsy,
+                                          const double* __restrict__ dtratio,
+                                          double* __restrict__ qK_result,
+                                          double* __restrict__ qR_result,
+                                          const double* __restrict__ QKv,
+                                          const double* __restrict__ QRv,
+                                          const double* __restrict__ dQKv,
+                                          const double* __restrict__ dQRv,
+                                          size_t len,
+                                          size_t depth,
+                                          size_t t1len,
+                                          size_t prod) {
+    size_t j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j >= prod) return;
+
+    size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
+    size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
+
+    double inx = posx[j] - indsx;
+    double inx2 = inx * inx;
+    double inx3 = inx2 * inx;
+    size_t inds = (indsx - 1) * len + indsy[j];
+
+    const double* weights = weightsy + j * depth;
+
+    double qK0 = 0.0, qK1 = 0.0, dqK1 = 0.0, dqK2 = 0.0;
+    double QR0 = 0.0, QR1 = 0.0, dQR1 = 0.0, dQR2 = 0.0;
+
+    for (size_t d = 0; d < depth; ++d) {
+        size_t offset = inds + d;
+        size_t offset1 = len + offset;
+        size_t offset2 = 2 * len + offset;
+        double w = weights[d];
+        qK0  += w * QKv[offset];
+        qK1  += w * QKv[offset1];
+        dqK1 += w * dQKv[offset1];
+        QR0  += w * QRv[offset];
+        QR1  += w * QRv[offset1];
+        dQR1 += w * dQRv[offset1];
+        if (indsx >= t1len - 1) continue;
+        dQR2 += w * dQRv[offset2];
+        dqK2 += w * dQKv[offset2];
+    }
+
+    // QK linear Hermite always
+    if (indsx < t1len - 1) {
+        double denom = dtratio[indsx + 1];
+        qK_result[j] = (1 - 3 * inx2 + 2 * inx3) * qK0 + (inx - 2 * inx2 + inx3) * dqK1 + (3 * inx2 - 2 * inx3) * qK1 + (-inx2 + inx3) * dqK2 / denom;
+    } else {
+        qK_result[j] = (1 - inx2) * qK0 + inx2 * qK1 + (inx - inx2) * dqK1;
+    }
+
+    // QR log-space if safe, using staggered derivatives; fallback otherwise
+    if (indsx < t1len - 1) {
+        double denom = dtratio[indsx + 1];
+        if (QR0 > 0.0 && QR1 > 0.0) {
+            double f0 = log(QR0);
+            double f1 = log(QR1);
+            double g_left  = dQR1 / QR0;  // derivative at left node stored at next index
+            double g_right = dQR2 / QR1;  // derivative at right node stored at next-next index
+            double f_interp = (1 - 3 * inx2 + 2 * inx3) * f0 + (inx - 2 * inx2 + inx3) * g_left + (3 * inx2 - 2 * inx3) * f1 + (-inx2 + inx3) * g_right / denom;
+            qR_result[j] = exp(f_interp);
+        } else {
+            qR_result[j] = (1 - 3 * inx2 + 2 * inx3) * QR0 + (inx - 2 * inx2 + inx3) * dQR1 + (3 * inx2 - 2 * inx3) * QR1 + (-inx2 + inx3) * dQR2 / denom;
+        }
+    } else {
+        if (QR0 > 0.0 && QR1 > 0.0) {
+            double f0 = log(QR0);
+            double f1 = log(QR1);
+            double g_left = dQR1 / QR0;
+            double f_interp = (1 - inx2) * f0 + inx2 * f1 + (inx - inx2) * g_left;
+            qR_result[j] = exp(f_interp);
+        } else {
+            qR_result[j] = (1 - inx2) * QR0 + inx2 * QR1 + (inx - inx2) * dQR1;
+        }
+    }
+}
+
 // Simple dispatcher selecting specialized vs dynamic kernel based on depth
 class IndexMatAllOptimizer {
     static size_t cached_depth;
@@ -275,6 +356,36 @@ void indexMatAllGPU(const thrust::device_vector<double>& posx,
     const size_t depth = weightsy.size() / indsy.size();
     IndexMatAllOptimizer::setup(depth);
     IndexMatAllOptimizer::run(posx, indsy, weightsy, dtratio, qK_result, qR_result, QKv, QRv, dQKv, dQRv, len, stream);
+}
+
+// Log-space launcher
+void indexMatAllGPU_log(const thrust::device_vector<double>& posx,
+                    const thrust::device_vector<size_t>& indsy,
+                    const thrust::device_vector<double>& weightsy,
+                    const thrust::device_vector<double>& dtratio,
+                    thrust::device_vector<double>& qK_result,
+                    thrust::device_vector<double>& qR_result,
+                    const thrust::device_vector<double>& QKv,
+                    const thrust::device_vector<double>& QRv,
+                    const thrust::device_vector<double>& dQKv,
+                    const thrust::device_vector<double>& dQRv,
+                    size_t len,
+                    cudaStream_t stream) {
+    size_t prod = indsy.size();
+    size_t depth = weightsy.size() / prod; size_t t1len = dtratio.size();
+    int threads = 64; int blocks = (prod + threads - 1) / threads;
+    indexMatAllKernel_dynamic_log<<<blocks, threads, 0, stream>>>(
+        thrust::raw_pointer_cast(posx.data()),
+        thrust::raw_pointer_cast(indsy.data()),
+        thrust::raw_pointer_cast(weightsy.data()),
+        thrust::raw_pointer_cast(dtratio.data()),
+        thrust::raw_pointer_cast(qK_result.data()),
+        thrust::raw_pointer_cast(qR_result.data()),
+        thrust::raw_pointer_cast(QKv.data()),
+        thrust::raw_pointer_cast(QRv.data()),
+        thrust::raw_pointer_cast(dQKv.data()),
+        thrust::raw_pointer_cast(dQRv.data()),
+        len, depth, t1len, prod);
 }
 
 // GPU interpolation functions

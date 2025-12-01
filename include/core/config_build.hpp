@@ -43,6 +43,19 @@
     #undef DMFE_PP_VALUE
 #endif
 
+// Normalize DMFE_TAIL_FIT_DEBUG similarly
+#ifndef DMFE_TAIL_FIT_DEBUG
+    #define DMFE_TAIL_FIT_DEBUG 0
+#else
+    #if (DMFE_TAIL_FIT_DEBUG + 0) == 1
+        #undef DMFE_TAIL_FIT_DEBUG
+        #define DMFE_TAIL_FIT_DEBUG 1
+    #else
+        #undef DMFE_TAIL_FIT_DEBUG
+        #define DMFE_TAIL_FIT_DEBUG 0
+    #endif
+#endif
+
 // CUDA qualifier macros: when CUDA is enabled, use CUDA keywords; otherwise define as empty.
 #if DMFE_WITH_CUDA
     #define DMFE_DEVICE __device__

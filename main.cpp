@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
 
     // Display version information
     // Keep banner plain; following lines use standardized prefixes
-    std::cout << "RG-Evo: DMFE Simulation" << std::endl;
+    std::cout << "DYNAMITE: DMFE Simulation" << std::endl;
     std::cout << "=======================" << std::endl;
     std::cout << g_version_info.toString() << std::endl;
     std::cout << std::endl;

@@ -224,7 +224,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     update_params_prog(params_step, params_steps_total);
 
     params << std::setprecision(16);
-    params << "# DMFE Simulation Parameters" << std::endl;
+    params << "# DYNAMITE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
     params << std::endl;
 
@@ -382,7 +382,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     update_params_prog(params_step, params_steps_total);
     
     params << std::setprecision(16);
-    params << "# DMFE Simulation Parameters" << std::endl;
+    params << "# DYNAMITE Simulation Parameters" << std::endl;
     params << "# =========================" << std::endl;
     params << std::endl;
     update_params_prog(++params_step, params_steps_total);

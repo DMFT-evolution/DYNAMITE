@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=gpu
 #SBATCH -G h100:1
-#SBATCH --mem=100gb
+#SBATCH --mem=400gb
 #SBATCH --time=7-00:15:00 
 #SBATCH --job-name=rg-evo-run
 #SBATCH --mail-user=jlang15@uni-koeln.de
@@ -32,7 +32,7 @@ echo $presendir
 
 # To organise the work directory according to date, time, and job ID 
 dt=`date '+%Y-%m-%d_%H%M'`
-workdir=/scratch/${USER}/gpu_${SLURM_JOB_ID}_$dt
+workdir=/scratch/${USER}/GPU_${SLURM_JOB_ID}_$dt
 echo "Working directory: $workdir"
 
 mkdir -p $workdir
@@ -59,7 +59,7 @@ elif $USE_NCU; then
   ncu --set full -o profile ./RG-Evo
 else
   # ./RG-Evo -m 10000 -D false -l "$l"
-  ./RG-Evo -m 120000 -D false -q 4 -l 0.5 -L 512
+  ./RG-Evo -p 2 -q 6 -l 0.9 -L 512 -m 1e8 -t 1e7 -D false -S false
 fi
 
 # Move error and logfile to work directory

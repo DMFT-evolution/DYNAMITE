@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/gpu.svg" alt="GPU icon"/> Tutorial: Cluster Portable Build
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/gpu.svg" alt="GPU icon"/> Tutorial: Cluster Portable Build
 
 Build and run on heterogeneous cluster nodes without `-march=native` and with shared cudart.
 

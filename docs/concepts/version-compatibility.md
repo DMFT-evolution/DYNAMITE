@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/tag.svg" alt="Version tag icon"/> Version compatibility
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/tag.svg" alt="Version tag icon"/> Version compatibility
 
 Outputs embed build/version metadata. Resume compatibility is determined by the version policy and can be overridden explicitly.
 
@@ -18,7 +18,7 @@ Outputs embed build/version metadata. Resume compatibility is determined by the 
 ## What is compared when resuming
 
 - Primarily the code version string. Additional metadata (git branch/hash, dirty state) are reported as warnings when major.minor are equal but commits differ.
-- Runtime options like `--serk2` and sparsification aggressiveness are stored with outputs and re‑applied; mismatches are surfaced in logs even if allowed.
+- Runtime options like `--serk2`, `--log-response-interp` and sparsification aggressiveness are stored with outputs and re‑applied; mismatches are surfaced in logs even if allowed. Older runs may not include the `log_response_interp` field; in that case it is treated as `false` for comparison.
 
 ## Recommendation
 

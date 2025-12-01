@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/architecture.svg" alt="Architecture icon"/> Architecture
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/architecture.svg" alt="Architecture icon"/> Architecture
 
 The code mirrors physics operations:
 
@@ -8,6 +8,30 @@ The code mirrors physics operations:
 - Sparsification (`include/sparsify/`): maintains sublinear memory/compute with error control.
 - Simulation (`include/simulation/`): orchestration, checkpoints, and async I/O.
 - Core/Math/IO/Version: utilities, numeric primitives, I/O (HDF5 runtime), version policy.
+
+## System flow
+
+```mermaid
+flowchart LR
+  sim[Simulation orchestrator<br/>src/simulation] --> eoms[EOM kernels<br/>src/EOMs]
+  eoms --> interp[Interpolation maps<br/>src/interpolation]
+  interp --> conv[Convolution evaluators<br/>src/convolution]
+  conv --> sparsify[Sparsification<br/>src/sparsify]
+  sparsify --> update[State update & diagnostics]
+  update --> sim
+  update --> io[IO layer<br/>src/io]
+  io -->|async or sync| storage[(Outputs:<br/>data.h5, data.bin, params.txt)]
+  update --> console[Console/UI feedback]
+
+  classDef module fill:#1f77b4,stroke:#0d3b66,color:#fff
+  sim:::module
+  eoms:::module
+  interp:::module
+  conv:::module
+  sparsify:::module
+  update:::module
+  io:::module
+```
 
 ## I/O layer (modular, runtime‑optional HDF5)
 

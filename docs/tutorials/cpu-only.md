@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DMFE/assets/icons/cpu.svg" alt="CPU icon"/> Tutorial: CPU-only Run
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/cpu.svg" alt="CPU icon"/> Tutorial: CPU-only Run
 
 If CUDA is not available or you want deterministic CPU runs, disable the GPU path.
 
