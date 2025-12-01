@@ -11,6 +11,8 @@
 struct SimulationDataSnapshot {
     std::vector<double> QKv, QRv, dQKv, dQRv, t1grid, rvec, drvec;
     std::vector<double> QKB1int, QRB1int, theta;
+    std::vector<double> debug_step_times;
+    std::vector<double> debug_step_runtimes;
     double energy;
     double t_current;
     int current_len, current_loop;

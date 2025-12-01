@@ -10,7 +10,7 @@ For build, run, inputs/outputs, and full CLI reference, see `README.md`.
 
 I/O at a glance:
 - Preferred format: `data.h5` (HDF5), loaded via a runtime-optional wrapper; automatic fallback to `data.bin` if HDF5 is unavailable at runtime.
-- Separate artifacts: `params.txt`, histories (`rvec.txt`, `energy.txt`, `qk0.txt`), and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`).
+- Separate artifacts: `params.txt`, histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and in debug mode `times.txt` with per-step wall-clock runtime), and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`).
 - TUI/save telemetry: progress windows for main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90], with a concise "Save started"/"Save finished: <dir>" message pair.
 
 ## Module Map

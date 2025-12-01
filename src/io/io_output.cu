@@ -29,6 +29,7 @@
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <algorithm>
 
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
@@ -198,6 +199,10 @@ SimulationDataSnapshot createDataSnapshot()
     snapshot.peak_memory_kb_snapshot = peak_memory_kb;
     snapshot.peak_gpu_memory_mb_snapshot = peak_gpu_memory_mb;
     snapshot.program_start_time_snapshot = program_start_time;
+
+    // Capture debug runtime telemetry (host-only data)
+    snapshot.debug_step_times = sim->h_debug_step_times;
+    snapshot.debug_step_runtimes = sim->h_debug_step_runtimes;
     
     return snapshot;
 }
@@ -268,7 +273,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "histories");
     };
-    size_t total_lines = simulation.h_t1grid.size() * 3; // rvec + energy + qk0
+    const bool write_times = config.debug && !simulation.h_debug_step_runtimes.empty();
+    const size_t debug_sample_count = write_times ? std::min(simulation.h_debug_step_runtimes.size(), simulation.h_t1grid.size()) : 0;
+    size_t total_lines = simulation.h_t1grid.size() * 3 + debug_sample_count; // rvec + energy + qk0 (+times when debug)
     size_t done_lines = 0;
     update_hist_prog(done_lines, total_lines);
 
@@ -316,10 +323,32 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
+
+    // Save wall-clock runtime history when debug telemetry is available
+    if (write_times && debug_sample_count > 0) {
+        std::string timesFilename = dirPath + "/times.txt";
+        std::ofstream timesFile(timesFilename);
+        if (timesFile) {
+            timesFile << std::fixed << std::setprecision(16);
+            timesFile << "# Time\tRuntimeSeconds\n";
+            for (size_t i = 0; i < debug_sample_count; ++i) {
+                size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
+                double sim_time_value = (i < simulation.h_debug_step_times.size())
+                    ? simulation.h_debug_step_times[i]
+                    : simulation.h_t1grid[safe_idx];
+                timesFile << sim_time_value << "\t" << simulation.h_debug_step_runtimes[i] << "\n";
+                if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
+            }
+            timesFile.close();
+        } else {
+            std::cerr << dmfe::console::ERR() << "Could not open file " << timesFilename << std::endl;
+        }
+    }
     
     // Consolidated summary line for history files
     if (config.debug) {
-        std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0; " << t1len 
+        std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0"
+                  << (write_times ? ", times" : "") << "; " << t1len 
                   << " time points) under " << dirPath << std::endl;
     }
     // Ensure we end histories phase at 0.80
@@ -358,7 +387,9 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "histories");
     };
-    size_t total_lines = snapshot.t1grid.size() * 3;
+    const bool write_times = config.debug && !snapshot.debug_step_runtimes.empty();
+    const size_t debug_sample_count = write_times ? std::min(snapshot.debug_step_runtimes.size(), snapshot.t1grid.size()) : 0;
+    size_t total_lines = snapshot.t1grid.size() * 3 + debug_sample_count;
     size_t done_lines = 0;
     update_hist_prog(done_lines, total_lines);
 
@@ -406,11 +437,32 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
     } else {
     std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
     }
+
+    if (write_times && debug_sample_count > 0) {
+        std::string timesFilename = dirPath + "/times.txt";
+        std::ofstream timesFile(timesFilename);
+        if (timesFile) {
+            timesFile << std::fixed << std::setprecision(16);
+            timesFile << "# Time\tRuntimeSeconds\n";
+            for (size_t i = 0; i < debug_sample_count; ++i) {
+                size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
+                double sim_time_value = (i < snapshot.debug_step_times.size())
+                    ? snapshot.debug_step_times[i]
+                    : snapshot.t1grid[safe_idx];
+                timesFile << sim_time_value << "\t" << snapshot.debug_step_runtimes[i] << "\n";
+                if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
+            }
+            timesFile.close();
+        } else {
+            std::cerr << dmfe::console::ERR() << "Could not open file " << timesFilename << std::endl;
+        }
+    }
     
     // Consolidated summary line for history files (async)
     if (config.debug) {
-        std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0; " << t1len 
-                  << " time points) under " << dirPath << " (async)" << std::endl;
+    std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0"
+          << (write_times ? ", times" : "") << "; " << t1len 
+          << " time points) under " << dirPath << " (async)" << std::endl;
     }
     update_hist_prog(total_lines, total_lines);
 }

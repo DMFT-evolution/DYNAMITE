@@ -47,4 +47,9 @@ struct SimulationData {
     std::vector<size_t> h_Stemp0, h_Stemp1;
 
     std::vector<double> h_error_result;
+
+    // Debug/telemetry timelines ------------------------------------------------
+    // Captures (simulation time, wall-clock runtime) pairs when config.debug is true.
+    std::vector<double> h_debug_step_times;
+    std::vector<double> h_debug_step_runtimes;
 };

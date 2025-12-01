@@ -75,7 +75,7 @@ Method notes and trade‑offs:
 
 - HDF5 `data.h5` when available; else `data.bin` plus text summaries.
 - Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see concepts/eoms-and-observables.md).
-- Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`.
+- Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`, and in debug mode `times.txt` (wall-clock runtime per step).
 
 I/O behavior and TUI:
 - HDF5 is loaded at runtime when possible; on failure the code writes `data.bin` instead. The console prints which HDF5 libraries were loaded (if any).

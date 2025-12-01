@@ -109,7 +109,7 @@ This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision 
 
 The I/O layer is modular and reports progress via a compact TUI:
 
-- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
+- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and when `-D true` the per-step runtime log `times.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
 - Runtime-optional HDF5: the program tries to load system `libhdf5`/`libhdf5_hl` at runtime. It prints which libraries were loaded; if unavailable or an error occurs, it falls back to `data.bin` automatically.
 - Save telemetry windows (fraction of the save task): main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line reaches 1.0 when all outputs are complete.
 - TUI messages: a "Save started" line is printed (without filename unless `--debug true`) and a final "Save finished: <dir>" line when done. In async mode, the simulation continues while saving in the background.

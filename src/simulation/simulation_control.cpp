@@ -5,6 +5,7 @@
 #include "core/console.hpp"
 #include "interpolation/interpolation_core.hpp"
 #include <iostream>
+#include <algorithm>
 
 // External global variables
 extern SimulationConfig config;
@@ -12,6 +13,16 @@ extern SimulationData* sim;
 
 bool rollbackState(int n) {
 #if DMFE_WITH_CUDA
+    auto trim_debug_timelines = [&](size_t targetSize) {
+        if (!sim->h_debug_step_times.empty()) {
+            size_t debug_target = std::min(sim->h_debug_step_times.size(), targetSize);
+            sim->h_debug_step_times.resize(debug_target);
+        }
+        if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
+            sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
+        }
+    };
+
     // Get current state size
     size_t currentSize = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
     
@@ -58,11 +69,22 @@ bool rollbackState(int n) {
 
         interpolate();
     }
+    trim_debug_timelines(targetSize);
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "
               << (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) << std::endl;
 #else
+    auto trim_debug_timelines = [&](size_t targetSize) {
+        if (!sim->h_debug_step_times.empty()) {
+            size_t debug_target = std::min(sim->h_debug_step_times.size(), targetSize);
+            sim->h_debug_step_times.resize(debug_target);
+        }
+        if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
+            sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
+        }
+    };
+
     // Get current state size
     size_t currentSize = sim->h_t1grid.size();
     
@@ -91,6 +113,7 @@ bool rollbackState(int n) {
     config.loop -= n;
 
     interpolate();
+    trim_debug_timelines(targetSize);
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "

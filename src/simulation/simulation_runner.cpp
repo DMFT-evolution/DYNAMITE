@@ -339,6 +339,34 @@ int runSimulation() {
             }
 #endif
         }
+
+        // Record debug runtime telemetry (host-side only, gated to avoid perf impact)
+        if (config.debug) {
+            double sim_time_sample;
+#if DMFE_WITH_CUDA
+            sim_time_sample = config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back();
+#else
+            sim_time_sample = sim->h_t1grid.back();
+#endif
+            double runtime_sample = getRuntimeSeconds();
+            auto& times = sim->h_debug_step_times;
+            auto& runtimes = sim->h_debug_step_runtimes;
+            const double tol = 1e-12;
+            if (times.size() > runtimes.size()) {
+                // keep vectors in lockstep even if previous state was inconsistent
+                runtimes.resize(times.size());
+            }
+            bool should_append = times.empty() || sim_time_sample > times.back() + tol || sim_time_sample < times.back() - tol;
+            if (should_append) {
+                times.push_back(sim_time_sample);
+                runtimes.push_back(runtime_sample);
+            } else if (!runtimes.empty()) {
+                runtimes.back() = runtime_sample;
+            } else {
+                // Shouldn't happen, but keep vectors aligned
+                runtimes.push_back(runtime_sample);
+            }
+        }
     }
 
     SimulationDataSnapshot* final_snapshot = nullptr;
