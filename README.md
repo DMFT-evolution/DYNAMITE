@@ -37,8 +37,6 @@ After build the executable is placed in the project root:
 ./RG-Evo-shared
 ```
 
-`RG-Evo-shared` is now a lightweight wrapper that attempts to launch the CUDA-enabled binary `RG-Evo-shared.cuda`. If the required CUDA shared libraries (`libcudart`, `libcuda`) are missing on the current machine, the wrapper automatically falls back to the CPU-only executable `RG-Evo` so you still get a working run without copying extra libraries. Set `DMFE_FORCE_GPU=1` to skip the fallback if you need the GPU run to fail loudly.
-
 Show help and defaults:
 
 ```bash
@@ -149,7 +147,7 @@ Pass options to CMake at configure time (either via `./build.sh ...` or directly
 - DMFE_NATIVE (ON) — Adds `-march=native` for host compilation when using GCC/Clang.
 - DMFE_PORTABLE_BUILD (OFF) — Portable/cluster helper. Forces `DMFE_NATIVE=OFF` and uses shared CUDA runtime (see below).
 - DMFE_STATIC_CUDART (ON) — Link CUDA runtime statically; helps run on systems without a local CUDA toolkit. Set `OFF` to use shared cudart.
-- DMFE_BUILD_SHARED_VARIANT (ON) — Build the shared-runtime GPU binary `RG-Evo-shared.cuda` plus the wrapper `RG-Evo-shared` that auto-falls back to the CPU executable when CUDA libraries are unavailable.
+- DMFE_BUILD_SHARED_VARIANT (ON) — Also build `RG-Evo-shared` with shared CUDA runtime.
 - USE_HDF5 (OFF) — Compile-time HDF5 linkage. Requires dev packages (e.g., `libhdf5-dev`). Defines `USE_HDF5` and links `HDF5::HDF5`.
 - USE_HDF5_RUNTIME (ON) — Runtime-optional HDF5 via dlopen. Adds `src/io/h5_runtime.cpp`, defines `H5_RUNTIME_OPTIONAL=1`, links `-ldl`. Note: Many distro builds hide the `H5T_*` native type globals; for best compatibility, ensure the HDF5 High-Level runtime library is present (e.g. `libhdf5_hl.so` / `libhdf5_serial_hl.so`). If the loader prints that it loaded `libhdf5*.so` but not the HL library and HDF5 writes fail, the program will fall back to `data.bin`.
 - DMFE_PREFER_CLANG_HOST (OFF) — Prefer `clang++-14` as CUDA host compiler if available.

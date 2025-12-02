@@ -23,9 +23,6 @@ Grid_data/2048/
 *.dylib
 *.dll
 *.code-workspace
-/RG-Evo
-/RG-Evo-shared
-/RG-Evo-shared.cuda
 
 # Python
 __pycache__/
