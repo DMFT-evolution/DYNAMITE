@@ -266,7 +266,7 @@ void tailFitBlendGPU() {
 	double mean_abs_residual = thrust::transform_reduce(
 		thrust::device,
 		sim->temp12.begin(), sim->temp12.begin() + tail_len,
-		[] __device__ (double r) { return fabs(r); },
+		[] __host__ __device__ (double r) -> double { return fabs(r); },
 		0.0,
 		thrust::plus<double>()
 	) / static_cast<double>(tail_len);
@@ -281,7 +281,7 @@ void tailFitBlendGPU() {
 	double residual_variance = thrust::transform_reduce(
 		thrust::device,
 		sim->temp12.begin(), sim->temp12.begin() + tail_len,
-		[mean_residual] __device__ (double r) {
+		[mean_residual] __host__ __device__ (double r) -> double {
 			double d = r - mean_residual;
 			return d * d;
 		},

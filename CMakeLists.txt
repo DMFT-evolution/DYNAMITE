@@ -357,6 +357,8 @@ endif()
 
 # Optional shared-runtime variant (CUDA only)
 if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
+    set(RG_EVO_SHARED_GPU_OUTPUT_NAME "RG-Evo-shared.cuda")
+    set(RG_EVO_SHARED_CPU_FALLBACK "RG-Evo")
     add_executable(RG-Evo-shared main.cpp)
     target_link_libraries(RG-Evo-shared PRIVATE DFME-core)
     target_link_options(RG-Evo-shared PRIVATE $<HOST_LINK:-ldl>)
@@ -365,6 +367,7 @@ if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
         CUDA_SEPARABLE_COMPILATION ON
         CUDA_RUNTIME_LIBRARY Shared
         RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}
+        OUTPUT_NAME ${RG_EVO_SHARED_GPU_OUTPUT_NAME}
     )
     target_compile_options(RG-Evo-shared PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:${common_cuda_flags}>
@@ -373,6 +376,18 @@ if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
     if(DMFE_DEBUG)
         target_compile_definitions(RG-Evo-shared PUBLIC THRUST_DEBUG=1)
     endif()
+
+    # Generate CPU-fallback wrapper script in the runtime directory
+    set(RG_EVO_SHARED_WRAPPER ${PROJECT_SOURCE_DIR}/RG-Evo-shared)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/scripts/RG-Evo-shared.sh.in
+        ${RG_EVO_SHARED_WRAPPER}
+        @ONLY
+    )
+    file(CHMOD ${RG_EVO_SHARED_WRAPPER} PERMISSIONS
+        OWNER_READ OWNER_WRITE OWNER_EXECUTE
+        GROUP_READ GROUP_EXECUTE
+        WORLD_READ WORLD_EXECUTE)
 endif()
 
 foreach(tgt IN ITEMS DFME-core RG-Evo)

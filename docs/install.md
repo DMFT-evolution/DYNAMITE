@@ -25,7 +25,7 @@ cmake -S . -B build
 cmake --build build -j $(nproc)
 ```
 
-Executables: `./RG-Evo` (and optionally `./RG-Evo-shared`).
+Executables: `./RG-Evo` (and optionally the wrapper `./RG-Evo-shared`, which launches `RG-Evo-shared.cuda` when CUDA libraries are present and otherwise falls back to `./RG-Evo`).
 
 ## Options
 
