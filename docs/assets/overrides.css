@@ -1,7 +1,7 @@
 /* Brand primitives */
 :root {
-  --dmfe-logo-default: url('../assets/logo-dmfe.svg');
-  --dmfe-logo-contrast: url('../assets/logo-dmfe-contrast.svg');
+  --dmfe-logo-default: url('/DYNAMITE/assets/logo-dmfe.svg');
+  --dmfe-logo-contrast: url('/DYNAMITE/assets/logo-dmfe-contrast.svg');
   --dmfe-gradient-start: #1e88e5;
   --dmfe-gradient-mid: #3d68ff;
   --dmfe-gradient-end: #5e35b1;
@@ -39,7 +39,7 @@ body.dmfe-home[data-md-color-scheme="slate"]::before {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background-image: url('../assets/Logo_fancy.png');
+  background-image: url('/DYNAMITE/assets/Logo_fancy.png');
   background-repeat: no-repeat;
   background-size: clamp(640px, 65vw, 1100px);
   background-position: center calc(12vh + 20px);

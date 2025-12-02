@@ -133,7 +133,7 @@ Inputs directory structure:
 ## Conceptual figure: triangular time domain and non‑equidistant grid
 
 <figure style="text-align:center;">
-	<img src="../../assets/interpolation-grid-diagram.svg" alt="Triangular time domain with dense and sparse grid regions" style="max-width: 680px; width: 100%; height: auto;" />
+	<img src="/DYNAMITE/assets/interpolation-grid-diagram.svg" alt="Triangular time domain with dense and sparse grid regions" style="max-width: 680px; width: 100%; height: auto;" />
 	<figcaption>Triangular time domain with dense and sparse grid regions.</figcaption>
   
 </figure>
