@@ -260,7 +260,7 @@ Example: `Grid_data/512/...` for `-L 512`. On first use the program may create a
 At startup, an output root directory is selected:
 
 - If you pass `-o /path/to/dir` (or `--out-dir /path/to/dir`), all results are written there. The path is created if needed.
-- Otherwise, if the executable resides under your `$HOME`, results are written under `config.outputDir` (default in code: `/nobackups/jlang/Results/`).
+- Otherwise, if the executable resides under your `$HOME`, results are written under `config.outputDir` (default in code: `/nobackups/<username>/Results/`, resolved from `$USER`/`$LOGNAME`).
 - Else results go to `config.resultsDir` (default `Results/`, relative to the working dir).
 
 Both defaults live in `include/config.hpp`. The CLI `--out-dir` provides a runtime override without rebuilding.

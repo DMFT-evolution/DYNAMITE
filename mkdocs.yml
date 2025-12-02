@@ -15,15 +15,18 @@ theme:
   logo: assets/logo-dmfe.svg
   favicon: assets/logo-dmfe.svg
   palette:
-    - scheme: default
-      primary: blue
-      accent: indigo
     - scheme: slate
       primary: blue
       accent: indigo
       toggle:
+        icon: material/white-balance-sunny
+        name: Switch to light mode
+    - scheme: default
+      primary: blue
+      accent: indigo
+      toggle:
         icon: material/weather-night
-        name: Switch to dark mode
+        name: Switch back to dark mode
 
 markdown_extensions:
   - admonition
@@ -52,6 +55,7 @@ markdown_extensions:
 
 plugins:
   - search
+  - asciinema-player
   - exclude:
       glob:
         - reference/doxygen/**
@@ -62,8 +66,11 @@ extra_javascript:
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js
   - assets/mermaid-init.js
+  - assets/logo-fade.js
+  - assets/asciinema-player.min.js
 extra_css:
   - assets/overrides.css
+  - assets/asciinema-player.css
 
 nav:
   - Home: index.md

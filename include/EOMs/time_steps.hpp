@@ -154,28 +154,6 @@ double rstepGPU(
     double T0,
     StreamPool& pool);
 
-double rstepGPU(
-    const thrust::device_ptr<const double>& qK,
-    const thrust::device_ptr<const double>& qR,
-    double t,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
-    double Gamma,
-    double T0,
-    StreamPool& pool);
-
-// Overload that also stores the result directly into a device buffer (avoids host->device write)
-double rstepGPU(
-    const thrust::device_ptr<const double>& qK,
-    const thrust::device_ptr<const double>& qR,
-    double t,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
-    double Gamma,
-    double T0,
-    StreamPool& pool,
-    double* device_out);
-
 double drstepGPU(
     const thrust::device_vector<double>& QKv,
     const thrust::device_vector<double>& QRv,

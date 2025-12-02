@@ -1,13 +1,108 @@
-<div style="display:flex;align-items:center;gap:16px;margin-bottom:8px;">
-	<img src="assets/logo-dmfe.svg" alt="DYNAMITE logo" width="144" height="144"/>
-	<h1 style="margin:0;">DYNAMITE: Dynamical Mean-Field Evolution Toolkit</h1>
-</div>
+<section class="dmfe-hero" aria-labelledby="dmfe-hero-title">
+	<div class="dmfe-hero__glow" aria-hidden="true"></div>
+	<div class="dmfe-hero__grid">
+		<div class="dmfe-hero__text">
+			<!-- <p class="dmfe-hero__eyebrow">Open-source dynamical mean-field evolution</p> -->
+			<h1 id="dmfe-hero-title">Long-time dynamics, lightning-fast performance.</h1>
+			<p class="dmfe-hero__lede">
+				DYNAMITE is an efficient solver of DMFT equations with long memory. It features sublinear cost, GPU support and reusable checkpoints.
+			</p>
+			<div class="dmfe-hero__cta">
+				<a class="md-button md-button--primary" href="install/">Install</a>
+				<a class="md-button" href="usage/">Browse usage</a>
+				<a class="md-button" href="tutorials/first-run/">Try the first run</a>
+			</div>
+			<!-- <dl class="dmfe-hero__stats">
+				<div>
+					<dt>Scaling</dt>
+					<dd>Sublinear in simulated time</dd>
+				</div>
+				<div>
+					<dt>Backends</dt>
+					<dd>Deterministic CPU + optional GPU</dd>
+				</div>
+				<div>
+					<dt>Outputs</dt>
+					<dd>Versioned HDF5 + checkpoints</dd>
+				</div>
+			</dl> -->
+		</div>
+		<!-- <div class="dmfe-hero__visual">
+			<div class="dmfe-showcase">
+				<p class="dmfe-showcase__label">Showcase lane</p>
+				<div class="dmfe-showcase__cards">
+					<div class="dmfe-showcase__card">
+						<h3>CLI snapshots</h3>
+						<p>Drop terminal captures or run summaries here when you are ready to highlight workflows.</p>
+					</div>
+					<div class="dmfe-showcase__card">
+						<h3>Code embeds</h3>
+						<p>Embed syntax-highlighted EOM snippets, grid specs, or screenshots without changing the layout.</p>
+					</div>
+				</div>
+				<p class="dmfe-showcase__hint">This lane intentionally stays flexible for future examples or screenshots.</p>
+			</div>
+		</div> -->
+	</div>
+</section>
 
-<p style="margin-top:0;color:#455a64;"><b>
-An open-source toolkit for time-evolving non-stationary dynamical mean-field equations with memory. It targets systems that develop emergent slow time scales (e.g., quenches, aging, and other far-from-equilibrium protocols) and delivers long-time trajectories with controlled accuracy at practical cost. High performance CPU and GPU acceleration, reproducible outputs, and resumable checkpoints.
-</p></b>
+<section class="dmfe-section dmfe-terminal">
+	<div class="dmfe-terminal-card">
+		<div class="dmfe-terminal-card__glow" aria-hidden="true"></div>
+		<!-- <div class="dmfe-terminal-card__body"> -->
+			<div class="dmfe-terminal-card__header">
+				<p class="dmfe-terminal-card__eyebrow">Terminal snapshot</p>
+			</div>
+			<!-- <div class="dmfe-terminal-card__player"> -->
+```asciinema-player
+{
+	"file": "assets/demo.cast",
+	"rows": 17,
+	"cols": 102,
+	"mkap_theme": "none",
+	"auto_play": true,
+	"loop": true
+}
+```
+			<!-- </div> -->
+		<!-- </div> -->
+	</div>
+</section>
 
-## Problem setting (DMFT, aging, quench)
+<section class="dmfe-section">
+	<div class="dmfe-section__header">
+		<p class="dmfe-eyebrow">Why DYNAMITE</p>
+		<h2>Purpose-built for aging and quench protocols</h2>
+	</div>
+	<div class="dmfe-feature-grid">
+		<article class="dmfe-feature">
+			<h3>Non-stationary solvers</h3>
+			<p>Track two-time correlators C(t, t') and responses R(t, t') deep into aging, respecting the causal triangle.</p>
+		</article>
+		<article class="dmfe-feature">
+			<h3>Interpolated memory</h3>
+			<p>Two-dimensional sparse interpolation drops the asymptotic cost from O(T³) to sublinear while controlling error.</p>
+		</article>
+		<article class="dmfe-feature">
+			<h3>Adaptive integrators</h3>
+			<p>RK54 ⇄ SSPRK104 switching, stability-aware steps, and sparsification-aware tolerances keep runs safe.</p>
+		</article>
+		<article class="dmfe-feature">
+			<h3>CPU baseline, GPU boosts</h3>
+			<p>Deterministic CPU path plus optional CUDA kernels for acceleration after validation.</p>
+		</article>
+		<article class="dmfe-feature">
+			<h3>Checkpoints + reproducibility</h3>
+			<p>Versioned HDF5 outputs, restartable checkpoints, and pinned parameters for every trajectory.</p>
+		</article>
+		<article class="dmfe-feature">
+			<h3>Plugin-style EOM modules</h3>
+			<p>Drop in custom closures for new models via the EOM interface. Examples live in <code>concepts/eoms-and-observables.md</code>.</p>
+		</article>
+	</div>
+</section>
+
+## DMFT problem setting
 
 We evolve correlation and response functions after a quench under closed dynamical equations of the form
 
@@ -16,81 +111,57 @@ $$
 \partial_t R(t,t') = \mathcal{G}[C,R](t,t')\,,\quad t\ge t'\,.
 $$
 
-The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to sublinear in simulated time while controlling accuracy relevant to aging observables.
+The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to sublinear in simulated time while controlling accuracy for aging observables.
 
-## What DYNAMITE provides
+### When DMFE is the right tool
 
-- Non-stationary DMFT time evolution after quenches for mean-field glassy and related models.
-- Two-dimensional sparse interpolation for memory kernels on the causal triangle, with controlled error.
-- Adaptive high-order explicit integrators with stability-aware switching (RK54 → SSPRK104), plus sparsification-aware steps.
-- CPU-first implementation with optional GPU kernels; deterministic runs and versioned outputs for reproducibility.
-- Resume from checkpoints; lightweight, streaming I/O suitable for long trajectories.
+- Your DMFT equations close on C and R with memory integrals over the past.
+- You need long-time, high-accuracy trajectories (aging, quenches, or other non-stationary protocols).
+- You rely on reproducible outputs, resumable checkpoints, and deterministic CPU references before enabling GPUs.
 
-When you should use it
-- You study aging dynamics and two-time observables C(t, t') and R(t, t') in fully-connected/mean-field models.
-- Your DMFT equations close in terms of C and R with memory integrals/convolutions over the past.
-- You need long-time, high-accuracy trajectories at feasible cost (sublinear scaling in simulated time).
+### Model assumptions
 
-What DYNAMITE assumes (scope)
-- Causal, single-site effective dynamics admitting closed DMFT equations on the triangular domain t ≥ t'.
-- History terms expressed as integrals/convolutions evaluable on a 2D interpolation grid.
-- Model-specific closures supplied through an EOM module (examples provided). See concepts/eoms-and-observables.md.
+- Single-site, causal effective dynamics laid out on the triangular domain t ≥ t'.
+- History terms expressible as integrals/convolutions evaluable on a 2D interpolation grid.
+- Model-specific closures supplied via an EOM module (see `concepts/eoms-and-observables.md`).
 
 ## Quickstart
 
-- Build Release:
-
-```bash
-./build.sh
-```
-
-- Short quench on L=512 grid:
-
-```bash
-./RG-Evo -L 512 -l 0.5 -m 1e4 -D false
-```
-
-- Outputs: HDF5 `data.h5` when available (datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec`) with attributes for parameters and time; otherwise binary with text summaries.
+<div class="dmfe-quickstart">
+	<div>
+		<h3>Build</h3>
+		<pre><code>./build.sh</code></pre>
+	</div>
+	<div>
+		<h3>Short quench (L = 512)</h3>
+		<pre><code>./RG-Evo -L 512 -l 0.5 -m 1e4 -D false</code></pre>
+	</div>
+	<div>
+		<h3>Outputs</h3>
+		<p>Versioned HDF5: <code>QKv</code>, <code>QRv</code>, <code>dQKv</code>, <code>dQRv</code>, <code>t1grid</code>, <code>rvec</code>, <code>drvec</code>. Binary + text summaries when HDF5 is unavailable.</p>
+	</div>
+</div>
 
 ## Typical workflow
 
-1) Pick or implement an EOM module defining the closures F, G for your model.
-2) Choose an interpolation grid (sizes and layout) balancing accuracy and speed.
-3) Select an integrator and tolerances; default adaptive RK54 usually works best initially.
-4) Run a short trajectory, inspect stability and estimated errors; adjust grid or tolerances.
-5) Launch production runs; use checkpoints and resume to extend time horizons.
+<ol class="dmfe-workflow">
+	<li><span>Pick or implement an EOM module defining the closures \( \mathcal{F}, \mathcal{G} \) for your model.</span></li>
+	<li><span>Choose an interpolation grid (sizes/layout) that balances accuracy and runtime.</span></li>
+	<li><span>Select an integrator and tolerances; adaptive RK54 is the usual starting point.</span></li>
+	<li><span>Run a short trajectory, inspect stability + error estimates, and adjust grids/tolerances.</span></li>
+	<li><span>Launch production runs with checkpoints so you can resume to extend time horizons.</span></li>
+</ol>
 
-## Where to go next
-
-- Installation notes: install.md (toolchain/CUDA arch selection)
-- Usage and flags: usage.md (physics meanings and recommended ranges)
-- Equations and observables: concepts/eoms-and-observables.md
-- Architecture and accuracy controls: concepts/*
-- API reference (headers): reference/api/
-
-## Outputs and formats
-
-- Primary: HDF5 file `data.h5` with datasets `QKv`, `QRv`, `dQKv`, `dQRv` and grids `t1grid`, `rvec`, `drvec`; parameters and time stored as attributes. See usage.md for details.
-- Fallback: Binary data with accompanying human-readable summaries when HDF5 is not available.
-- Checkpoints: Periodic snapshots enable resume without loss of accuracy.
-
-## Performance and accuracy
+## Outputs, performance, and accuracy
 
 - Sparse 2D interpolation of history terms yields sublinear cost in simulated time for long runs.
-- Stability-aware integrator switching maintains accuracy near stiff/transient regimes.
-- Recommended starting grids are provided in concepts/interpolation-grids.md; refine based on your observable tolerances.
-- CPU path is the reference; enable GPU when available for additional speedups after validating on your model.
+- Stability-aware integrator switching maintains accuracy near stiff or transient regimes.
+- Recommended starting grids live in `concepts/interpolation-grids.md`; refine per observable tolerances.
+- CPU path is the reference; enable GPU when available for speed-ups after validating on your model.
 
-## Cite DYNAMITE
+## Cite DYNAMITE & get help
 
-If this toolkit supports your research, please cite:
-
-- Software: see Reference → Cite for release/version details (CITATION.cff).
+- Software: see **Reference → Cite** (powered by `CITATION.cff`).
 - Method paper: J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” arXiv:2504.06849.
-
-License: Apache-2.0. See the License badge and the LICENSE file in the repository.
-
-## Getting help
-
-- See CONTRIBUTING.md and docs/dev/testing.md for guidance on reporting issues.
-- Open an issue in the project tracker with a minimal input reproducing the problem and your build info (compiler/CUDA, commit hash).
+- License: Apache-2.0 (see `LICENSE`).
+- Support: follow `dev/testing.md` for issue templates or open a GitHub issue with your build info (compiler/CUDA, commit hash, minimal input).

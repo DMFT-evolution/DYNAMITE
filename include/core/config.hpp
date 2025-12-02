@@ -1,7 +1,19 @@
 #pragma once
 
+#include <cstdlib>
 #include <string>
 #include <vector>
+
+inline std::string default_output_dir() {
+    const char *user = std::getenv("USER");
+    if (!user || user[0] == '\0') {
+        user = std::getenv("LOGNAME");
+    }
+    if (!user || user[0] == '\0') {
+        user = "jlang";
+    }
+    return std::string("/nobackups/") + user + "/Results/";
+}
 
 struct SimulationConfig {
     int p = 3;
@@ -12,7 +24,7 @@ struct SimulationConfig {
     double Gamma = 0.0;
     int maxLoop = 10000;  // 1e4
     std::string resultsDir = "Results/";
-    std::string outputDir = "/nobackups/jlang/Results/";
+    std::string outputDir = default_output_dir();
     bool debug = true;
     bool save_output = true;
     double tmax = 1e7;

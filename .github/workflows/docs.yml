@@ -19,7 +19,7 @@ jobs:
           python-version: '3.x'
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material mkdocs-material-extensions mkdocs-exclude
+          pip install mkdocs mkdocs-material mkdocs-material-extensions mkdocs-asciinema-player mkdocs-exclude
       - name: Build site
         run: |
           mkdocs build --strict
