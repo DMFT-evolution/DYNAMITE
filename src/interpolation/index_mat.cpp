@@ -8,10 +8,6 @@
 #include <numeric>
 #include <omp.h>
 
-// Prefer global C overloads to avoid namespace lookup issues
-using ::exp;
-using ::log;
-
 using namespace std;
 
 // External declarations for global variables

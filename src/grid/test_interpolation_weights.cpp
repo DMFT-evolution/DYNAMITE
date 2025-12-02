@@ -11,12 +11,6 @@ using dmfe::grid::compute_barycentric_rational_weights;
 using dmfe::grid::compute_bspline_weights;
 using dmfe::grid::BSplineWeights;
 
-static double max_abs(const std::vector<double>& v) {
-    double m = 0.0;
-    for (double x : v) m = std::max(m, std::abs(x));
-    return m;
-}
-
 int main() {
     const std::size_t len = 512;
     const double Tmax = 100000.0;

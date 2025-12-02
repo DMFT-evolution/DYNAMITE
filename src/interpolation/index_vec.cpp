@@ -9,10 +9,6 @@
 #include <omp.h>
 #include <numeric>
 
-// Prefer global C overloads to avoid namespace lookup issues
-using ::exp;
-using ::log;
-
 // Global simulation configuration (defined in main.cpp)
 extern SimulationConfig config;
 
