@@ -61,7 +61,7 @@ void sparsifyNscale(double threshold) {
 
     // Rebuild the vectors by keeping only the elements at inds
     std::vector<double> new_QKv, new_QRv, new_dQKv, new_dQRv;
-    std::vector<double> new_rvec, new_drvec, new_rInt, new_drInt;
+    std::vector<double> new_rvec, new_drvec;
     std::vector<double> new_t1grid, new_delta_t_ratio;
     
     new_QKv.reserve(inds.size() * config.len);
@@ -70,8 +70,6 @@ void sparsifyNscale(double threshold) {
     new_dQRv.reserve(inds.size() * config.len);
     new_rvec.reserve(inds.size());
     new_drvec.reserve(inds.size());
-    new_rInt.reserve(inds.size());
-    new_drInt.reserve(inds.size());
     new_t1grid.reserve(inds.size());
     new_delta_t_ratio.reserve(inds.size());
 
@@ -84,8 +82,6 @@ void sparsifyNscale(double threshold) {
         }
         new_rvec.push_back(sim->h_rvec[idx]);
         new_drvec.push_back(sim->h_drvec[idx]);
-        new_rInt.push_back(sim->h_rInt[idx]);
-        new_drInt.push_back(sim->h_drInt[idx]);
         new_t1grid.push_back(sim->h_t1grid[idx]);
         new_delta_t_ratio.push_back(sim->h_delta_t_ratio[idx]);
     }
@@ -96,8 +92,6 @@ void sparsifyNscale(double threshold) {
     sim->h_dQRv = std::move(new_dQRv);
     sim->h_rvec = std::move(new_rvec);
     sim->h_drvec = std::move(new_drvec);
-    sim->h_rInt = std::move(new_rInt);
-    sim->h_drInt = std::move(new_drInt);
     sim->h_t1grid = std::move(new_t1grid);
     sim->h_delta_t_ratio = std::move(new_delta_t_ratio);
 }

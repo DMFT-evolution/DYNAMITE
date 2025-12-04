@@ -276,7 +276,9 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     if (config.debug) {
         std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << " (async)" << std::endl;
     }
+    std::cout << "OK" << std::endl;
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
+    std::cout << "Still OK" << std::endl;
 #if DMFE_WITH_CUDA
     saveHistoryAsync(filename, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
 #endif

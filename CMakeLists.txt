@@ -222,6 +222,7 @@ set(CPU_SOURCES
     src/io/io_save_hdf5.cpp
     src/io/io_save_compressed.cpp
     src/io/io_save_driver.cpp
+    src/io/io_snapshot_host.cpp
     src/io/io_utils.cpp
     src/math/math_ops.cpp
     src/simulation/simulation_control.cpp

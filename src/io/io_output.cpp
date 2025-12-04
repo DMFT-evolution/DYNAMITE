@@ -1057,7 +1057,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     temp_sim.h_t1grid = snapshot.t1grid;
     temp_sim.h_rvec = snapshot.rvec;
     temp_sim.h_drvec = snapshot.drvec;
-    
+
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
 #if DMFE_WITH_CUDA
     saveHistoryAsync(filename, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
@@ -1253,14 +1253,8 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
     // Mark save started for telemetry immediately after acquiring the lock
     _setSaveStart(filename);
     
-#if DMFE_WITH_CUDA
     // Create snapshot synchronously to pause simulation during this critical section
     SimulationDataSnapshot snapshot = createDataSnapshot();
-#else
-    // Create empty snapshot for CPU-only builds
-    SimulationDataSnapshot snapshot;
-    std::cerr << dmfe::console::WARN() << "Snapshot creation not available in CPU-only builds" << std::endl;
-#endif
     
     // Check if async export is enabled
     if (config.async_export) {

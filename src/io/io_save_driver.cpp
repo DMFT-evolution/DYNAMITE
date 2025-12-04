@@ -27,12 +27,7 @@ SimulationDataSnapshot saveSimulationState(const std::string& filename, double d
 
     _setSaveStart(filename);
 
-#if DMFE_WITH_CUDA
     SimulationDataSnapshot snapshot = createDataSnapshot();
-#else
-    SimulationDataSnapshot snapshot;
-    std::cerr << dmfe::console::WARN() << "Snapshot creation not available in CPU-only builds" << std::endl;
-#endif
 
     if (config.async_export) {
         auto saveAsync = [filename, dirPath, delta, delta_t, snapshot]() {
