@@ -162,6 +162,6 @@ The solver implements a numerical renormalization scheme with two-dimensional in
 ## Cite DYNAMITE & get help
 
 - Software: see **Reference → Cite** (powered by `CITATION.cff`).
-- Method paper: J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” arXiv:2504.06849.
+- Method paper: J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. ***135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
 - License: Apache-2.0 (see `LICENSE`).
 - Support: follow `dev/testing.md` for issue templates or open a GitHub issue with your build info (compiler/CUDA, commit hash, minimal input).

@@ -1,6 +1,6 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Convolution icon"/> EOMs and Observables
 
-and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the arXiv paper's conventions; DYNAMITE implements those definitions directly.
+and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the conventions published in the Phys. Rev. Lett. article; DYNAMITE implements those definitions directly.
 
 ## Notes
 
@@ -11,7 +11,7 @@ and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors
 
 - `QKv`, `QRv`: discretized correlation/response on the sparse gridy" src="/DYNAMITE/assets/icons/function.svg" alt="Function icon"/> Equations of motion (current model) and observables
 
-We evolve correlation C(t,t') and response R(t,t') after a quench on the non-equidistant grid. Currently, DYNAMITE has the mixed spherical p-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (arXiv:2504.06849). Generalization to pluggable models is planned.
+We evolve correlation C(t,t') and response R(t,t') after a quench on the non-equidistant grid. Currently, DYNAMITE has the mixed spherical p-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. ***135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). Generalization to pluggable models is planned.
 
 ## Mixed spherical p-spin EOMs (paper definitions)
 
@@ -38,7 +38,7 @@ D(t,s) &= p\,J_p^2\, C(t,s)^{p-1} C(t,s) \\
 \end{aligned}
 \]
 
-and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the arXiv paper’s conventions; DYNAMITE implements those definitions directly.
+and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the conventions published in Phys. Rev. Lett.; DYNAMITE implements those definitions directly.
 
 Notes:
 - The exact expressions and units match the paper; see source under `include/EOMs/` for the hardcoded operators used at runtime.

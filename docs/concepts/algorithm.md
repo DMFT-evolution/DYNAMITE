@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, arXiv:2504.06849)
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, Phys. Rev. Lett. ***135**, 27401 (2025))
 
 This section summarizes the numerical renormalization algorithm implemented in DYNAMITE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
 
@@ -21,7 +21,7 @@ For the spherical mixed p-spin model (representative), the functionals \(\mathca
 
 This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to sublinear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
 
-Important: DYNAMITE uses exactly the non-equidistant, nested grid defined in the arXiv paper. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
+Important: DYNAMITE uses exactly the non-equidistant, nested grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
 
 ## Discrete scheme and data layout
 
@@ -84,7 +84,7 @@ The nested sparse representation amortizes the cost of memory integrals, leading
 
 ## References
 
-- J. Lang, S. Sachdev, M. Diehl, “Numerical renormalization of glassy dynamics,” arXiv:2504.06849.
+- J. Lang, S. Sachdev, M. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. ***135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
 
 ## See also
 
