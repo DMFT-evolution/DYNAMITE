@@ -19,7 +19,7 @@ For the spherical mixed p-spin model (representative), the functionals \(\mathca
 - Interleave time evolution with periodic sparsification to prune redundant history while preserving interpolation accuracy.
 - Maintain a compressed representation of C and R enabling fast convolution-like updates via precomputed index/weight maps.
 
-This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to sublinear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
+This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to linear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
 
 Important: DYNAMITE uses exactly the non-equidistant, nested grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
 

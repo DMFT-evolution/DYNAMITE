@@ -77,23 +77,23 @@
 	<div class="dmfe-feature-grid">
 		<article class="dmfe-feature">
 			<h3>Non-stationary solvers</h3>
-			<p>Track two-time correlators C(t, t') and responses R(t, t') deep into aging, respecting the causal triangle.</p>
+			<p>Track two-time correlators C(t, t') and responses R(t, t') deep into aging</p>
 		</article>
 		<article class="dmfe-feature">
 			<h3>Interpolated memory</h3>
-			<p>Two-dimensional sparse interpolation drops the asymptotic cost from O(T³) to sublinear while controlling error.</p>
+			<p>Two-dimensional sparse interpolation drops the asymptotic cost from O(T³) to linear while controlling errors.</p>
 		</article>
 		<article class="dmfe-feature">
 			<h3>Adaptive integrators</h3>
-			<p>RK54 ⇄ SSPRK104 switching, stability-aware steps, and sparsification-aware tolerances keep runs safe.</p>
+			<p>RK54 ⇄ SSPRK104 switching, stability-aware steps, and sparsification-aware tolerances ensure stability to late times.</p>
 		</article>
 		<article class="dmfe-feature">
-			<h3>CPU baseline, GPU boosts</h3>
-			<p>Deterministic CPU path plus optional CUDA kernels for acceleration after validation.</p>
+			<h3>Smart hardware detection</h3>
+			<p>Autoruns on compatible GPU when available, seamlessly falls back to CPU.</p>
 		</article>
 		<article class="dmfe-feature">
 			<h3>Checkpoints + reproducibility</h3>
-			<p>Versioned HDF5 outputs, restartable checkpoints, and pinned parameters for every trajectory.</p>
+			<p>Versioned HDF5 outputs and restartable checkpoints for every trajectory.</p>
 		</article>
 	</div>
 </section>
@@ -107,13 +107,13 @@ $$
 \partial_t R(t,t') = \mathcal{G}[C,R](t,t')\,,\quad t\ge t'\,.
 $$
 
-The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to sublinear in simulated time while controlling accuracy for aging observables.
+The solver implements a numerical renormalization scheme with two-dimensional interpolation, reducing the asymptotic cost from cubic to linear in simulated time while controlling accuracy for aging observables.
 
 ### When DMFE is the right tool
 
 - Your DMFT equations close on C and R with memory integrals over the past.
 - You need long-time, high-accuracy trajectories (aging, quenches, or other non-stationary protocols).
-- You rely on reproducible outputs, resumable checkpoints, and deterministic CPU references before enabling GPUs.
+- You rely on reproducible outputs, resumable checkpoints, and high performance.
 
 ### Model assumptions
 
@@ -141,7 +141,7 @@ The solver implements a numerical renormalization scheme with two-dimensional in
 ## Typical workflow
 
 <ol class="dmfe-workflow">
-	<li><span>Select the built-in EOMs (currently the mixed spherical <em>p</em>-spin model as in the method paper) and set physical parameters.</span></li>
+	<li><span>Select the built-in EOMs (currently the mixed spherical <em>p</em>-spin model as in the accompanying paper) and set physical parameters.</span></li>
 	<li><span>Choose an interpolation grid (sizes/layout) that balances accuracy and runtime.</span></li>
 	<li><span>Select an integrator and tolerances; adaptive RK54 is the usual starting point.</span></li>
 	<li><span>Run a short trajectory, inspect stability + error estimates, and adjust grids/tolerances.</span></li>

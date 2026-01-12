@@ -1,5 +1,14 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Usage icon"/> Usage
 
+This page is your **practical starting point** for running DYNAMITE: CLI flags, inputs/outputs, and common workflows.
+
+For the algorithmic background and implementation concepts, continue with:
+
+- **Concepts → Algorithm**
+- **Concepts → Interpolation grids**
+- **Concepts → Time integration**
+- **Concepts → EOMs and observables**
+
 Entry point: `./RG-Evo`. Show all options with `-h`.
 
 ## Model and parameters
@@ -9,7 +18,7 @@ Entry point: `./RG-Evo`. Show all options with `-h`.
 - `-T, --T0` (float|inf): initial temperature; use `inf` for zero-noise quenches.
 - `-G, --Gamma` (float): final temperature.
 
-Note: At present, the mixed spherical p-spin equations are hardcoded as in the paper; other models are not yet configurable. This will be relaxed in a future release.
+Note: At present, the mixed spherical p-spin equations are hardcoded as in the accompanying paper; other models are not yet implemented. Modular equations of motion will be subject of a future release.
 
 ## Discretization and accuracy
 
@@ -25,7 +34,7 @@ Note: At present, the mixed spherical p-spin equations are hardcoded as in the p
 - `-D` debug logging; `-v` print build/version; `-I` allow resume across incompatible versions (use with care).
 
 Interpolation mode:
-- `-R, --log-response-interp` boolean: interpolate QR and dQR in log space when safe (default false). If enabled, the code interpolates f=log(QR) and g=dQR/QR and exponentiates back; it automatically falls back to linear when any stencil QR<=0. QK/dQK remain linear.
+- `-R, --log-response-interp` boolean: interpolate QR and dQR in log space (default false). If enabled, the code interpolates f=log(QR) and g=dQR/QR and exponentiates back; it automatically falls back to linear when any stencil QR<=0. QK/dQK remain linear.
 
 Sparsification:
 - `-w, --sparsify-sweeps INT`: number of sparsify sweeps per maintenance pass.
@@ -49,8 +58,8 @@ Use the built-in grid generator to create or refresh `Grid_data/<L>/`:
 
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
-							[--alpha X] [--delta X] \
-							[--spline-order n] [--interp-method METHOD] [--interp-order n]
+  [--alpha X] [--delta X] \
+  [--spline-order n] [--interp-method METHOD] [--interp-order n]
 # METHODS: poly | rational | bspline
 ```
 
@@ -69,17 +78,18 @@ Alpha/Delta (optional):
 Method notes and trade‑offs:
 - `poly`: local barycentric Lagrange of order n (degree n). Minimal weights per entry (n+1). Good accuracy for smooth data; fastest when the sample values change often.
 - `rational`: barycentric rational variant with the same interface and locality as `poly`, typically slightly more robust on irregular grids.
-- `bspline`: B‑spline of degree n via global collocation. Exports dense weights per entry (global linear map). Prefer this when you need spline smoothness/derivatives and can reuse the same data vector across many evaluations; otherwise `poly`/`rational` are usually faster.
+- `bspline`: B‑spline of degree n via global collocation. Exports dense weights per entry (global linear map). Prefer this when you need spline smoothness/derivatives and can reuse the same data vector across many evaluations; otherwise `poly`/`rational` are usually much faster.
 
 ## Outputs and observables
 
-- HDF5 `data.h5` when available; else `data.bin` plus text summaries.
+- Data is exported as HDF5 `data.h5` when available; else `data.bin` plus text summaries for quick access.
 - Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see concepts/eoms-and-observables.md).
 - Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`, and in debug mode `step_metrics.txt` (per-step runtime and memory).
 
 I/O behavior and TUI:
-- HDF5 is loaded at runtime when possible; on failure the code writes `data.bin` instead. The console prints which HDF5 libraries were loaded (if any).
-- Save progress is staged: main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line advances accordingly, and a final "Save finished: <dir>" is printed.
+- When HDF5 support is available at runtime, the code writes `data.h5`; otherwise it writes `data.bin`.
+- The save progress bar/status line is shown only with `-D false`.
+- Save stages: main [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90].
 
 Resume: automatic if a compatible checkpoint is found (version policy documented in concepts/version-compatibility.md).
 
