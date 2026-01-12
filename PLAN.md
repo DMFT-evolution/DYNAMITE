@@ -45,7 +45,7 @@ Audience: PhD-level researchers in theoretical physics, mathematics, and CS. Goa
 ## Concrete tasks and file hooks
 
 1) Logo/Favicon
-   - Done: `mkdocs.yml` sets `logo:` and `favicon:` to `assets/logo-dmfe.svg`.
+   - Done: `mkdocs.yml` sets `logo:` and `favicon:` to `assets/icons/icon-dmfe-contrast.svg`.
 
 2) Homepage
    - Done: Hero block and figures in `docs/index.md`.

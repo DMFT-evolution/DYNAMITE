@@ -47,7 +47,7 @@ using namespace std;
 extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 extern std::chrono::high_resolution_clock::time_point program_start_time;
 

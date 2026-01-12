@@ -41,7 +41,7 @@
 extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 #if DMFE_WITH_CUDA
 extern size_t peak_gpu_memory_mb;
 #endif
@@ -349,22 +349,38 @@ int runSimulation() {
             sim_time_sample = sim->h_t1grid.back();
 #endif
             double runtime_sample = getRuntimeSeconds();
+            double memory_sample = config.gpu
+                ? static_cast<double>(getGPUMemoryUsage())
+                : static_cast<double>(getCurrentMemoryUsageMB());
             auto& times = sim->h_debug_step_times;
             auto& runtimes = sim->h_debug_step_runtimes;
+            auto& memory = sim->h_debug_step_memory;
             const double tol = 1e-12;
             if (times.size() > runtimes.size()) {
                 // keep vectors in lockstep even if previous state was inconsistent
                 runtimes.resize(times.size());
             }
+            if (memory.size() > times.size()) {
+                memory.resize(times.size());
+            } else if (memory.size() < times.size()) {
+                memory.resize(times.size(), memory.empty() ? 0.0 : memory.back());
+            }
             bool should_append = times.empty() || sim_time_sample > times.back() + tol || sim_time_sample < times.back() - tol;
             if (should_append) {
                 times.push_back(sim_time_sample);
                 runtimes.push_back(runtime_sample);
+                memory.push_back(memory_sample);
             } else if (!runtimes.empty()) {
                 runtimes.back() = runtime_sample;
+                if (!memory.empty()) {
+                    memory.back() = memory_sample;
+                } else {
+                    memory.push_back(memory_sample);
+                }
             } else {
                 // Shouldn't happen, but keep vectors aligned
                 runtimes.push_back(runtime_sample);
+                memory.push_back(memory_sample);
             }
         }
     }

@@ -2,7 +2,7 @@
 
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
 
-DYNAMITE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; Phys. Rev. Lett. **135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
+DYNAMITE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to sublinear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
 
 Key features:
 - GPU‑accelerated kernels with a CPU fallback
@@ -109,7 +109,7 @@ This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision 
 
 The I/O layer is modular and reports progress via a compact TUI:
 
-- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and when `-D true` the per-step runtime log `times.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
+- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and when `-D true` the per-step telemetry log `step_metrics.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
 - Runtime-optional HDF5: the program tries to load system `libhdf5`/`libhdf5_hl` at runtime. It prints which libraries were loaded; if unavailable or an error occurs, it falls back to `data.bin` automatically.
 - Save telemetry windows (fraction of the save task): main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line reaches 1.0 when all outputs are complete.
 - TUI messages: a "Save started" line is printed (without filename unless `--debug true`) and a final "Save finished: <dir>" line when done. In async mode, the simulation continues while saving in the background.
@@ -135,7 +135,7 @@ Licensed under the Apache License, Version 2.0. See the `LICENSE` file for detai
 
 ## Cite
 
-If you use DYNAMITE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, Phys. Rev. Lett. **135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
+If you use DYNAMITE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
 
 ## Build options
 

@@ -1,10 +1,10 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
-DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
+DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
 
 Why this matters: The algorithm’s sublinear scaling depends critically on this grid. Although not extremely sensitive to tiny details, using a highly non‑equidistant grid with nested blocks is essential; equidistant grids defeat the renormalization gains and dramatically increase cost.
 
-## Explicit equations (as in Phys. Rev. Lett. **135**, 27401 (2025))
+## Explicit equations (as in Phys. Rev. Lett. **135**, 247101 (2025))
 
 We parametrize the two‑point functions on the triangular domain $t_2 \le t_1$ by the time ratio $\phi = t_2/t_1 \in [0,1]$, i.e.
 

@@ -11,7 +11,7 @@ and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors
 
 - `QKv`, `QRv`: discretized correlation/response on the sparse gridy" src="/DYNAMITE/assets/icons/function.svg" alt="Function icon"/> Equations of motion (current model) and observables
 
-We evolve correlation C(t,t') and response R(t,t') after a quench on the non-equidistant grid. Currently, DYNAMITE has the mixed spherical p-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). Generalization to pluggable models is planned.
+We evolve correlation C(t,t') and response R(t,t') after a quench on the non-equidistant grid. Currently, DYNAMITE has the mixed spherical p-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). Generalization to pluggable models is planned.
 
 ## Mixed spherical p-spin EOMs (paper definitions)
 

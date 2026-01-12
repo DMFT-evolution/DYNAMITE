@@ -13,7 +13,7 @@ theme:
     - search.suggest
     - search.highlight
   logo: assets/logo-dmfe.svg
-  favicon: assets/logo-dmfe.svg
+  favicon: assets/icons/icon-dmfe-contrast.svg
   palette:
     - scheme: slate
       primary: blue

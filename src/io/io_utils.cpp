@@ -46,7 +46,7 @@ using namespace std;
 extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 extern std::chrono::high_resolution_clock::time_point program_start_time;
 
@@ -398,14 +398,14 @@ std::string getGPUInfo() {
 #endif
 }
 
-std::string formatMemory(size_t memory_kb) {
-    if (memory_kb >= 1024 * 1024) {
-        return std::to_string(memory_kb / (1024 * 1024)) + " GB";
-    } else if (memory_kb >= 1024) {
-        return std::to_string(memory_kb / 1024) + " MB";
-    } else {
-        return std::to_string(memory_kb) + " KB";
+std::string formatMemory(size_t memory_mb) {
+    if (memory_mb >= 1024) {
+        double gb = static_cast<double>(memory_mb) / 1024.0;
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(gb >= 10.0 ? 1 : 2) << gb << " GB";
+        return oss.str();
     }
+    return std::to_string(memory_mb) + " MB";
 }
 
 // Function to wait for any ongoing async saves to complete

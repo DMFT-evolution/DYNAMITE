@@ -53,7 +53,7 @@ using namespace std;
 extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 extern std::chrono::high_resolution_clock::time_point program_start_time;
 
@@ -271,8 +271,8 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     double runtime_seconds = getRuntimeSeconds();
     params << "runtime seconds = " << std::fixed << std::setprecision(2) << runtime_seconds << std::endl;
     params << "runtime formatted = " << formatDuration(runtime_seconds) << std::endl;
-    params << "peak memory usage = " << formatMemory(peak_memory_kb) << std::endl;
-    params << "peak memory (kb) = " << peak_memory_kb << std::endl;
+    params << "peak memory usage = " << formatMemory(peak_memory_mb) << std::endl;
+    params << "peak memory (MB) = " << peak_memory_mb << std::endl;
     if (config.gpu) {
         params << "peak gpu memory (mb) = " << peak_gpu_memory_mb << std::endl;
         params << "current gpu memory (mb) = " << getGPUMemoryUsage() << std::endl;
@@ -431,8 +431,8 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     double runtime_seconds = std::chrono::duration<double>(now - snapshot.program_start_time_snapshot).count();
     params << "runtime seconds = " << std::fixed << std::setprecision(2) << runtime_seconds << std::endl;
     params << "runtime formatted = " << formatDuration(runtime_seconds) << std::endl;
-    params << "peak memory usage = " << formatMemory(snapshot.peak_memory_kb_snapshot) << std::endl;
-    params << "peak memory (kb) = " << snapshot.peak_memory_kb_snapshot << std::endl;
+    params << "peak memory usage = " << formatMemory(snapshot.peak_memory_mb_snapshot) << std::endl;
+    params << "peak memory (MB) = " << snapshot.peak_memory_mb_snapshot << std::endl;
     if (snapshot.config_snapshot.gpu) {
         params << "peak gpu memory (mb) = " << snapshot.peak_gpu_memory_mb_snapshot << std::endl;
         // Note: We can't get current GPU memory in async context safely

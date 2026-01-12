@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="50.414215"
+   height="50.414215"
+   viewBox="0 0 50.414215 50.414215"
+   role="img"
+   aria-label="DMFE logo (high contrast)"
+   version="1.1"
+   id="svg29"
+   sodipodi:docname="icon-dmfe-contrast.svg"
+   inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview31"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="3.825"
+     inkscape:cx="32.941176"
+     inkscape:cy="16.20915"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg29" />
+  <defs
+     id="defs9">
+    <linearGradient
+       id="gc"
+       x1="0"
+       y1="0"
+       x2="48"
+       y2="48"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0%"
+         stop-color="#ff6f00"
+         id="stop2" />
+      <stop
+         offset="100%"
+         stop-color="#d32f2f"
+         id="stop4" />
+    </linearGradient>
+    <style
+       id="style7">
+      .word { font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-weight: 800; letter-spacing: 0.4px; }
+    </style>
+  </defs>
+  <!-- Symbol: stylized 2D grid with a causal triangle, high-contrast warm gradient -->
+  <g
+     id="g23">
+    <rect
+       x="0"
+       y="0"
+       width="48"
+       height="48"
+       rx="6"
+       ry="6"
+       fill="url(#gc)"
+       opacity="0.25"
+       id="rect11"
+       style="fill:url(#gc)" />
+    <g
+       stroke="#ff6f00"
+       stroke-width="1"
+       opacity="0.7"
+       id="g17">
+      <path
+         d="M 8,8 H 48 M 8,20 H 48 M 8,32 h 40"
+         id="path13" />
+      <path
+         d="M 8,8 V 48 M 20,8 V 48 M 32,8 v 40"
+         id="path15" />
+    </g>
+    <path
+       d="M 8,8 H 48 L 8,48 Z"
+       fill="#ff6f00"
+       opacity="0.5"
+       id="path19" />
+    <path
+       d="M 8,8 H 48 L 8,48 Z"
+       fill="none"
+       stroke="#ffd180"
+       stroke-width="2"
+       opacity="0.9"
+       id="path21" />
+  </g>
+  <!-- Wordmark: white for maximum contrast -->
+</svg>

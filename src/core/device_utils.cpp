@@ -10,7 +10,7 @@
 #endif
 
 // External global variables for peak memory tracking
-size_t peak_memory_kb = 0;
+size_t peak_memory_mb = 0;
 size_t peak_gpu_memory_mb = 0;
 
 // External declaration for config global variable
@@ -26,28 +26,40 @@ bool isHDF5Available() {
 #endif
 }
 
-// Function to get current memory usage in KB
-size_t getCurrentMemoryUsage() {
+// Function to get current memory usage in MB (rounded down, minimum 1 when non-zero)
+size_t getCurrentMemoryUsageMB() {
     struct rusage usage;
-    getrusage(RUSAGE_SELF, &usage);
-    return usage.ru_maxrss; // Returns KB on Linux, bytes on macOS
+    if (getrusage(RUSAGE_SELF, &usage) != 0) {
+        return 0;
+    }
+#if defined(__APPLE__)
+    size_t bytes = static_cast<size_t>(usage.ru_maxrss);
+    size_t mb = bytes / (1024ULL * 1024ULL);
+    if (mb == 0 && bytes > 0) mb = 1; // ensure non-zero when memory is in use
+    return mb;
+#else
+    size_t kb = static_cast<size_t>(usage.ru_maxrss);
+    size_t mb = kb / 1024ULL;
+    if (mb == 0 && kb > 0) mb = 1;
+    return mb;
+#endif
 }
 
 #include <sys/sysinfo.h>
-// Function to get total physical system memory in KB (Linux). Returns 0 if unavailable.
-size_t getTotalSystemMemoryKB() {
+// Function to get total physical system memory in MB (Linux). Returns 0 if unavailable.
+size_t getTotalSystemMemoryMB() {
     struct sysinfo info;
     if (sysinfo(&info) == 0) {
         // totalram is in units of mem_unit bytes
         unsigned long long bytes = static_cast<unsigned long long>(info.totalram) * info.mem_unit;
-        return static_cast<size_t>(bytes / 1024ULL);
+        return static_cast<size_t>(bytes / (1024ULL * 1024ULL));
     }
     // Fallback using sysconf
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     if (pages > 0 && page_size > 0) {
         unsigned long long bytes = static_cast<unsigned long long>(pages) * static_cast<unsigned long long>(page_size);
-        return static_cast<size_t>(bytes / 1024ULL);
+        return static_cast<size_t>(bytes / (1024ULL * 1024ULL));
     }
     return 0;
 }
@@ -70,9 +82,9 @@ size_t getTotalGPUMemory() {
 
 // Function to update peak memory usage
 void updatePeakMemory() {
-    size_t current_mem = getCurrentMemoryUsage();
-    if (current_mem > peak_memory_kb) {
-        peak_memory_kb = current_mem;
+    size_t current_mem = getCurrentMemoryUsageMB();
+    if (current_mem > peak_memory_mb) {
+        peak_memory_mb = current_mem;
     }
 }
 #endif

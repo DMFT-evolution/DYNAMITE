@@ -12,7 +12,7 @@
 
 extern SimulationConfig config;
 extern SimulationData* sim;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 extern std::chrono::high_resolution_clock::time_point program_start_time;
 
@@ -52,12 +52,13 @@ SimulationDataSnapshot createDataSnapshot() {
     snapshot.compiler_version = g_version_info.compiler_version;
     snapshot.cuda_version = g_version_info.cuda_version;
 
-    snapshot.peak_memory_kb_snapshot = peak_memory_kb;
+    snapshot.peak_memory_mb_snapshot = peak_memory_mb;
     snapshot.peak_gpu_memory_mb_snapshot = peak_gpu_memory_mb;
     snapshot.program_start_time_snapshot = program_start_time;
 
     snapshot.debug_step_times = sim->h_debug_step_times;
     snapshot.debug_step_runtimes = sim->h_debug_step_runtimes;
+    snapshot.debug_step_memory = sim->h_debug_step_memory;
 
     return snapshot;
 }

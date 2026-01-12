@@ -131,7 +131,7 @@ bool isCompatibleGPUInstalled() {
 
 // External declarations
 extern SimulationConfig config;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 
 // Function to get GPU memory usage in MB
@@ -166,13 +166,13 @@ size_t getAvailableGPUMemory() {
     return total_mem / (1024 * 1024); // Convert to MB
 }
 
-// getTotalSystemMemoryKB is implemented in device_utils.cpp; ensure symbol visible here via header.
+// getTotalSystemMemoryMB is implemented in device_utils.cpp; ensure symbol visible here via header.
 
 // Function to update peak memory usage
 void updatePeakMemory() {
-    size_t current_mem = getCurrentMemoryUsage();
-    if (current_mem > peak_memory_kb) {
-        peak_memory_kb = current_mem;
+	size_t current_mem = getCurrentMemoryUsageMB();
+	if (current_mem > peak_memory_mb) {
+		peak_memory_mb = current_mem;
     }
     
     if (config.gpu) {

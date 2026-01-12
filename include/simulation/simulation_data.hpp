@@ -52,4 +52,5 @@ struct SimulationData {
     // Captures (simulation time, wall-clock runtime) pairs when config.debug is true.
     std::vector<double> h_debug_step_times;
     std::vector<double> h_debug_step_runtimes;
+    std::vector<double> h_debug_step_memory;
 };

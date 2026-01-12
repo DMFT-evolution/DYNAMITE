@@ -21,6 +21,9 @@ bool rollbackState(int n) {
         if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
             sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
         }
+        if (sim->h_debug_step_memory.size() > sim->h_debug_step_times.size()) {
+            sim->h_debug_step_memory.resize(sim->h_debug_step_times.size());
+        }
     };
 
     // Get current state size
@@ -82,6 +85,9 @@ bool rollbackState(int n) {
         }
         if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
             sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
+        }
+        if (sim->h_debug_step_memory.size() > sim->h_debug_step_times.size()) {
+            sim->h_debug_step_memory.resize(sim->h_debug_step_times.size());
         }
     };
 

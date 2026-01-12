@@ -16,14 +16,14 @@
 // External globals used for memory and telemetry (declared elsewhere)
 extern SimulationConfig config;
 extern SimulationData* sim;
-extern size_t peak_memory_kb;
+extern size_t peak_memory_mb;
 #if DMFE_WITH_CUDA
 extern size_t peak_gpu_memory_mb;
 extern size_t getAvailableGPUMemory();
 extern size_t getGPUMemoryUsage();
 #endif
-extern size_t getCurrentMemoryUsage();
-extern size_t getTotalSystemMemoryKB();
+extern size_t getCurrentMemoryUsageMB();
+extern size_t getTotalSystemMemoryMB();
 // Telemetry helpers are declared in io/io_utils.hpp
 
 namespace {
@@ -167,20 +167,20 @@ void SimulationTextUI::update_status(double t, double tmax, int loop, double del
     std::string bar = make_progress_bar(frac, 28);
 
     // Memory info
-    size_t cur_kb = 0; try { cur_kb = getCurrentMemoryUsage(); } catch (...) { cur_kb = 0; }
-    size_t total_kb = getTotalSystemMemoryKB();
+    size_t cur_mb = 0; try { cur_mb = getCurrentMemoryUsageMB(); } catch (...) { cur_mb = 0; }
+    size_t total_mb = getTotalSystemMemoryMB();
     std::ostringstream mem;
-    if (cur_kb && total_kb) {
-        double frac_ram = std::min(1.0, (double)cur_kb / (double)total_kb);
+    if (cur_mb && total_mb) {
+        double frac_ram = std::min(1.0, (double)cur_mb / (double)total_mb);
         const char* ram_color = dmfe::console::C_GREEN;
         if (frac_ram >= 0.75) ram_color = dmfe::console::C_RED; else if (frac_ram >= 0.50) ram_color = dmfe::console::C_YELLOW;
         if (dmfe::console::color_out()) mem << ram_color;
-        mem << "RAM " << (cur_kb/1024) << "/" << (total_kb/1024) << " MB " << make_mem_bar(cur_kb, total_kb, 20);
+        mem << "RAM " << cur_mb << "/" << total_mb << " MB " << make_mem_bar(cur_mb, total_mb, 20);
         if (dmfe::console::color_out()) mem << dmfe::console::C_RESET;
-    } else if (cur_kb) {
-        mem << "RAM " << (cur_kb/1024) << " MB";
+    } else if (cur_mb) {
+        mem << "RAM " << cur_mb << " MB";
     } else {
-        mem << "RAM peak " << (peak_memory_kb/1024) << " MB";
+        mem << "RAM peak " << peak_memory_mb << " MB";
     }
 #if DMFE_WITH_CUDA
     if (config.gpu) {

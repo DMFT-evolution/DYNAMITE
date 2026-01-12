@@ -1,4 +1,4 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, Phys. Rev. Lett. **135**, 27401 (2025))
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, Phys. Rev. Lett. **135**, 247101 (2025))
 
 This section summarizes the numerical renormalization algorithm implemented in DYNAMITE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
 
@@ -50,26 +50,32 @@ Time stepping follows the adaptive RK54 default and automatically switches to SS
 
 ```mermaid
 flowchart TD
-  start([Start: set initial C, R])
-  init[Initialize sparse grids<br/>precompute interpolation structures]
-  propose[Propose Δ<br/>local error control]
-  interp[Interpolate history<br/>with sparse maps]
-  eoms[Evaluate EOMs<br/>compute ∂ₜ C, ∂ₜ R]
-  step[Advance active integrator<br/>RK54 / SSPRK104 / SERK2]
-  diag[Update diagonal observables<br/>and cached outputs]
+  start([Start: set initial C, R, μ])
+  init[Initialize grids<br/>precompute interpolation/integration weights]
+  propose[Adapt time step]
+  interp[Interpolate history]
+  eoms[Evaluate EOMs<br/>compute ∂ₜ C, ∂ₜ R, ∂ₜ μ]
+  step[Update/Append history]
+  check{Check error bounds}
+  back[Roll back]
+  diag[Update observables]
   sparsify_check{Sparsify due?}
-  sparsify[Sparsify history layers<br/>renormalize grid]
-  persist[Persist diagnostics<br/>and optional checkpoints]
-  advance[t = t + Δt]
+  sparsify[Sparsify history layers<br/>save checkpoint]
   continue_check{Reached stop criteria?}
   stop([Stop])
 
-  start --> init --> propose --> interp --> eoms --> step --> diag --> sparsify_check
-  sparsify_check -->|Yes| sparsify --> persist
-  sparsify_check -->|No| persist
-  persist --> advance --> continue_check
+  start --> init --> propose --> G1  
+  step --> diag --> check -->|OK| sparsify_check
+  check --> |not OK| back --> propose
+  sparsify_check -->|Yes| sparsify --> continue_check
+  sparsify_check -->|No| continue_check
   continue_check -->|No| propose
   continue_check -->|Yes| stop
+
+subgraph G1[Runge-Kutta update]
+  direction LR
+  interp --> eoms -->step
+end
 ```
 
 ## Error control and accuracy
@@ -84,7 +90,7 @@ The nested sparse representation amortizes the cost of memory integrals, leading
 
 ## References
 
-- J. Lang, S. Sachdev, M. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 27401 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
+- J. Lang, S. Sachdev, M. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
 
 ## See also
 

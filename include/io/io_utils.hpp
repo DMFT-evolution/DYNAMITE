@@ -13,6 +13,7 @@ struct SimulationDataSnapshot {
     std::vector<double> QKB1int, QRB1int, theta;
     std::vector<double> debug_step_times;
     std::vector<double> debug_step_runtimes;
+    std::vector<double> debug_step_memory;
     double energy;
     double t_current;
     int current_len, current_loop;
@@ -21,7 +22,7 @@ struct SimulationDataSnapshot {
     // Version and memory info for async saving
     std::string code_version, git_hash, git_branch, git_tag, build_date, build_time, compiler_version, cuda_version;
     bool git_dirty;
-    size_t peak_memory_kb_snapshot, peak_gpu_memory_mb_snapshot;
+    size_t peak_memory_mb_snapshot, peak_gpu_memory_mb_snapshot;
     std::chrono::high_resolution_clock::time_point program_start_time_snapshot;
 };
 
