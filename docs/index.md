@@ -95,10 +95,6 @@
 			<h3>Checkpoints + reproducibility</h3>
 			<p>Versioned HDF5 outputs, restartable checkpoints, and pinned parameters for every trajectory.</p>
 		</article>
-		<article class="dmfe-feature">
-			<h3>Plugin-style EOM modules</h3>
-			<p>Drop in custom closures for new models via the EOM interface. Examples live in <code>concepts/eoms-and-observables.md</code>.</p>
-		</article>
 	</div>
 </section>
 
@@ -145,7 +141,7 @@ The solver implements a numerical renormalization scheme with two-dimensional in
 ## Typical workflow
 
 <ol class="dmfe-workflow">
-	<li><span>Pick or implement an EOM module defining the closures \( \mathcal{F}, \mathcal{G} \) for your model.</span></li>
+	<li><span>Select the built-in EOMs (currently the mixed spherical <em>p</em>-spin model as in the method paper) and set physical parameters.</span></li>
 	<li><span>Choose an interpolation grid (sizes/layout) that balances accuracy and runtime.</span></li>
 	<li><span>Select an integrator and tolerances; adaptive RK54 is the usual starting point.</span></li>
 	<li><span>Run a short trajectory, inspect stability + error estimates, and adjust grids/tolerances.</span></li>

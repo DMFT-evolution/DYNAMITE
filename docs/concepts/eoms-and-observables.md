@@ -1,17 +1,6 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Convolution icon"/> EOMs and Observables
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/function.svg" alt="Function icon"/> Equations of motion (current model) and observables
 
-and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the conventions published in the Phys. Rev. Lett. article; DYNAMITE implements those definitions directly.
-
-## Notes
-
-- The exact expressions and units match the paper; see source under `include/EOMs/` for the hardcoded operators used at runtime.
-- The non-stationary (aging) regime requires both time integrals and thus benefits from the sparse 2D grid and renormalized history.
-
-## Stored fields
-
-- `QKv`, `QRv`: discretized correlation/response on the sparse gridy" src="/DYNAMITE/assets/icons/function.svg" alt="Function icon"/> Equations of motion (current model) and observables
-
-We evolve correlation C(t,t') and response R(t,t') after a quench on the non-equidistant grid. Currently, DYNAMITE has the mixed spherical p-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). Generalization to pluggable models is planned.
+We evolve correlation $C(t,t')$ and response $R(t,t')$ after a quench on the non-equidistant grid $t\ge t'$. Currently, DYNAMITE has the mixed spherical $p$-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)).
 
 ## Mixed spherical p-spin EOMs (paper definitions)
 
@@ -32,15 +21,15 @@ with model-specific kernels (for a representative mixed p,q case) of the form
 \[
 \begin{aligned}
 \Sigma(t,s) &= p\,J_p^2\, C(t,s)^{p-1} R(t,s) \\
-&\quad+ q\,J_q^2\, C(t,s)^{q-1} R(t,s), \\
-D(t,s) &= p\,J_p^2\, C(t,s)^{p-1} C(t,s) \\
-&\quad+ q\,J_q^2\, C(t,s)^{q-1} C(t,s),
+&\quad+ q\,J_q^2\, C(t,s)^{q-1} R(t,s),
 \end{aligned}
 \]
 
-and the spherical constraint fixing µ(t) from C(t,t)=1. The concrete prefactors and any thermal/noise terms follow the conventions published in Phys. Rev. Lett.; DYNAMITE implements those definitions directly.
+The second kernel $D(t,s)$ depends on the model conventions (and temperature/noise terms) and is **currently documented incorrectly in this page**; please consult the paper for the precise expression. (This section will be updated to include the correct $D(t,s)$ formula.)
 
-Notes:
+## Notes
+- The spherical constraint fixes $\mu(t)$ from $C(t,t)=1$.
+- The concrete prefactors and any thermal/noise terms follow the conventions published in Phys. Rev. Lett.; DYNAMITE implements those definitions directly.
 - The exact expressions and units match the paper; see source under `include/EOMs/` for the hardcoded operators used at runtime.
 - The non-stationary (aging) regime requires both time integrals and thus benefits from the sparse 2D grid and renormalized history.
 
