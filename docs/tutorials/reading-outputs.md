@@ -63,14 +63,14 @@ Each output directory includes the information needed to reproduce a run:
 1) **Exact code identity**
 
 Open `params.txt` and record:
-- `code_version`, `git_hash`, `git_branch`, `git_tag`, `git_dirty`
+- `code_version`, `git_hash`, `git_branch`, `git_tag`, `git_dirty`  
 - compiler/CUDA versions and build timestamp
 
 2) **Exact runtime configuration**
 
 In `params.txt` you’ll also find:
-- the full stored command line (when available)
-- physical parameters ($p$, $p2$, $\lambda$, $T_0$, $\Gamma$)
+- the full stored command line  
+- physical parameters ($p$, $p2$, $\lambda$, $T_0$, $\Gamma$)  
 - numerical parameters (grid `len`, tolerances, sparsification settings, integrator toggles)
 
 3) **Grid provenance**

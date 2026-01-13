@@ -11,17 +11,17 @@ $$
 \partial_t R(t,t') = \mathcal{G}[C,R](t,t')\,.
 $$
 
-For the spherical mixed p-spin model (representative), the functionals \(\mathcal{F},\mathcal{G}\) contain convolution-like memory integrals in both time arguments with kernels determined by the interaction orders and couplings. The renormalization scheme reorganizes these integrals to achieve sublinear scaling in simulated time.
+For the spherical mixed p-spin model (representative), the functionals \(\mathcal{F},\mathcal{G}\) contain convolution-like memory integrals in both time arguments with kernels determined by the interaction orders and couplings. The renormalization scheme parses these integrals to achieve (sub)linear scaling in simulated time.
 
 ## Numerical renormalization: core idea
 
-- Represent the 2D time plane on an adaptive sparse grid with nested blocks.
+- Represent the 2D time plane on an adaptive sparse grid.
 - Interleave time evolution with periodic sparsification to prune redundant history while preserving interpolation accuracy.
 - Maintain a compressed representation of C and R enabling fast convolution-like updates via precomputed index/weight maps.
 
 This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to linear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
 
-Important: DYNAMITE uses exactly the non-equidistant, nested grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid typically destroys sublinear scaling. See Interpolation grids for details.
+Important: DYNAMITE uses exactly the non-equidistant grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid drastically reduces the accessible times. See Interpolation grids for details.
 
 ## Discrete scheme and data layout
 
@@ -80,13 +80,13 @@ end
 
 ## Error control and accuracy
 
-- Local truncation error is controlled via `-e`; monitor step-size independence of observables.
-- Sparsification ensures interpolation error is bounded; validate by short runs with sparsification off or conservative thresholds.
-- Convergence in L (512/1024/2048) must be checked for quantities of interest, especially near transitions.
+- Runge-Kutta error is controlled via `-e`.
+- Sparsification removes data points if their removal affects the reconstructed history by less than 1/10th of the error specified via `-e`.
+- Convergence in L (512/1024/2048) must be checked for quantities of interest, especially near dynamical phase transitions.
 
 ## Complexity and performance
 
-The nested sparse representation amortizes the cost of memory integrals, leading to sublinear growth with simulated time. GPU kernels accelerate interpolation and convolution; CPU fallback preserves portability. Asynchronous I/O decouples storage from integration.
+The nested sparse representation amortizes the cost of memory integrals, leading to (sub)linear growth with simulated time. GPU kernels accelerate interpolation and convolution; CPU fallback preserves portability. Asynchronous I/O decouples storage from integration.
 
 ## References
 

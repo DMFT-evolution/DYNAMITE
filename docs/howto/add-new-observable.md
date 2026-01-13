@@ -26,20 +26,20 @@ Files to inspect first:
 
 Steps:
 
-1) Add a new field to the snapshot/state struct(s) (prefer plain `std::vector<double>` / scalars).
-2) Populate it in `createDataSnapshot()`.
-3) Serialize it:
+1. Add a new field to the snapshot/state struct(s) (prefer plain `std::vector<double>` / scalars).
+2. Populate it in `createDataSnapshot()`.
+3. Serialize it:
 	- binary: extend the writer and reader in lockstep.
 	- HDF5: add a dataset with the same shape as the corresponding binary payload.
-4) Update any versioning/compat checks if the on-disk format changes.
+4. Update any versioning/compat checks if the on-disk format changes.
 
 ### 2) Derived diagnostics (no format changes)
 
 If the observable can be computed from existing fields at save time, avoid changing file formats:
 
-1) Compute it in the save path (e.g. alongside other summaries in `src/io/`).
-2) Write it to a new text file (e.g. `my_observable.txt`) and/or an HDF5 dataset.
-3) Mention it in `docs/usage.md` and `docs/tutorials/reading-outputs.md`.
+1. Compute it in the save path (e.g. alongside other summaries in `src/io/`).
+2. Write it to a new text file (e.g. `my_observable.txt`) and/or an HDF5 dataset.
+3. Mention it in `docs/usage.md` and `docs/tutorials/reading-outputs.md`.
 
 This path is usually the lowest friction.
 
@@ -61,9 +61,9 @@ Even if you also add HDF5, a small text summary is convenient for quick plotting
 
 ## Docs + sanity checks
 
-1) Update `docs/usage.md` (Outputs section) to list the new file/dataset.
-2) Add one quick check to `docs/tutorials/reading-outputs.md` (e.g. expected sign/limits).
-3) Run a tiny simulation and verify:
+1. Update `docs/usage.md` (Outputs section) to list the new file/dataset.
+2. Add one quick check to `docs/tutorials/reading-outputs.md` (e.g. expected sign/limits).
+3. Run a tiny simulation and verify:
 	- output file is created
 	- values are finite
 	- (if resume-safe) restart reproduces the observable

@@ -17,18 +17,18 @@ If the kernel is used from both host and device code, add a small wrapper API an
 
 ## 2) Add the CPU implementation
 
-1) Create the header under `include/`.
-2) Implement in `src/`.
-3) Prefer existing utilities:
+1. Create the header under `include/`.
+2. Implement in `src/`.
+3. Prefer existing utilities:
 	- math helpers: `include/math/*`
 	- memory/telemetry: `include/core/gpu_memory_utils.hpp`, `include/core/console.hpp`
 	- convolution scaffolding: `include/convolution/*` and `src/convolution/*`
 
 ## 3) Add the CUDA implementation (optional)
 
-1) Create `src/<module>/<name>.cu`.
-2) Guard CUDA-only bits with `#if DMFE_WITH_CUDA`.
-3) Reuse device utilities from `include/core/*` (and `include/core/device_utils.cuh` where appropriate).
+1. Create `src/<module>/<name>.cu`.
+2. Guard CUDA-only bits with `#if DMFE_WITH_CUDA`.
+3. Reuse device utilities from `include/core/*` (and `include/core/device_utils.cuh` where appropriate).
 
 Practical advice:
 

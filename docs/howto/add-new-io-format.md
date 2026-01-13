@@ -32,9 +32,9 @@ Prefer taking a `SimulationDataSnapshot` as input (so writers are decoupled from
 
 Integrate into the existing async flow:
 
-1) Keep respecting `--async-export`.
-2) Ensure failures fall back cleanly (either to an existing format or to “skip extra export”).
-3) Update progress reporting only if it’s user-visible; otherwise keep it silent.
+1. Keep respecting `--async-export`.
+2. Ensure failures fall back cleanly (either to an existing format or to “skip extra export”).
+3. Update progress reporting only if it’s user-visible; otherwise keep it silent.
 
 ## 4) If you need a new CLI switch
 
@@ -43,8 +43,8 @@ Integrate into the existing async flow:
 
 ## 5) Document and provide a tiny reader example
 
-1) Update `docs/usage.md` (Outputs section).
-2) Update `docs/tutorials/reading-outputs.md` with:
+1. Update `docs/usage.md` (Outputs section).
+2. Update `docs/tutorials/reading-outputs.md` with:
 	- how to detect the format
 	- minimal Python snippet (or point to a script in `scripts/`)
 

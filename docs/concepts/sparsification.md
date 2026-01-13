@@ -1,6 +1,6 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
 
-Sparsification preserves asymptotic efficiency by pruning history with controlled error. The pruning criterion and reconstruction exactly match the implementation in `src/sparsify/`.
+Sparsification reduces memory load by pruning history with controlled error. This is particularly relevant for long simulations run on GPUs. The pruning criterion and reconstruction are implemented in `src/sparsify/`.
 
 What is pruned: interior time‑nodes of the 1D history grid `t1grid` along $t_1$. Endpoints are always kept.
 
@@ -13,9 +13,6 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 
 	$\displaystyle +\; s\,\big\lvert 2\,(QR[i]-QR[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QR[i-1]}{\Delta_1} + \tfrac{\mathrm d QR[i+1]}{\Delta_3}\big) \big\rvert.$
 
-- Optionally (CPU path), add the same form for the scalar $r$:
-
-	$\displaystyle s\,\big\lvert 2\,(r[i]-r[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d r[i-1]}{\Delta_1} + \tfrac{\mathrm d r[i+1]}{\Delta_3}\big) \big\rvert.$
 - If the total is below the threshold, node i is erasable; otherwise it is kept.
 
 ## Index reconstruction and derivative scaling
@@ -27,6 +24,7 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 $$
 \displaystyle \text{tfac}[i] = \frac{t\big[\text{inds}[i]\big] - t\big[\text{inds}[i-1]\big]}{t\big[\text{indsD}[i]\big] - t\big[\text{indsD}[i]-1\big]}.
 $$
+
 - Gather arrays with these indices:
 	- QK, QR, r use `inds`.
 	- dQK, dQR, dr use `indsD` and are multiplied by tfac to preserve derivative consistency under grid compression.
@@ -36,11 +34,12 @@ $$
 
 - The GPU implementation evaluates flags at even indices for efficiency; CPU checks all interior indices.
 - Aggressive vs conservative modes only change the threshold value and sweep cadence; the mechanism is identical.
-- After sparsification, the code may try SERK2 briefly; disable via `--serk2=false` if desired.
+- After sparsification, the code may try SERK2; disable via `--serk2=false` if desired.
 
 ## Choosing a threshold
 
-- Start from the default (tuned for len and ε) and validate on short runs by comparing C and R slices and derived observables (energy, gFDR/FDT diagnostics) with sparsification off. Increase threshold for more compression; decrease for more accuracy.
+- The default threshold should be safe in the context of the mixed spherical $p$-spin model.
+- If a new threshold is needed, start from the default (tuned for len and ε) and validate on short runs by comparing C and R slices and derived observables (energy, gFDR/FDT diagnostics) with sparsification off. Increase threshold for more compression; decrease for more accuracy.
 
 Implementation references: `include/sparsify/sparsify_utils.hpp`, `src/sparsify/sparsify_utils.cpp` (CPU), `src/sparsify/sparsify_utils.cu` (GPU). Post‑prune, interpolation is re‑initialized automatically by downstream calls.
 

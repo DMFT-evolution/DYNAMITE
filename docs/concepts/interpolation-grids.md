@@ -1,8 +1,23 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
-DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). The grid is multi‑scale and highly non‑uniform by design to resolve short‑time singular structure and long‑time aging simultaneously. All node locations and quadrature data are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
+<figure style="text-align:center;">
+	<img src="/DYNAMITE/assets/interpolation-grid-diagram.svg" alt="Triangular time domain with dense and sparse grid regions" style="max-width: 680px; width: 100%; height: auto;" />
+	<figcaption>Triangular time domain with dense and sparse grid regions.</figcaption>
+	
+</figure>
 
-Why this matters: The algorithm’s sublinear scaling depends critically on this grid. Although not extremely sensitive to tiny details, using a highly non‑equidistant grid with nested blocks is essential; equidistant grids defeat the renormalization gains and dramatically increase cost.
+Only the triangular domain $t' \le t$ is simulated. The grid is dense at short times and near the diagonal at long times, with a sparse intermediate region; this multi‑scale structure enables the method’s sublinear scaling.
+
+DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). All node locations and quadrature/interpolation metadata are precomputed and shipped under `Grid_data/<L>/` for L ∈ {512, 1024, 2048}.
+
+On this page:
+
+- the explicit paper equations defining the base grid (for reference)
+- the optional \(\alpha/\delta\) index remapping used by the generator
+- what the `Grid_data/<L>/` files contain and how to regenerate them
+- practical notes on choosing $L$ and checking convergence
+
+Why this matters: the algorithm’s renormalization gains depend on using a highly non‑equidistant, nested grid. An equidistant grid typically destroys the scaling and dramatically increases cost.
 
 ## Explicit equations (as in Phys. Rev. Lett. **135**, 247101 (2025))
 
@@ -132,10 +147,4 @@ Inputs directory structure:
 
 ## Conceptual figure: triangular time domain and non‑equidistant grid
 
-<figure style="text-align:center;">
-	<img src="/DYNAMITE/assets/interpolation-grid-diagram.svg" alt="Triangular time domain with dense and sparse grid regions" style="max-width: 680px; width: 100%; height: auto;" />
-	<figcaption>Triangular time domain with dense and sparse grid regions.</figcaption>
-  
-</figure>
-
-Only the triangular domain t' ≤ t is simulated; points are dense at both short times (near the origin) and along the diagonal at long times (where the correlation length R grows like R(τ) with τ = t - t'), with a sparse intermediate region where R ~ 1/t. This multi-scale structure reflects the renormalized layering that enables sublinear algorithmic scaling.
+The figure above is the key picture to keep in mind: dense near $(t,t')\approx(0,0)$, dense near the diagonal at late times, and sparse in between.
