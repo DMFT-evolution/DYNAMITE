@@ -24,6 +24,7 @@ $$
 D(t,s) &= f'(C(t,s)) + \beta\, \delta(s)\, f'(C(t,0))\,,
 \end{aligned}
 $$
+
 where
 
 $$
@@ -31,6 +32,7 @@ $$
 f(x)=J_p^2\, x^p + J_q^2\, x^q\,,
 \end{aligned}
 $$
+
 and the Lagrange multiplier of the spherical constraint
 
 $$

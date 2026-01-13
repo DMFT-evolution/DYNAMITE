@@ -12,29 +12,28 @@ Default strategy: adaptive Dormand–Prince RK54. When the adaptive step approac
 flowchart TD
   start([Start step with RK54])
   estimate[Estimate error<br/>and spectral bound]
-  within{Within RK54<br/>stability?}
+  adapt[Adapt time step]
+  within{Time step within RK54<br/>stability?}
   rk54[Advance with RK54]
   switch["Switch to SSPRK(10,4)"<br/>halve Δt once]
   ssprk["Advance with SSPRK(10,4)"]
   sparsify{Sparsification<br/>just happened?}
-  serk2_trial[Trial SERK2 step]
+  serk2_trial[Trial SERK2 step<br/>halve Δt once]
   accept{Trial accepted?}
   serk2[Continue with SERK2]
-  revert[Revert to prior scheme]
-  exit([Next time step])
 
   start --> estimate
-  estimate --> within
-  within -->|Yes| rk54 --> exit
-  within -->|No| switch --> ssprk --> exit
-  exit --> sparsify
-  sparsify -->|No| start
+  estimate --> adapt
+  adapt --> sparsify
+  within -->|Yes| rk54 --> estimate
+  within -->|No| switch --> ssprk --> estimate
+  sparsify -->|No| within
   sparsify -->|Yes| serk2_trial --> accept
-  accept -->|Yes| serk2 --> start
-  accept -->|No| revert --> start
+  accept -->|Yes| serk2 --> estimate
+  accept -->|No| within
 ```
 
-## Error and stability controls (paper supplemental and code)
+## Error and stability controls
 
 - Error bound on each step applies to the 1‑norm of C and R:
 
@@ -42,8 +41,8 @@ $$
 \|C(t,\, \phi_k\, t)\|_1 + \|R(t,\, \phi_k\, t)\|_1 \leq \varepsilon.
 $$
 
-- Dormand–Prince stability along the negative real axis extends to about $-3.307$. With an upper bound on the Jacobian spectral radius $\lambda_{\max} \lesssim 4\,\Sigma''(1)$, the code switches to SSPRK$(10,4)$ once $\lambda_{\max}\,\Delta t \gtrsim 3.0$. On switch, $\Delta t$ is halved once to account for the lower order, then adapted normally.
-- Step‑size controller increases $\Delta t$ slightly when below target error and reduces it when above (simple proportional strategy; details in supplemental text).
+- Dormand–Prince stability along the negative real axis extends to about $-3.307$. With an upper bound on the Jacobian spectral radius $\lambda_{\max} \lesssim 4\,\Sigma''(1)$, the code switches to SSPRK$(10,4)$ once $\lambda_{\max}\,\Delta t > 3.0$. On switch, $\Delta t$ is halved once to account for the lower order, then adapted normally.
+- Step‑size controller increases $\Delta t$ slightly when below target error and reduces it when above.
 
 ## CLI controls
 
@@ -54,7 +53,7 @@ $$
 
 ## Practice
 
-- Check step‑size independence of key observables (C, R) at representative times.
-- If SERK2 trials are disabled, expect exclusively Dormand–Prince and SSPRK$(10,4)$.
+- Check that key observables (C, R) at latest times are independent of `-e`.
+- If concerned about stability, disable the lower order method SERK2 at the risk of potentially slightly lower performance at late times.
 
 Implementation details: see `include/EOMs/` and `src/EOMs/` (RK54 Dormand–Prince, SSPRK(10,4), SERK2 kernels and selection logic).
