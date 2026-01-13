@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +21,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+          cache: 'pip'
       - name: Install dependencies
         run: |
           pip install mkdocs mkdocs-material mkdocs-material-extensions mkdocs-asciinema-player mkdocs-exclude
