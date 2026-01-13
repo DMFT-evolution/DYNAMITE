@@ -16,19 +16,29 @@ Let the memory kernels be functionals of C and R with p- and q-body terms and sp
 \end{aligned}
 \]
 
-with model-specific kernels (for a representative mixed p,q case) of the form
+with model-specific kernels (for the mixed spherical $p$-spin model) of the form
 
 \[
 \begin{aligned}
-\Sigma(t,s) &= p\,J_p^2\, C(t,s)^{p-1} R(t,s) \\
-&\quad+ q\,J_q^2\, C(t,s)^{q-1} R(t,s),
+\Sigma(t,s) &= f''(C(t,s))R(t,s),\\
+\D(t,s) &= f'(C(t,s)) + \beta\, \delta(s)\, f'(C(t,0))\,,
+\end{aligned}
+\]
+where
+\[
+\begin{aligned}
+f(x)=J_p^2\, x^p + J_q^2\, x^q\,,
+\end{aligned}
+\]
+and the Lagrange multiplier of the spherical constraint
+\[
+\begin{aligned}
+\mu(t)=T_f+\int_0^t ds\left[\Sigma(t,s)C(t,s)+D(t,s)R(t,s)\right]\,.
 \end{aligned}
 \]
 
-The second kernel $D(t,s)$ depends on the model conventions (and temperature/noise terms) and is **currently documented incorrectly in this page**; please consult the paper for the precise expression. (This section will be updated to include the correct $D(t,s)$ formula.)
-
 ## Notes
-- The spherical constraint fixes $\mu(t)$ from $C(t,t)=1$.
+- The spherical constraint fixes $\mu(t)$ such that $C(t,t)=1$.
 - The concrete prefactors and any thermal/noise terms follow the conventions published in Phys. Rev. Lett.; DYNAMITE implements those definitions directly.
 - The exact expressions and units match the paper; see source under `include/EOMs/` for the hardcoded operators used at runtime.
 - The non-stationary (aging) regime requires both time integrals and thus benefits from the sparse 2D grid and renormalized history.

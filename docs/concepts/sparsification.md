@@ -9,9 +9,10 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 - Let $t_{\text{left}} = t[i-2],\; t_{\text{mid}} = t[i]$; define $\Delta_1 = t[i-1] - t_{\text{left}},\; \Delta_2 = t_{\text{mid}} - t_{\text{left}},\; \Delta_3 = t[i+1] - t_{\text{mid}}$ and scale $s = \Delta_2/12$.
 - For each component $j = 1\dots \text{len}$, accumulate
 
-	$\displaystyle s\,\big\lvert 2\,(QK[i]-QK[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QK[i-1]}{\Delta_1} + \tfrac{\mathrm d QK[i+1]}{\Delta_3}\big) \big\rvert$
-
-	$\displaystyle +\; s\,\big\lvert 2\,(QR[i]-QR[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QR[i-1]}{\Delta_1} + \tfrac{\mathrm d QR[i+1]}{\Delta_3}\big) \big\rvert.$
+  $$
+  \displaystyle s\,\big\lvert 2\,(QK[i]-QK[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QK[i-1]}{\Delta_1} + \tfrac{\mathrm d QK[i+1]}{\Delta_3}\big) \big\rvert
+  \; +\; s\,\big\lvert 2\,(QR[i]-QR[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QR[i-1]}{\Delta_1} + \tfrac{\mathrm d QR[i+1]}{\Delta_3}\big) \big\rvert.
+  $$
 
 - If the total is below the threshold, node i is erasable; otherwise it is kept.
 
@@ -21,9 +22,9 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 - Build `indsD` by shifting interior kept indices by $+1$ for derivative‑anchored data; set `indsD[0]=0`.
 - Compute `tfac` per kept chunk: `tfac[0]=1`, and for `i > 0`
 
-$$
-\displaystyle \text{tfac}[i] = \frac{t\big[\text{inds}[i]\big] - t\big[\text{inds}[i-1]\big]}{t\big[\text{indsD}[i]\big] - t\big[\text{indsD}[i]-1\big]}.
-$$
+  $$
+  \displaystyle \text{tfac}[i] = \frac{t\big[\text{inds}[i]\big] - t\big[\text{inds}[i-1]\big]}{t\big[\text{indsD}[i]\big] - t\big[\text{indsD}[i]-1\big]}.
+  $$
 
 - Gather arrays with these indices:
 	- QK, QR, r use `inds`.
