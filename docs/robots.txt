@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dmft-evolution.github.io/DYNAMITE/sitemap.xml

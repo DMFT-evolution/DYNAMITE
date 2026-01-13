@@ -23,6 +23,11 @@ jobs:
       - name: Build site
         run: |
           mkdocs build --strict
+      - name: Add robots.txt and sitemap.xml
+        run: |
+          cp docs/robots.txt site/robots.txt
+          cp docs/google3b6e732554505512.html site/google3b6e732554505512.html
+          python3 scripts/gen_sitemap.py --site-dir site --site-url "https://dmft-evolution.github.io/DYNAMITE/"
       - name: Add .nojekyll
         run: |
           touch site/.nojekyll

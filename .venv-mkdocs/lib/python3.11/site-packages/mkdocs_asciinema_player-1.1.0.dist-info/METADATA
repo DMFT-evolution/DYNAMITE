@@ -1,0 +1,90 @@
+Metadata-Version: 2.4
+Name: mkdocs-asciinema-player
+Version: 1.1.0
+Summary: A Mkdocs Plugin to include asciinema player in your documentation.
+Keywords: mkdocs,documentation,asciinema,asciinema-player
+Author: Philippe-André De Carvalho
+Author-email: Philippe-André De Carvalho <philippe.andre.decarvalho@gmail.com>
+License-Expression: MIT
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Operating System :: POSIX
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: System Administrators
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Utilities
+Classifier: Topic :: Software Development :: Documentation
+Requires-Dist: mkdocs>=1.6.1,<2
+Maintainer: Philippe-André De Carvalho
+Maintainer-email: Philippe-André De Carvalho <philippe.andre.decarvalho@gmail.com>
+Requires-Python: >=3.10, <4
+Project-URL: documentation, https://pa-decarvalho.github.io/mkdocs-asciinema-player
+Project-URL: homepage, https://github.com/pa-decarvalho/mkdocs-asciinema-player
+Project-URL: repository, https://github.com/pa-decarvalho/mkdocs-asciinema-player
+Description-Content-Type: text/markdown
+
+# mkdocs-asciinema-player
+
+[![docs](https://img.shields.io/badge/docs-plugin-blue?logo=asciinema)](https://pa-decarvalho.github.io/mkdocs-asciinema-player/)
+[![test](https://github.com/pa-decarvalho/mkdocs-asciinema-player/workflows/test/badge.svg)](https://github.com/pa-decarvalho/mkdocs-asciinema-player/actions)
+[![pypi](https://img.shields.io/pypi/v/mkdocs-asciinema-player.svg)](https://pypi.org/project/mkdocs-asciinema-player/)
+[![pyversions](https://img.shields.io/pypi/pyversions/mkdocs-asciinema-player.svg)](https://pypi.python.org/pypi/mkdocs-asciinema-player)
+[![downloads](https://img.shields.io/pypi/dm/mkdocs-asciinema-player.svg)](https://pypi.org/project/mkdocs-asciinema-player/)
+[![license](https://img.shields.io/pypi/l/mkdocs-asciinema-player.svg)](https://pypi.python.org/pypi/mkdocs-asciinema-player)
+
+A Mkdocs Plugin to include asciinema player in your documentation.
+
+## Related Projects
+
+| Name                                                                                            | Description                                                            |
+|-------------------------------------------------------------------------------------------------|------------------------------------------------------------------------|
+| [98.css](https://github.com/jdan/98.css)                                                        | 98.css from [jdan](https://github.com/jdan)                            |
+
+## Quick Setup
+
+### Installation
+
+Install the plugin via pip :
+
+```sh
+pip install mkdocs-asciinema-player
+```
+
+### Configure
+
+In your `mkdocs.yml`, add `asciinema-player` to the `plugins` section :
+
+```yaml
+plugins:
+  - search
+  - asciinema-player
+```
+
+### Usage
+
+In your MkDocs docs folder, add any [asciinema](https://asciinema.org/) `.cast` file and add this to any markdown page :
+
+````markdown
+```asciinema-player
+{
+    "file": "assets/asciinema/bootstrap.cast"
+}
+```
+````
+
+### More
+
+For more information on the plugin, you can visit the the following [website](https://pa-decarvalho.github.io/mkdocs-asciinema-player/)
+
+You will find the complete documentation of the plugin, examples of use, installation and configuration instructions.
+
+## Contributing
+
+See [CONTRIBUTING.md](https://github.com/pa-decarvalho/mkdocs-asciinema-player/blob/main/CONTRIBUTING.md) file.

@@ -14,19 +14,19 @@ This page explains (i) the basic idea and why it matters for accuracy/scaling, (
 DYNAMITE parameterizes the triangular domain using the time ratio
 
 \[
-	heta = t'/t \in [0,1],\quad \text{with } t'\le t.
+	\theta = t'/t \in [0,1],\quad \text{with } t'\le t.
 \]
 
 The grid is a **fixed set of monotone nodes** $\{\theta_i\}_{i=1}^N$ that is intentionally dense near $\theta\approx 0$ and $\theta\approx 1$.
 
 ### Why non‑equidistant?
 
-At long times, Green’s functions can retain sharp structure for small relative times $\tau=t-t'\lesssim\tau_{\rm micro}$ (i.e. very close to the diagonal $t'\approx t$), and (after a quench) can also remain sensitive to the early‑time region $t'\lesssim\tau_{\rm micro}$. The paper’s key requirement is that the grid spacings be fine enough to resolve these microscopic scales *when mapped back to physical time*, while keeping the number of ratio nodes fixed.
+At long times, Green’s functions can retain sharp features for small relative times $\tau=t-t'\lesssim\tau_{\rm micro}$ (i.e. very close to the diagonal $t'\approx t$), and (after a quench) can also remain sensitive to the early‑time region $t'\lesssim\tau_{\rm micro}$. The key requirement is that the grid spacings be fine enough to resolve these microscopic scales *when mapped back to physical time*, while keeping the number of ratio nodes fixed.
 
-In the notation of the paper, this is captured by the resolution condition (main text Eq. (2)):
+This is captured by the resolution condition:
 
 \[
-	heta_{i+1}-\theta_i \ll \frac{\tau_{\rm micro}}{t}\quad \text{for all } i \text{ with } \min(\theta_i,1-\theta_i)\lesssim \frac{\tau_{\rm micro}}{\min(t',\tau)}.
+	\theta_{i+1}-\theta_i \ll \frac{\tau_{\rm micro}}{t}\quad \text{for all } i \text{ with } \min(\theta_i,1-\theta_i)\lesssim \frac{\tau_{\rm micro}}{\min(t',\tau)}.
 \]
 
 Practically, this is why the grid must be dense near $\theta=0$ and $\theta=1$.
@@ -45,7 +45,7 @@ Practically, this is why the grid must be dense near $\theta=0$ and $\theta=1$.
 
 Only the triangular domain $t' \le t$ is simulated. The algorithm samples functions as $\mathcal A(t,\theta)\equiv A(t,\theta t)$ on a fixed irregular $\theta$ grid, and (crucially) evaluates memory integrals by interpolating along derived contours that remain dense in the RG‑relevant regions.
 
-DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). All node locations and quadrature/interpolation metadata are precomputed and shipped under `Grid_data/<L>/` for $L\in\{512,1024,2048\}$.
+DYNAMITE uses the non‑equidistant time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). All node locations and quadrature/interpolation metadata are precomputed and, for $L=512$, these are shipped under `Grid_data/512/`.
 
 On this page:
 
@@ -54,11 +54,11 @@ On this page:
 - **Optional generator feature:** the \(\alpha/\delta\) index remapping (defaults reproduce the paper grid exactly).
 - **Practical use:** choosing $L$, regeneration, and quick convergence checks.
 
-> **Important:** treat the grid choice as an algorithmic ingredient, not a cosmetic discretization. Using an equidistant grid often destroys the scaling and can increase cost dramatically.
+> **Important:** treat the grid choice as an algorithmic ingredient, not a cosmetic discretization. Using an equidistant grid will dramatically limit the accessible times.
 
 ## What the files contain (and how the runtime uses them)
 
-The grid package under `Grid_data/<L>/` is meant to be *complete*: the code should not have to recompute interpolation topology or quadrature rules at runtime.
+The grid package under `Grid_data/<L>/` is meant to be *complete*: the code does not have to recompute interpolation topology or quadrature rules at runtime.
 
 - `theta.dat`  — the fixed monotone node set $\{\theta_i\}$ for $\theta=t'/t$.
 - `phi1.dat`, `phi2.dat` — the two contour families used to discretize the memory integrals in the paper (main text Eq. (3)), evaluated from the same base nodes:
@@ -66,7 +66,7 @@ The grid package under `Grid_data/<L>/` is meant to be *complete*: the code shou
 	- $\phi^{(2)}_{ij}=\theta_j+(1-\theta_j)\,\theta_i$ (dense near the diagonal / small relative time)
 - `int.dat` — quadrature weights for integration over the irregular node set (open‑clamped B‑spline; default $s=5$).
 
-> Notation note: the paper uses $\theta=t'/t$ for the time ratio. In data files, the node list is stored in `theta.dat`. The auxiliary contour coordinates are stored as `phi1.dat` and `phi2.dat`.
+> Notation note: here we use $\theta=t'/t$ for the time ratio. In data files, the node list is stored in `theta.dat`. The auxiliary contour coordinates are stored as `phi1.dat` and `phi2.dat`.
 
 Interpolation metadata (for fast gathers during convolution / stencil evaluation):
 
@@ -76,7 +76,7 @@ Interpolation metadata (for fast gathers during convolution / stencil evaluation
 
 Provenance:
 
-- `grid_params.txt` — generator parameters (len, $T_\max$, spline order, interpolation method/order, FH window if rational, optional `alpha`/`delta`, and the command line used).
+- `grid_params.txt` — generator parameters (len, $T_\max$, spline order, interpolation method/order, (floater-Hormann) FH window if rational, optional `alpha`/`delta`, and the command line used).
 
 ## Generating/updating the grids and metadata
 
@@ -123,7 +123,7 @@ The fixed irregular grid $\{\theta_k\}_{k=1}^L$ (dense near $0$ and $1$) is give
 and the monotone arctan‑based mapping
 
 \[
-	heta_k = \frac{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0\,\xi_k)}{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0)}.
+	\theta_k = \frac{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0\,\xi_k)}{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0)}.
 \]
 
 Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowding; any choice that yields sufficient density near $0$ and $1$ for your $t_{\max}$ is acceptable. This mapping is analytically invertible and yields near‑endpoint spacings that satisfy the resolution condition (paper Eq. (2)).
@@ -132,8 +132,8 @@ Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowdin
 
 In addition to the paper‑exact grid above, the implementation supports an **optional** smooth non‑linear remapping of the *fractional index* prior to evaluating the underlying $\Theta(x)$ mapping (i.e. before producing node locations in $\theta\in[0,1]$).
 
-- `alpha` ∈ [0,1]: blends toward the non‑linear map.
-- `delta \ge 0`: controls the “softness” of the remapping.
+- `alpha` ∈ [0,1]: blends toward the non‑linear map.  
+- `delta \ge 0`: controls the “softness” of the remapping.  
 
 The defaults `alpha=0, delta=0` reproduce the paper grid exactly. Non‑zero `alpha` re‑distributes nodes while preserving monotonicity and endpoints. If used, values are recorded in `Grid_data/<subdir>/grid_params.txt`.
 
@@ -164,7 +164,7 @@ and the modified grid is obtained by composition with the original mapping:
 \]
 
 Remarks:
-- $\alpha=0$ (any $\delta$) yields the identity in index space, i.e., the paper‑exact grid. $\alpha=1$ applies the full non‑linear remapping.
+- $\alpha=0$ (any $\delta$) yields the identity in index space, i.e., the paper‑exact grid. $\alpha=1$ applies the full non‑linear remapping.  
 - The normalization by $g_1$ clamps the transform so that endpoints map to endpoints (monotone, range preserved).
 
 For memory integrals (paper Eq. (3)), the paper introduces an integration variable $\phi$ and uses two contour families on the same $\theta$ grid:
@@ -185,11 +185,11 @@ DYNAMITE uses the following notation in code and data:
 
 ## Performance note
 
-Using these paper‑defined non‑equidistant grids is the primary reason the method attains sublinear growth of cost with simulated time. Changing to an equidistant grid will typically increase complexity toward the cubic baseline and should be avoided.
+Using these paper‑defined non‑equidistant grids is the primary reason the method attains (sub)linear growth of cost with simulated time. Although the high interpolation orders make the method reasonably insensitive to the precise grid choice, the grid must be tailored to the system. Using an equidistant grid for aging dynamics will be highly inefficient as it must resolve both the slow emergent time scales of the aging regime and the fast microscopic scales.
 
 ## Choosing L and checking convergence
 
-- Available L: 512 / 1024 / 2048. Larger L → higher fidelity at higher cost.
+- The code ships with a single set of grid parameters for $L=512$ with $\alpha=\delta=0$. Use larger L for higher fidelity and later times at higher cost.
 - Validate by comparing observables (energy(t), C(t,t), C(t, α t)) across L.
 - Near phase transitions, prefer larger L to capture critical scaling.
 
@@ -199,7 +199,3 @@ Inputs directory structure:
 - `Grid_data/<L>/posA1y.dat`, `posA2y.dat`, `posB2y.dat`
 - `Grid_data/<L>/indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat`
 - `Grid_data/<L>/weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat`
-
-## Conceptual figure: triangular time domain and non‑equidistant grid
-
-The figure above is the key picture to keep in mind: dense near $(t,t')\approx(0,0)$, dense near the diagonal at late times, and sparse in between.

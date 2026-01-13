@@ -1,8 +1,13 @@
 # DYNAMITE
 
+> GitHub repository: https://github.com/DMFT-evolution/DMFE  \
+> Documentation: https://dmft-evolution.github.io/DYNAMITE/
+
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
 
 DYNAMITE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to (sub)linear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
+
+Keywords (for search): DMFT, dynamical mean-field equations, nonequilibrium dynamics, aging dynamics, spin glass, spherical p-spin, numerical renormalization, interpolation grids, CUDA, C++.
 
 Key features:
 - GPU‑accelerated kernels with a CPU fallback
