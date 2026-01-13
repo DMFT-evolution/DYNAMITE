@@ -22,9 +22,10 @@ jobs:
         with:
           python-version: '3.x'
           cache: 'pip'
+          cache-dependency-path: .github/mkdocs-requirements.txt
       - name: Install dependencies
         run: |
-          pip install mkdocs mkdocs-material mkdocs-material-extensions mkdocs-asciinema-player mkdocs-exclude
+          pip install -r .github/mkdocs-requirements.txt
       - name: Build site
         run: |
           mkdocs build --strict
