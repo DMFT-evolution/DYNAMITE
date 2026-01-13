@@ -1,13 +1,11 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
-The *interpolation grid* is one of DYNAMITE’s core design choices: it fixes **where** the two‑time correlators are sampled on the triangular domain $t'\le t$, and it ships with the **quadrature weights, interpolation stencils, and index maps** that make memory integrals fast and accurate.
+The *interpolation grid* is one of DYNAMITE’s core design choices: it fixes **where** the two‑time Green’s functions are sampled on the triangular domain $t'\le t$, and it ships with the **quadrature weights, interpolation stencils, and index maps** used to evaluate memory integrals efficiently.
 
-If you take away one thing from this page, let it be this:
+Conceptually, the algorithm keeps a *fixed* number of samples in the dimensionless time ratio
+$\theta=t'/t\in[0,1]$ and evolves only the outer time $t$ with an adaptive ODE solver. The grid is chosen so that microscopic features near $t'\approx t$ (small relative time) and near $t'\approx 0$ (quench/onset region) remain resolved for all simulated ages $t$.
 
-- The method’s scaling and stability rely on a **nested, highly non‑equidistant** time‑ratio grid.
-- Swapping in an equidistant grid is not a harmless “resolution change” — it typically breaks the renormalization gains and can make runs dramatically more expensive.
-
-This page explains (i) what the grid is conceptually, (ii) where it appears in the code and on disk, and (iii) the exact equations used to generate it.
+This page explains (i) the basic idea and why it matters for accuracy/scaling, (ii) what’s stored under `Grid_data/<L>/`, and (iii) the paper equations used to generate the shipped grid.
 
 ## Quick orientation
 
@@ -16,18 +14,26 @@ This page explains (i) what the grid is conceptually, (ii) where it appears in t
 DYNAMITE parameterizes the triangular domain using the time ratio
 
 \[
-\phi = t'/t \in [0,1],\quad \text{with } t'\le t.
+	heta = t'/t \in [0,1],\quad \text{with } t'\le t.
 \]
 
-The grid is a **fixed set of monotone nodes** $\{\phi_k\}_{k=1}^L$ that is intentionally dense near $\phi\approx 0$ and $\phi\approx 1$.
+The grid is a **fixed set of monotone nodes** $\{\theta_i\}_{i=1}^N$ that is intentionally dense near $\theta\approx 0$ and $\theta\approx 1$.
 
 ### Why non‑equidistant?
 
-At long times the dynamics develop sharp structure near the diagonal ($t'\approx t$), while other regions can be sampled more sparsely. The shipped grids implement exactly this multi‑scale sampling so that accuracy can be retained without paying the cubic “uniform grid everywhere” cost.
+At long times, Green’s functions can retain sharp structure for small relative times $\tau=t-t'\lesssim\tau_{\rm micro}$ (i.e. very close to the diagonal $t'\approx t$), and (after a quench) can also remain sensitive to the early‑time region $t'\lesssim\tau_{\rm micro}$. The paper’s key requirement is that the grid spacings be fine enough to resolve these microscopic scales *when mapped back to physical time*, while keeping the number of ratio nodes fixed.
+
+In the notation of the paper, this is captured by the resolution condition (main text Eq. (2)):
+
+\[
+	heta_{i+1}-\theta_i \ll \frac{\tau_{\rm micro}}{t}\quad \text{for all } i \text{ with } \min(\theta_i,1-\theta_i)\lesssim \frac{\tau_{\rm micro}}{\min(t',\tau)}.
+\]
+
+Practically, this is why the grid must be dense near $\theta=0$ and $\theta=1$.
 
 ### Where does it show up in practice?
 
-- Runtime interpolation uses precomputed **stencils** (indices + weights) derived from this grid.
+- Runtime interpolation uses precomputed **stencils** (indices + weights) derived from this fixed $\theta$ grid.
 - Memory integrals use spline‑consistent **quadrature weights** on the same nodes.
 - All of these are bundled under `Grid_data/<L>/` and loaded by the code at startup.
 
@@ -37,7 +43,7 @@ At long times the dynamics develop sharp structure near the diagonal ($t'\approx
 	
 </figure>
 
-Only the triangular domain $t' \le t$ is simulated. The grid is dense at short times and near the diagonal at long times, with a sparse intermediate region; this multi‑scale structure enables the method’s sublinear scaling.
+Only the triangular domain $t' \le t$ is simulated. The algorithm samples functions as $\mathcal A(t,\theta)\equiv A(t,\theta t)$ on a fixed irregular $\theta$ grid, and (crucially) evaluates memory integrals by interpolating along derived contours that remain dense in the RG‑relevant regions.
 
 DYNAMITE uses exactly the non‑equidistant, nested time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). All node locations and quadrature/interpolation metadata are precomputed and shipped under `Grid_data/<L>/` for $L\in\{512,1024,2048\}$.
 
@@ -54,11 +60,13 @@ On this page:
 
 The grid package under `Grid_data/<L>/` is meant to be *complete*: the code should not have to recompute interpolation topology or quadrature rules at runtime.
 
-- `theta.dat`  — primary (monotone) parameterization $\theta\equiv\{\phi_k\}$ (the time‑ratio nodes).
-- `phi1.dat`, `phi2.dat` — the two contour families $\varphi^{(1)}$, $\varphi^{(2)}$ evaluated on the same node set; used to assemble 2D interpolation stencils.
-- `int.dat` — quadrature weights associated with $\{\phi_k\}$ for accurate evaluation of memory integrals (open‑clamped B‑spline of configurable degree; default $s=5$).
+- `theta.dat`  — the fixed monotone node set $\{\theta_i\}$ for $\theta=t'/t$.
+- `phi1.dat`, `phi2.dat` — the two contour families used to discretize the memory integrals in the paper (main text Eq. (3)), evaluated from the same base nodes:
+	- $\phi^{(1)}_{ij}=\theta_i\,\theta_j$ (dense near the onset / early times)
+	- $\phi^{(2)}_{ij}=\theta_j+(1-\theta_j)\,\theta_i$ (dense near the diagonal / small relative time)
+- `int.dat` — quadrature weights for integration over the irregular node set (open‑clamped B‑spline; default $s=5$).
 
-> Notation note: throughout the paper and this page, $\phi$ denotes the time ratio $t'/t$, and $\{\phi_k\}$ are the grid nodes. In the code/data, the node list is stored in `theta.dat` and is often referred to as “theta”.
+> Notation note: the paper uses $\theta=t'/t$ for the time ratio. In data files, the node list is stored in `theta.dat`. The auxiliary contour coordinates are stored as `phi1.dat` and `phi2.dat`.
 
 Interpolation metadata (for fast gathers during convolution / stencil evaluation):
 
@@ -99,13 +107,13 @@ Method notes:
 
 ## Explicit equations (as in Phys. Rev. Lett. **135**, 247101 (2025))
 
-We parametrize the two‑point functions on the triangular domain $t_2 \le t_1$ by the time ratio $\phi = t_2/t_1 \in [0,1]$, i.e.
+We parametrize the two‑point functions on the triangular domain $t_2 \le t_1$ by the time ratio $\theta = t_2/t_1 \in [0,1]$, i.e.
 
 \[
-\mathcal G(t_1,\phi) \equiv G(t_1,\phi\,t_1).
+\mathcal G(t_1,\theta) \equiv G(t_1,\theta\,t_1).
 \]
 
-The fixed irregular grid $\{\phi_k\}_{k=1}^L$ (dense near $0$ and $1$) is given by the supplemental Eq. (S1):
+The fixed irregular grid $\{\theta_k\}_{k=1}^L$ (dense near $0$ and $1$) is given by the supplemental Eq. (S1):
 
 \[
 \xi_k = \frac{2k - 1 - L}{L - 1},\quad k=1,\dots,L,\qquad
@@ -115,14 +123,14 @@ The fixed irregular grid $\{\phi_k\}_{k=1}^L$ (dense near $0$ and $1$) is given 
 and the monotone arctan‑based mapping
 
 \[
-\phi_k = \frac{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0\,\xi_k)}{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0)}.
+	heta_k = \frac{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0\,\xi_k)}{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0)}.
 \]
 
 Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowding; any choice that yields sufficient density near $0$ and $1$ for your $t_{\max}$ is acceptable. This mapping is analytically invertible and yields near‑endpoint spacings that satisfy the resolution condition (paper Eq. (2)).
 
 ## Optional index remapping (alpha/delta)
 
-In addition to the paper‑exact grid above, the implementation supports an **optional** smooth non‑linear remapping of the *fractional index* prior to evaluating the underlying $\Theta(x)$ mapping (i.e. before producing node locations in $\phi\in[0,1]$).
+In addition to the paper‑exact grid above, the implementation supports an **optional** smooth non‑linear remapping of the *fractional index* prior to evaluating the underlying $\Theta(x)$ mapping (i.e. before producing node locations in $\theta\in[0,1]$).
 
 - `alpha` ∈ [0,1]: blends toward the non‑linear map.
 - `delta \ge 0`: controls the “softness” of the remapping.
@@ -159,7 +167,7 @@ Remarks:
 - $\alpha=0$ (any $\delta$) yields the identity in index space, i.e., the paper‑exact grid. $\alpha=1$ applies the full non‑linear remapping.
 - The normalization by $g_1$ clamps the transform so that endpoints map to endpoints (monotone, range preserved).
 
-For memory integrals (paper Eq. (3)), two contour families on the same grid are used:
+For memory integrals (paper Eq. (3)), the paper introduces an integration variable $\phi$ and uses two contour families on the same $\theta$ grid:
 
 \[
 \rho_k^{(1)}(\alpha_j) = \phi_k\,\alpha_j,\qquad
@@ -171,10 +179,9 @@ These generate the “mixed” directions required by the convolution structure 
 
 DYNAMITE uses the following notation in code and data:
 
-- $\theta \equiv \{\phi_k\}$ (stored in `theta.dat`).
-- $\varphi^{(1)} \equiv \{\rho_k^{(1)}(\alpha_j)\}$ (stored in `phi1.dat`).
-- $\varphi^{(2)} \equiv \{\rho_k^{(2)}(\alpha_j)\}$ (stored in `phi2.dat`).
-- Spline‑consistent quadrature weights for the irregular grid (stored in `int.dat`, B‑spline degree s; default s=5).
+- $\{\theta_i\}$ (stored in `theta.dat`).
+- The two induced contour families (stored in `phi1.dat` and `phi2.dat`).
+- Spline‑consistent quadrature weights for the irregular grid (stored in `int.dat`, B‑spline degree $s$; default $s=5$).
 
 ## Performance note
 
