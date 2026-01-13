@@ -6,7 +6,7 @@ We evolve correlation $C(t,t')$ and response $R(t,t')$ after a quench on the non
 
 Let the memory kernels be functionals of C and R with p- and q-body terms and spherical constraint enforced via a Lagrange multiplier µ(t). The equations read schematically
 
-\[
+$$
 \begin{aligned}
 \partial_t C(t,t') &= -\mu(t)\, C(t,t') \\
 &\quad+ \int_0^t ds\, \Sigma(t,s)\, C(s,t') \\
@@ -14,28 +14,30 @@ Let the memory kernels be functionals of C and R with p- and q-body terms and sp
 \partial_t R(t,t') &= -\mu(t)\, R(t,t') + \delta(t-t') \\
 &\quad+ \int_{t'}^t ds\, \Sigma(t,s)\, R(s,t'),
 \end{aligned}
-\]
+$$
 
 with model-specific kernels (for the mixed spherical $p$-spin model) of the form
 
-\[
+$$
 \begin{aligned}
 \Sigma(t,s) &= f''(C(t,s))R(t,s),\\
-\D(t,s) &= f'(C(t,s)) + \beta\, \delta(s)\, f'(C(t,0))\,,
+D(t,s) &= f'(C(t,s)) + \beta\, \delta(s)\, f'(C(t,0))\,,
 \end{aligned}
-\]
+$$
 where
-\[
+
+$$
 \begin{aligned}
 f(x)=J_p^2\, x^p + J_q^2\, x^q\,,
 \end{aligned}
-\]
+$$
 and the Lagrange multiplier of the spherical constraint
-\[
+
+$$
 \begin{aligned}
 \mu(t)=T_f+\int_0^t ds\left[\Sigma(t,s)C(t,s)+D(t,s)R(t,s)\right]\,.
 \end{aligned}
-\]
+$$
 
 ## Notes
 - The spherical constraint fixes $\mu(t)$ such that $C(t,t)=1$.
