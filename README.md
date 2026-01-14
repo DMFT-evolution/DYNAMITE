@@ -48,15 +48,76 @@ Show help and defaults:
 ./RG-Evo -h
 ```
 
-### Grids and outputs (where to look)
+### Generate interpolation grids (theta/phi/pos) and interpolation metadata
 
-- Grid packages live under `Grid_data/<L>/` and are selected at runtime via `-L`.
-- If you need to generate or validate grids, see the docs:
-  - Tutorial: https://dmft-evolution.github.io/DYNAMITE/tutorials/generate-grids/
-  - How-to (full flag reference): https://dmft-evolution.github.io/DYNAMITE/howto/generate-grids/
-- For outputs, formats, and sanity checks, start with:
-  - Usage: https://dmft-evolution.github.io/DYNAMITE/usage/
-  - Tutorial: https://dmft-evolution.github.io/DYNAMITE/tutorials/reading-outputs/
+The `grid` subcommand creates interpolation grids and metadata under `Grid_data/<L>/`.
+
+Usage:
+
+```bash
+./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
+							[--alpha X] [--delta X] \
+							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
+# METHODS: poly | rational | bspline
+							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
+# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
+```
+
+Examples:
+
+```bash
+# Generate 512-point grids with barycentric Lagrange (degree 9)
+./RG-Evo grid --len 512 --Tmax 100000 --dir 512 --interp-method poly --interp-order 9
+
+# Generate with rational barycentric (Floater–Hormann style interface) of order 9
+./RG-Evo grid -L 512 --interp-method rational --interp-order 9
+
+# Same, using a wider FH window (blend across m=n+5 nodes)
+./RG-Evo grid -L 512 --interp-method rational --interp-order 9 --fh-stencil 14
+
+# Generate with B-spline of degree 9 (global collocation weights)
+./RG-Evo grid -L 512 --interp-method bspline --interp-order 9
+
+# Apply optional index remapping (alpha in [0,1], delta >= 0) to slightly re-distribute theta nodes
+./RG-Evo grid -L 512 --alpha 0.25 --delta 0.5 --dir 512-custom
+```
+
+Outputs written to `Grid_data/<SUBDIR>/` include:
+
+- Grids: `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
+- Integration weights: `int.dat` (N) — spline‑consistent open‑clamped B‑spline quadrature (degree s; default s=5)
+- Position grids: `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
+- Interpolation metadata (theta → targets):
+	- A1 (phi1): `indsA1y.dat` (N×N start indices), `weightsA1y.dat`
+	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
+	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
+
+Notes on methods:
+- poly writes local stencils: each entry stores a start index and n+1 weights.
+- rational (Floater–Hormann) defaults to m=n+1 (like poly). Set --fh-stencil m (m ≥ n+1) to blend multiple degree-n stencils over a window for extra stability on irregular nodes; each entry then stores m weights.
+- bspline writes dense weights per entry (global map). Prefer poly/rational when y changes frequently between evaluations.
+
+Notes on alpha/delta (optional):
+- The base grid follows the paper exactly. You can optionally apply a smooth non-linear remapping in index space controlled by `--alpha` (blend toward the non-linear map) and `--delta` (softness near the center). Defaults are `--alpha 0 --delta 0`, i.e., the paper grid. Any non-zero `alpha` will slightly re-distribute nodes while preserving monotonicity. The chosen values are recorded in `Grid_data/<SUBDIR>/grid_params.txt` as `alpha` and `delta`.
+
+### Automatic grid provisioning at startup
+
+When you start a simulation, the code ensures that interpolation grids for the requested length `-L` are available:
+
+- It first checks `Grid_data/<L>/` for the required files.
+- If missing, it scans other subdirectories under `Grid_data/` for a matching `grid_params.txt` with `len=<L>` and will reuse it via a symlink (`Grid_data/<L> -> Grid_data/<subdir>`) or by copying files.
+- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
+
+This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
+
+### I/O architecture and progress UI
+
+The I/O layer is modular and reports progress via a compact TUI:
+
+- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and when `-D true` the per-step telemetry log `step_metrics.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
+- Runtime-optional HDF5: the program tries to load system `libhdf5`/`libhdf5_hl` at runtime. It prints which libraries were loaded; if unavailable or an error occurs, it falls back to `data.bin` automatically.
+- Save telemetry windows (fraction of the save task): main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line reaches 1.0 when all outputs are complete.
+- TUI messages: a "Save started" line is printed (without filename unless `--debug true`) and a final "Save finished: <dir>" line when done. In async mode, the simulation continues while saving in the background.
 
 ## Documentation
 
@@ -145,9 +206,28 @@ cmake -S . -B build \
 ./RG-Evo -m 120000 -D false -q 4 -l 0.5 -L 512
 ```
 
-For the full CLI flag reference and defaults, see the docs:
-
-- Usage: https://dmft-evolution.github.io/DYNAMITE/usage/
+- Common flags (see `-h` for full list and defaults):
+	- `-p INT` primary parameter p
+	- `-q INT` secondary parameter p2
+	- `-l, --lambda FLOAT` coupling lambda
+	- `-T, --T0 FLOAT|inf` initial temperature (use `inf` for infinity)
+	- `-G, --Gamma FLOAT` final temperature
+	- `-L INT` grid length L (must match available data, e.g. 512/1024/2048)
+	- `-m INT` max number of loops
+	- `-t FLOAT` max simulation time
+	- `-d FLOAT` minimum time step
+	- `-e, --error FLOAT` max error per step
+	- `-R, --log-response-interp BOOL` interpolate QR/dQR in log space (default false; auto-fallback to linear if any QR<=0)
+	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
+	- `-s BOOL` save outputs (default true; pass `false` to disable)
+	- `-S, --serk2 BOOL` use SERK2 method (default true)
+	- `-w, --sparsify-sweeps INT` set number of sparsification sweeps per maintenance pass (`-1` auto [default], `0` off, `>0` fixed count)
+	- `-D BOOL` debug messages (default true)
+	- `-g, --gpu BOOL` enable GPU acceleration (default true)
+	- `-A, --async-export BOOL` enable asynchronous data export (default true)
+	- `-I, --allow-incompatible-versions BOOL` allow loading data saved with incompatible versions (default false)
+	- `-v` print version info and exit
+	- `-c, --check FILE` check version compatibility of a params file and exit
 
 GPU/CPU: By default, the program attempts to use GPU acceleration if compatible hardware is detected (`--gpu true`). You can explicitly disable GPU acceleration with `--gpu false` to force CPU-only execution. The program will automatically fall back to CPU if GPU is disabled or if no compatible GPU hardware is found.
 

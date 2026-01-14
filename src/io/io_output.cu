@@ -275,7 +275,9 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         _setSaveProgress(frac, last_t1, "histories");
     };
     const bool write_times = config.debug && !simulation.h_debug_step_runtimes.empty();
-    const size_t debug_sample_count = write_times ? std::min(simulation.h_debug_step_runtimes.size(), simulation.h_t1grid.size()) : 0;
+    // IMPORTANT: step_metrics is *not* sparsified/downsampled; we write all recorded debug telemetry.
+    // Keep vector usage conservative: only consume indices that exist, and keep time/memory fallbacks.
+    const size_t debug_sample_count = write_times ? simulation.h_debug_step_runtimes.size() : 0;
     const auto& memory_history = simulation.h_debug_step_memory;
     const bool memory_available = !memory_history.empty();
     size_t total_lines = simulation.h_t1grid.size() * 3 + debug_sample_count; // rvec + energy + qk0 (+times when debug)
@@ -336,13 +338,17 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             std::string memory_header = gpu_param ? "GPUMemoryMB" : "RAMMemoryMB";
             timesFile << "# Time\tRuntimeSeconds\t" << memory_header << "\n";
             for (size_t i = 0; i < debug_sample_count; ++i) {
+                // Use the debug time vector when present; otherwise fall back to closest t1grid entry.
                 size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
                 double sim_time_value = (i < simulation.h_debug_step_times.size())
                     ? simulation.h_debug_step_times[i]
-                    : simulation.h_t1grid[safe_idx];
+                    : (t1len ? simulation.h_t1grid[safe_idx] : 0.0);
+
+                // Memory telemetry might be absent or shorter; use last-known value when available.
                 double memory_value = (i < memory_history.size())
                     ? memory_history[i]
                     : (memory_available ? memory_history.back() : 0.0);
+
                 timesFile << sim_time_value << "\t" << simulation.h_debug_step_runtimes[i]
                           << "\t" << memory_value << "\n";
                 if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
@@ -396,7 +402,8 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         _setSaveProgress(frac, last_t1, "histories");
     };
     const bool write_times = config.debug && !snapshot.debug_step_runtimes.empty();
-    const size_t debug_sample_count = write_times ? std::min(snapshot.debug_step_runtimes.size(), snapshot.t1grid.size()) : 0;
+    // IMPORTANT: step_metrics is *not* sparsified/downsampled; we write all recorded debug telemetry.
+    const size_t debug_sample_count = write_times ? snapshot.debug_step_runtimes.size() : 0;
     const auto& memory_history = snapshot.debug_step_memory;
     const bool memory_available = !memory_history.empty();
     size_t total_lines = snapshot.t1grid.size() * 3 + debug_sample_count;
@@ -459,7 +466,7 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
                 size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
                 double sim_time_value = (i < snapshot.debug_step_times.size())
                     ? snapshot.debug_step_times[i]
-                    : snapshot.t1grid[safe_idx];
+                    : (t1len ? snapshot.t1grid[safe_idx] : 0.0);
                 double memory_value = (i < memory_history.size())
                     ? memory_history[i]
                     : (memory_available ? memory_history.back() : 0.0);
