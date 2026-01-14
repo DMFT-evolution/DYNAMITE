@@ -23,6 +23,6 @@ If DYNAMITE or its documentation helped your work, please acknowledge the projec
 
 ## See also
 
-- [`CITATION.cff`](../../CITATION.cff)
+- [`CITATION.cff` (repository root)](https://github.com/DMFT-evolution/DYNAMITE/blob/main/CITATION.cff)
 - [Reference → Bibliography](bibliography.md)
 - [Dev → Release process](../dev/release.md)

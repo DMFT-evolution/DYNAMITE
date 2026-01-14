@@ -12,4 +12,4 @@
 
 - [Dev → Testing](testing.md)
 - [Version compatibility](../concepts/version-compatibility.md)
-- [`CHANGELOG.md`](../../CHANGELOG.md)
+- [`CHANGELOG.md` (repository root)](https://github.com/DMFT-evolution/DYNAMITE/blob/main/CHANGELOG.md)
