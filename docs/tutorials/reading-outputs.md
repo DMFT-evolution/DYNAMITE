@@ -154,6 +154,18 @@ Notes:
 python3 scripts/plot_energy_threshold_gap.py /path/to/output/dir --skip-nonpositive --out eth_gap.png
 ```
 
+Example (commands + output figure):
+
+![Threshold-energy gap plot](../assets/energy.png)
+
+```bash
+# 1) Run a simulation (example parameters)
+./RG-Evo -m 1e8 -D true -q 3 -l 0.5 -G 0.5 -L 512
+
+# 2) Plot E(t) - Eth from the run output directory
+python3 scripts/plot_energy_threshold_gap.py /path/to/output/dir --out energy.png
+```
+
 ### Correlation slice plot ($C(t_w+\tau, t_w)$) from compressed outputs
 
 If your output directory contains the compressed snapshot files
@@ -209,6 +221,6 @@ python3 scripts/plot_correlation.py /path/to/output/dir --tw "0,1,10,100" --out 
 Notes:
 
 - The script uses a spline interpolator (SciPy), however linear interpolations are often good enough.
-- The x-axis is logarithmic by default (matching Mathematica's `LogLinearPlot`). Use `--linear-x` to switch to a linear x-axis.
+- The x-axis is logarithmic by default. Use `--linear-x` to switch to a linear x-axis.
 - Axis labels use robust Unicode text by default (no LaTeX dependency). If you want full LaTeX rendering and have a working LaTeX install, pass `--usetex`.
 - Use `--tau-min/--tau-max` and `--n-tau` to control the plotted interval and resolution.
