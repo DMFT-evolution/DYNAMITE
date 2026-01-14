@@ -34,7 +34,7 @@ Point runs at the folder via `-L 512` (length) and ensure the directory exists.
 
 ## See also
 
-- How-to → Generate new grids (full flag reference & theory)
-- Concepts → Interpolation grids (mathematical background)
-- Tutorial → First Run (integrating the grid in a simulation)
+- [How-to → Generate new grids](../howto/generate-grids.md) (full flag reference & theory)
+- [Concepts → Interpolation grids](../concepts/interpolation-grids.md) (mathematical background)
+- [Tutorial → First Run](first-run.md) (integrating the grid in a simulation)
 

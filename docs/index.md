@@ -119,7 +119,7 @@ The solver implements a numerical renormalization scheme with two-dimensional in
 
 - Single-site, causal effective dynamics laid out on the triangular domain t ≥ t'.
 - History terms expressible as integrals/convolutions evaluable on a 2D interpolation grid.
-- Model-specific closures supplied via an EOM module (see `concepts/eoms-and-observables.md`).
+- Model-specific closures supplied via an EOM module (see [EOMs and observables](concepts/eoms-and-observables.md)).
 
 ## Quickstart
 
@@ -157,7 +157,7 @@ The solver implements a numerical renormalization scheme with two-dimensional in
 
 ## Cite DYNAMITE & get help
 
-- Software: see **Reference → Cite** (powered by `CITATION.cff`).
+- Software: see [Reference → Cite](reference/cite.md) (powered by `CITATION.cff`).
 - Method paper: J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
-- License: Apache-2.0 (see `LICENSE`).
-- Support: follow `dev/testing.md` for issue templates or open a GitHub issue with your build info (compiler/CUDA, commit hash, minimal input).
+- License: Apache-2.0 (see [`LICENSE`](https://github.com/DMFT-evolution/DMFE/blob/main/LICENSE)).
+- Support: follow [Testing](dev/testing.md) for issue templates or open a GitHub issue with your build info (compiler/CUDA, commit hash, minimal input).

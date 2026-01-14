@@ -9,7 +9,7 @@ If you use DYNAMITE in your research, please cite the software:
 
 Preferred citation
 
-- Cite a specific tagged release (see GitHub Releases) and include the DOI if available. Until a DOI is minted, include the version tag and commit hash for reproducibility.
+- Cite a specific tagged release (see [GitHub Releases](https://github.com/DMFT-evolution/DMFE/releases)) and include the DOI if available. Until a DOI is minted, include the version tag and commit hash for reproducibility.
 
 Related paper
 

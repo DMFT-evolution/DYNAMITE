@@ -87,7 +87,7 @@ CUDA runtime linkage (CUDA builds only):
 - `-DDMFE_STATIC_CUDART=ON|OFF` — link CUDA runtime statically (ON) or dynamically (OFF).
 - `-DDMFE_BUILD_SHARED_VARIANT=ON|OFF` — also build a shared-runtime CUDA variant.
 
-See README Build options for the full list and examples.
+See [README build options](https://github.com/DMFT-evolution/DMFE#build) for the full list and examples.
 
 ## CUDA notes
 
@@ -115,4 +115,4 @@ If you built with compile-time HDF5 (`USE_HDF5=ON`) and see HDF5 load/link error
 
 ---
 
-License: Apache-2.0. See the repository `LICENSE` file. For citation instructions, see Reference → Cite.
+License: Apache-2.0. See the repository [`LICENSE`](https://github.com/DMFT-evolution/DMFE/blob/main/LICENSE) file. For citation instructions, see [Reference → Cite](reference/cite.md).

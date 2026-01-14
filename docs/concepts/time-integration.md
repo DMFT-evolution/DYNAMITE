@@ -56,4 +56,4 @@ $$
 - Check that key observables (C, R) at latest times are independent of `-e`.
 - If concerned about stability, disable the lower order method SERK2 at the risk of potentially slightly lower performance at late times.
 
-Implementation details: see `include/EOMs/` and `src/EOMs/` (RK54 Dormand–Prince, SSPRK(10,4), SERK2 kernels and selection logic).
+Implementation details: see [`include/EOMs/`](https://github.com/DMFT-evolution/DMFE/tree/main/include/EOMs) and [`src/EOMs/`](https://github.com/DMFT-evolution/DMFE/tree/main/src/EOMs) (RK54 Dormand–Prince, SSPRK(10,4), SERK2 kernels and selection logic).

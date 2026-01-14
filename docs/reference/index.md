@@ -2,7 +2,7 @@
 
 This section collects stable reference material that supports running DYNAMITE and citing it.
 
-- How to cite the software: see Reference → Cite
-- Bibliography and background: see Reference → Bibliography
+- How to cite the software: see [Cite](cite.md)
+- Bibliography and background: see [Bibliography](bibliography.md)
 
-Developer note: API documentation can be generated locally when needed (see `docs/gen_api.sh`). It’s not included in the user-facing site.
+Developer note: API documentation can be generated locally when needed (see [`docs/gen_api.sh`](https://github.com/DMFT-evolution/DMFE/blob/main/docs/gen_api.sh)). It’s not included in the user-facing site.

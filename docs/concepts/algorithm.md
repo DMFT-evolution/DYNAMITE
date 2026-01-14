@@ -21,7 +21,7 @@ For the spherical mixed p-spin model (representative), the functionals \(\mathca
 
 This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to linear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
 
-Important: DYNAMITE uses exactly the non-equidistant grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid drastically reduces the accessible times. See Interpolation grids for details.
+Important: DYNAMITE uses exactly the non-equidistant grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid drastically reduces the accessible times. See [Interpolation grids](interpolation-grids.md) for details.
 
 ## Discrete scheme and data layout
 
@@ -94,5 +94,5 @@ The nested sparse representation amortizes the cost of memory integrals, leading
 
 ## See also
 
-- EOMs and Observables: eoms-and-observables.md
-- Time Integration: time-integration.md
+- [EOMs and Observables](eoms-and-observables.md)
+- [Time Integration](time-integration.md)

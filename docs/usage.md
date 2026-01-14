@@ -83,7 +83,7 @@ Method notes and trade‑offs:
 ## Outputs and observables
 
 - Data is exported as HDF5 `data.h5` when available; else `data.bin` plus text summaries for quick access.
-- Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see concepts/eoms-and-observables.md).
+- Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see [EOMs and observables](concepts/eoms-and-observables.md)).
 - Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`, and in debug mode `step_metrics.txt` (per-step runtime and memory).
 
 I/O behavior and TUI:
@@ -91,7 +91,7 @@ I/O behavior and TUI:
 - The save progress bar/status line is shown only with `-D false`.
 - Save stages: main [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90].
 
-Resume: automatic if a compatible checkpoint is found (version policy documented in concepts/version-compatibility.md).
+Resume: automatic if a compatible checkpoint is found (version policy documented in [Version compatibility](concepts/version-compatibility.md)).
 
 ## Typical runs
 

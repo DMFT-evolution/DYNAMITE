@@ -25,5 +25,5 @@ Goal: build and run DYNAMITE in Release on L=512 grid and inspect outputs.
 		--spline-order 5 --interp-method poly --interp-order 9
 	```
 	This writes theta/phi grids, integration weights, and interpolation metadata into `Grid_data/512/`.
-	See How-to → Generate new grids for details and options.
+	See [How-to → Generate new grids](../howto/generate-grids.md) for details and options.
 - GPU errors: retry with `--gpu false`

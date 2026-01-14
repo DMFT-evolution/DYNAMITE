@@ -44,7 +44,7 @@ $$
 ## Notes
 - The spherical constraint fixes $\mu(t)$ such that $C(t,t)=1$.
 - The concrete prefactors and any thermal/noise terms follow the conventions published in Phys. Rev. Lett.; DYNAMITE implements those definitions directly.
-- The exact expressions and units match the paper; see source under `include/EOMs/` for the hardcoded operators used at runtime.
+- The exact expressions and units match the paper; see source under [`include/EOMs/`](https://github.com/DMFT-evolution/DMFE/tree/main/include/EOMs) for the hardcoded operators used at runtime.
 - The non-stationary (aging) regime requires both time integrals and thus benefits from the sparse 2D grid and renormalized history.
 
 ## Stored fields
@@ -54,4 +54,4 @@ $$
 - `t1grid`: time grid values used by the integrator
 - `rvec`, `drvec`: reduced observables stored along the diagonal
 
-See `include/EOMs/*` and `include/interpolation/*` for algorithmic details.
+See [`include/EOMs/`](https://github.com/DMFT-evolution/DMFE/tree/main/include/EOMs) and [`include/interpolation/`](https://github.com/DMFT-evolution/DMFE/tree/main/include/interpolation) for algorithmic details.
