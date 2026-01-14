@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/function.svg" alt="Function icon"/> Equations of motion (current model) and observables
 
+**Audience:** readers who want the model equations and what is measured/exported.
+
 We evolve correlation $C(t,t')$ and response $R(t,t')$ after a quench on the non-equidistant grid $t\ge t'$. Currently, DYNAMITE has the mixed spherical $p$-spin equations hardcoded, matching the definitions in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)).
 
 ## Mixed spherical p-spin EOMs (paper definitions)

@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Tutorial: Generate Grids
 
+**Audience:** new users who want a working grid folder for their first run.
+
 Goal: create a ready-to-use interpolation grid folder `Grid_data/<L>/` (paper defaults) for a first simulation.
 
 ## Quick command
@@ -19,22 +21,21 @@ Outputs (`Grid_data/512/`):
 
 Point runs at the folder via `-L 512` (length) and ensure the directory exists.
 
-## Optional tweaks
+## Common variations
 
-- Larger grid: use `--len 1024` (or `2048`).
-- Rational interpolation: `--interp-method rational --fh-stencil 15` for extra stability.
-- Index remapping: `--alpha 0.2 --delta 0.25` (recorded; default 0 keeps paper grid).
-- Validate without writing: append `--validate` to compare with existing files.
+- Larger grid: `--len 1024` (or `2048`).
+- Reproducibility check: append `--validate` to compare with the existing folder.
+- If you hit numerical corner cases on very irregular nodes: try `--interp-method rational --fh-stencil 15`.
 
 ## Troubleshooting
 
 - Missing folder: rerun the quick command above.
-- Mismatch after code updates: regenerate with `--validate` then rebuild.
-- Disk space: remove unused large folders (keep only the L values you need).
+- Mismatch after code updates: run with `--validate` to confirm, then regenerate.
+- Disk space: remove unused `Grid_data/<L>/` folders (keep only the L values you use).
 
 ## See also
 
-- [How-to → Generate new grids](../howto/generate-grids.md) (full flag reference & theory)
-- [Concepts → Interpolation grids](../concepts/interpolation-grids.md) (mathematical background)
+- [How-to → Generate new grids](../howto/generate-grids.md) (full flag reference, file formats, validation)
+- [Concepts → Interpolation grids](../concepts/interpolation-grids.md) (mathematical background and paper equations)
 - [Tutorial → First Run](first-run.md) (integrating the grid in a simulation)
 

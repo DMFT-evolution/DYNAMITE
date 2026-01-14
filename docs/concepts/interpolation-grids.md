@@ -1,5 +1,11 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
 
+**Audience:** readers who want the conceptual and mathematical background.
+
+For hands-on grid generation (CLI flags, file formats, validation), jump to
+[How-to → Generate new grids](../howto/generate-grids.md). For a minimal quick-start command, see
+[Tutorial → Generate grids](../tutorials/generate-grids.md).
+
 The *interpolation grid* is one of DYNAMITE’s core design choices: it fixes **where** the two‑time Green’s functions are sampled on the triangular domain $t'\le t$, and it ships with the **quadrature weights, interpolation stencils, and index maps** used to evaluate memory integrals efficiently.
 
 Conceptually, the algorithm keeps a *fixed* number of samples in the dimensionless time ratio
@@ -78,32 +84,14 @@ Provenance:
 
 - `grid_params.txt` — generator parameters (len, $T_\max$, spline order, interpolation method/order, (floater-Hormann) FH window if rational, optional `alpha`/`delta`, and the command line used).
 
-## Generating/updating the grids and metadata
+## Practical usage (where to look)
 
-You can (re)generate a grid package via the built-in CLI:
+This page focuses on the **why** and the **equations**.
 
-```bash
-./RG-Evo grid --len L --Tmax 100000 --dir L \
-			  --interp-method poly --interp-order 9
-# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
-```
-
-Flags:
-
-- `--len L` selects the grid length (N=L).
-- `--Tmax X` sets the long-time scale used by the $\theta$ mapping.
-- `--dir SUBDIR` chooses the output subdirectory under `Grid_data/` (default: the value of `L`).
-- `--alpha X` in [0,1] and `--delta X \ge 0` enable the optional smooth index remapping for $\theta$ (defaults 0, i.e. paper‑exact). The chosen values are recorded in `grid_params.txt`.
-- `--spline-order n` controls the integration (quadrature) B‑spline degree (default: 5).
-- `--interp-method {poly|rational|bspline}` chooses the interpolation method for metadata.
-- `--interp-order n` sets interpolation degree/order.
-- `--fh-stencil m` (rational only) sets the Floater–Hormann window size $m\ge n+1$ (default $n+1$).
-
-Method notes:
-
-- `poly` (barycentric Lagrange) produces local stencils with exactly $n+1$ weights per entry; minimal per-evaluation cost.
-- `rational` (Floater–Hormann) with default $m=n+1$ matches `poly`; increasing `--fh-stencil` to $n+3\dots n+7$ blends overlapping local stencils and improves robustness on highly non-uniform grids while staying local (exactly $m$ weights per entry).
-- `bspline` produces a dense global map from base samples to outputs; appropriate when you need spline smoothness/derivatives and can reuse the same data across many evaluations.
+- For the full practical grid-generation reference (flags/defaults, outputs, validation workflow), see
+	[How-to → Generate new grids](../howto/generate-grids.md).
+- For a fast “just generate the default grids” walkthrough, see
+	[Tutorial → Generate grids](../tutorials/generate-grids.md).
 
 ## Explicit equations (as in Phys. Rev. Lett. **135**, 247101 (2025))
 

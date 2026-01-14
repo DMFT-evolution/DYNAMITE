@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
 
+**Audience:** readers who want to understand the pruning criterion and its effect on accuracy/performance.
+
 Sparsification reduces memory load by pruning history with controlled error. This is particularly relevant for long simulations run on GPUs. The pruning criterion and reconstruction are implemented in `src/sparsify/`.
 
 What is pruned: interior time‑nodes of the 1D history grid `t1grid` along $t_1$. Endpoints are always kept.
@@ -35,7 +37,7 @@ Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compu
 
 - The GPU implementation evaluates flags at even indices for efficiency; CPU checks all interior indices.
 - Aggressive vs conservative modes only change the threshold value and sweep cadence; the mechanism is identical.
-- After sparsification, the code may try SERK2; disable via `--serk2=false` if desired.
+- After sparsification, the code may try SERK2; whether this is enabled is a runtime configuration choice (see [Usage](../usage.md)).
 
 ## Choosing a threshold
 

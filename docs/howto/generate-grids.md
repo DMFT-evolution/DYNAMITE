@@ -1,6 +1,11 @@
 # Generate interpolation grids and metadata
 
-This how-to walks you through generating the θ/ϕ grids, integration weights, positional maps, and interpolation metadata used by DYNAMITE.
+**Audience:** users who want to generate, tweak, or validate `Grid_data/<L>/` folders.
+
+This how-to is the **canonical reference** for the `./RG-Evo grid` command: flags, outputs, and validation workflow.
+
+If you’re looking for the underlying math (paper equations, why the grid is non-equidistant), see
+[Concepts → Interpolation grids](../concepts/interpolation-grids.md).
 
 ## TL;DR
 
@@ -41,7 +46,7 @@ Outputs (under `Grid_data/512/`):
 Alpha/Delta (optional):
 - `--alpha` ∈ [0,1] blends a smooth non‑linear remapping of the fractional index into the default mapping; `--delta ≥ 0` sets the softness around the center. Defaults are 0 (paper‑exact grid). If set, the values are recorded in `Grid_data/<subdir>/grid_params.txt`.
 
-## Choosing a method
+## Choosing a method (practical)
 
 - Use `poly` (or `rational`) when the interpolated data change between calls. They store exactly n+1 weights per output entry and evaluate fast.
 - Use `rational` with a wider `--fh-stencil` to improve stability on highly irregular nodes while keeping exactly m local weights per entry.
@@ -59,3 +64,8 @@ Alpha/Delta (optional):
 - Start with `--interp-method poly --interp-order 9` (these are the defaults).
 - Keep `--Tmax` consistent across L when comparing convergence.
 - The generated files are read at runtime; ensure `Grid_data/<L>/` is on the target machine.
+
+## See also
+
+- [Tutorial → Generate grids](../tutorials/generate-grids.md) (quick start)
+- [Concepts → Interpolation grids](../concepts/interpolation-grids.md) (background and equations)

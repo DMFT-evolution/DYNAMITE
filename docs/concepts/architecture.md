@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/architecture.svg" alt="Architecture icon"/> Architecture
 
+**Audience:** readers who want a map of the codebase and module responsibilities.
+
 The code mirrors physics operations:
 
 - EOMs (`include/EOMs/`): RK54 (adaptive) with auto-switch to SSPRK104; optional SERK2 trials post-sparsification.
@@ -103,7 +105,7 @@ See also: `scripts/plot_correlation.py` and the “Reading outputs” tutorial.
 ### Accuracy knobs:
 
 - Grid length L (512/1024/2048): convergence in observables vs. runtime.  
-- Integrator tolerance `-e`, min step `-d`: trade accuracy vs. cost.  
+- Integrator error tolerance ε and minimum step: trade accuracy vs. cost.  
 - Sparsification mode: aggressive vs. conservative.
 
 GPU/CPU paths are interchangeable; ensure convergence checks are done on your platform of choice.

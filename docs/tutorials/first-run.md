@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="Tutorial icon"/> Tutorial: First Run
 
+**Audience:** new users who want to build and run DYNAMITE once.
+
 Goal: build and run DYNAMITE in Release on L=512 grid and inspect outputs.
 
 1. Build:
@@ -20,10 +22,13 @@ Goal: build and run DYNAMITE in Release on L=512 grid and inspect outputs.
 ## Troubleshooting
 
 - Missing `Grid_data/<L>`: generate it with the grid subcommand. Example for L=512:
-	```bash
-	./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
-		--spline-order 5 --interp-method poly --interp-order 9
-	```
-	This writes theta/phi grids, integration weights, and interpolation metadata into `Grid_data/512/`.
-	See [How-to → Generate new grids](../howto/generate-grids.md) for details and options.
+	See:
+	- [Tutorial → Generate grids](generate-grids.md) (quick start)
+	- [How-to → Generate new grids](../howto/generate-grids.md) (full flag reference + validation)
 - GPU errors: retry with `--gpu false`
+
+## See also
+
+- [Tutorial → Generate grids](generate-grids.md)
+- [Tutorial → CPU-only run](cpu-only.md)
+- [Tutorial → Reading outputs](reading-outputs.md)

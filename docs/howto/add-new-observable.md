@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/function.svg" alt="Observable icon"/> How-to: Add a New Observable
 
+**Audience:** developers adding new derived quantities to the outputs.
+
 This guide is for developers who want to add a new derived quantity to the run outputs (HDF5/binary + optional text summaries).
 
 ## Pick the “kind” of observable
@@ -67,3 +69,9 @@ Even if you also add HDF5, a small text summary is convenient for quick plotting
 	- output file is created
 	- values are finite
 	- (if resume-safe) restart reproduces the observable
+
+## See also
+
+- [Usage](../usage.md) (Outputs section)
+- [Tutorial → Reading outputs](../tutorials/reading-outputs.md)
+- [Developer → Testing](../dev/testing.md)

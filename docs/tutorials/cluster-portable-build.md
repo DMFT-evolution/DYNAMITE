@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/gpu.svg" alt="GPU icon"/> Tutorial: Cluster Portable Build
 
+**Audience:** users who need a portable build for heterogeneous cluster nodes.
+
 Build and run on heterogeneous cluster nodes without `-march=native` and with shared cudart.
 
 Configure:
@@ -19,3 +21,8 @@ Run:
 
 - Pick the lowest common SM (e.g., 80 for A100).
 - For CPU-only environments, set `-DDMFE_WITH_CUDA=OFF`.
+
+## See also
+
+- [Tutorial → First run](first-run.md)
+- [Tutorial → CPU-only run](cpu-only.md)

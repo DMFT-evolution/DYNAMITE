@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, Phys. Rev. Lett. **135**, 247101 (2025))
 
+**Audience:** readers who want the high-level algorithmic picture and terminology.
+
 This section summarizes the numerical renormalization algorithm implemented in DYNAMITE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
 
 ## Dynamical equations
@@ -40,7 +42,7 @@ Important: DYNAMITE uses exactly the non-equidistant grid defined in the Phys. R
 
 Time stepping follows the adaptive RK54 default and automatically switches to SSPRK104 once RK54 approaches its stability limit. After each sparsification, the code may attempt SERK2 (can be disabled via CLI). One step:
 
-1. Propose \(\Delta t\) from local error control (tolerance `-e`, min step `-d`).
+1. Propose \(\Delta t\) from local error control (error tolerance ε, minimum step size).
 2. Interpolate required history slices for convolution terms using precomputed indices and weights.
 3. Evaluate \(\mathcal{F},\mathcal{G}\) to obtain \(\partial_t C, \partial_t R\).
 4. Advance to t+\(\Delta t\) with the active integrator (RK54 or SSPRK104; SERK2 when trialed after sparsify); update diagonal quantities.
@@ -80,8 +82,10 @@ end
 
 ## Error control and accuracy
 
-- Runge-Kutta error is controlled via `-e`.
-- Sparsification removes data points if their removal affects the reconstructed history by less than 1/10th of the error specified via `-e`.
+- Runge-Kutta error is controlled via a user-configured error tolerance ε.
+- Sparsification removes data points if their removal affects the reconstructed history by less than a fixed fraction of ε.
+
+For the exact runtime configuration options and defaults, see [Usage](../usage.md).
 - Convergence in L (512/1024/2048) must be checked for quantities of interest, especially near dynamical phase transitions.
 
 ## Complexity and performance

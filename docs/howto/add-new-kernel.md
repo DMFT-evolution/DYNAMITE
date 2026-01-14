@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/convolution.svg" alt="Kernel icon"/> How-to: Add a New Kernel
 
+**Audience:** developers adding performance-critical CPU/CUDA kernels.
+
 This repo has paired CPU/CUDA implementations for performance-critical kernels (convolution, interpolation/search helpers, etc.).
 This page shows the “house style” for adding a new one.
 
@@ -53,3 +55,8 @@ Minimum checks:
 - Performance: time at least one representative call site (or check `step_metrics.txt` in debug mode).
 
 If it’s a user-visible enhancement, add a short note to the relevant concept/tutorial page.
+
+## See also
+
+- [Concepts → Architecture](../concepts/architecture.md)
+- [Developer → Testing](../dev/testing.md)

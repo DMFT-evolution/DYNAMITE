@@ -2,6 +2,8 @@
 
 Thanks for your interest in contributing to DYNAMITE!
 
+**Audience:** developers contributing code, documentation, or maintenance improvements.
+
 ## Workflow
 
 - Fork and create a feature branch
@@ -23,3 +25,9 @@ Thanks for your interest in contributing to DYNAMITE!
 
 - Update or add pages under `docs/` (how-tos, concepts, tutorials)
 - Run `./docs/gen_api.sh` if you changed public headers
+
+## See also
+
+- [Dev → Testing](testing.md)
+- [Dev → Release process](release.md)
+- [Overview](../index.md)

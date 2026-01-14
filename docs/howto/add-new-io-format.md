@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="IO icon"/> How-to: Add a New IO Format
 
+**Audience:** developers extending DMFE outputs and file formats.
+
 DMFE currently supports:
 
 - **HDF5** (`data.h5`) when HDF5 is available (compile-time or runtime-optional)
@@ -51,3 +53,9 @@ Integrate into the existing async flow:
 ## Compatibility note
 
 If the new format replaces the resume file, you must update both save and load paths (`src/io/io_input.cpp`) and consider version-compat behavior.
+
+## See also
+
+- [Tutorial → Reading outputs](../tutorials/reading-outputs.md)
+- [Concepts → Version compatibility](../concepts/version-compatibility.md)
+- [Developer → Testing](../dev/testing.md)

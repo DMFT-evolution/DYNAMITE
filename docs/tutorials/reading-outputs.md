@@ -1,23 +1,23 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="File icon"/> Tutorial: Reading outputs (and trusting them)
 
+**Audience:** new users who want to sanity-check results and locate key outputs.
+
 DYNAMITE writes a **self-contained output directory** for each run. This directory is designed to be both:
 
 - easy to inspect quickly (text summaries), and
 - reproducible / restartable (versioned params + full state in HDF5 or binary).
 
-## What files to expect
+## What you’ll typically see (high level)
 
-Depending on the build and available libraries you’ll get **either**:
+At minimum, each output directory contains:
 
-- `data.h5` (preferred when HDF5 is available), **or**
-- `data.bin` (binary fallback, always available),
+- a full-state file (`data.h5` when HDF5 is available, otherwise `data.bin`), and
+- `params.txt` (the provenance record: parameters, CLI, build/version info),
 
-and additionally:
+plus a few small text summaries intended for quick plotting.
 
-- `params.txt` (parameters + version/build/provenance)
-- text summaries such as `energy.txt`, `correlation.txt`, `rvec.txt`, `qk0.txt` (exact set may depend on run options)
-
-If you build without HDF5 support (or runtime HDF5 loading fails), the code automatically falls back to `data.bin` and still produces the same core state.
+For the full, canonical list of outputs and on-disk formats (including the compressed snapshot files), see
+[Concepts → Architecture](../concepts/architecture.md).
 
 ## Quick inspection (HDF5)
 
@@ -28,12 +28,8 @@ h5ls -r data.h5
 h5dump -n data.h5
 ```
 
-Core datasets written by DYNAMITE include:
-
-- `QKv`, `QRv`: correlation/response samples on the internal (non-equidistant) time-ratio grid
-- `dQKv`, `dQRv`: time derivatives (used by integrators / diagnostics)
-- `t1grid`: the (adaptive) time nodes $t$ used during integration
-- `rvec`, `drvec`: diagonal/reduced observables tracked during the run
+If you want dataset names/semantics, see
+[Concepts → EOMs and observables](../concepts/eoms-and-observables.md).
 
 Tip: `params.txt` is the fastest way to see **exactly** what the run did (grid size, tolerances, CPU/GPU mode, etc.).
 
@@ -54,7 +50,8 @@ These are intended for quick plotting and sanity checks.
 - Save path: when HDF5 is unavailable (or fails), the program writes `data.bin` instead.
 - Load/resume path: binaries can be loaded to resume trajectories if compatible with the current build/version policy.
 
-Implementation references (for developers): see declarations in [`include/io/io_utils.hpp`](https://github.com/DMFT-evolution/DMFE/blob/main/include/io/io_utils.hpp) and implementations under [`src/io/`](https://github.com/DMFT-evolution/DMFE/tree/main/src/io) (binary save/load, plus optional HDF5 writers).
+If you’re extending the I/O layer, see the I/O module overview in
+[Concepts → Architecture](../concepts/architecture.md).
 
 ## Reproducibility & provenance (how to trust a run)
 
@@ -114,31 +111,7 @@ $$
 
 where $E(t)$ is read from `energy.txt`, and $E_{\mathrm{th}}$ is computed from the parameters `lambda`, `p`, and `q` (with `q` usually stored as `p2` in `params.txt`).
 
-The threshold energy depends on the final temperature parameter `Gamma`:
-
-- If `Gamma = 0` (zero-temperature limit), define
-
-	$$
-	f_{\lambda}(x)=\lambda x^p+(1-\lambda)x^q
-	$$
-
-	and compute
-
-	$$
-	E_{\mathrm{th}}=\sqrt{f_{\lambda}''(1)}\left(\frac{f_{\lambda}(1)}{f_{\lambda}''(1)}-\frac{f_{\lambda}'(1)}{f_{\lambda}''(1)}-\frac{f_{\lambda}(1)}{f_{\lambda}'(1)}\right).
-	$$
-
-- If `Gamma > 0` (finite final temperature), first solve for $q_1\in(0,1)$ from
-
-	$$
-	\frac{1}{(1-q_1)^2}-\frac{f_{\lambda}''(q_1)}{\Gamma^2}=0,
-	$$
-
-	and then compute
-
-	$$
-	E_{\mathrm{th}}=\frac{-f_{\lambda}(1)+f_{\lambda}(q_1)\left(\frac{1}{q_1}+\frac{\Gamma^2}{(q_1-1)\,f_{\lambda}'(q_1)}\right)}{\Gamma}.
-	$$
+The script handles both $\Gamma=0$ and $\Gamma>0$ cases internally. If you want the full definition of $E_{\mathrm{th}}$ and the equations used, see the accompanying paper and the relevant background sections in the Concepts pages.
 
 Typical usage:
 
@@ -225,3 +198,9 @@ Notes:
 - Axis labels use robust Unicode text by default (no LaTeX dependency). If you want full LaTeX rendering and have a working LaTeX install, pass `--usetex`.
 - Curves are automatically truncated for $t_w+\tau > t_{\mathrm{last}}$ (no extrapolation beyond the simulated time window).
 - Use `--tau-min/--tau-max` and `--n-tau` to control the plotted interval and resolution.
+
+## See also
+
+- [Tutorial → First run](first-run.md)
+- [Tutorial → Parameter sweep](parameter-sweep.md)
+- [Concepts → Version compatibility](../concepts/version-compatibility.md)

@@ -1,5 +1,7 @@
 # Cite DYNAMITE
 
+**Audience:** researchers who want to cite the software and accompanying paper correctly.
+
 If you use DYNAMITE in your research, please cite the software:
 
 - Software: DYNAMITE — Dynamical Mean-Field Evolution (Apache-2.0)
@@ -18,3 +20,9 @@ Related paper
 Acknowledgment
 
 If DYNAMITE or its documentation helped your work, please acknowledge the project. Bug reports and feature requests are welcome.
+
+## See also
+
+- [`CITATION.cff`](../../CITATION.cff)
+- [Reference → Bibliography](bibliography.md)
+- [Dev → Release process](../dev/release.md)

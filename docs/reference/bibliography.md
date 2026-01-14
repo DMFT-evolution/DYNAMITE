@@ -1,5 +1,7 @@
 # Bibliography
 
+**Audience:** readers looking for background references on the methods and models.
+
 This page collects references related to the methods, models, and numerical techniques implemented in the project.
 
 If you add or update a reference, please keep the list alphabetized by first author surname.
@@ -22,3 +24,9 @@ If you add or update a reference, please keep the list alphabetized by first aut
 ## Citations to this software
 
 If you use this software, please cite the project and relevant methods. A formal software citation will be provided with releases. For now, please cite the accompanying methodology/preprint where appropriate.
+
+## See also
+
+- [Reference → Cite DYNAMITE](cite.md)
+- [Concepts → Algorithm](../concepts/algorithm.md)
+- [Concepts → Time integration](../concepts/time-integration.md)

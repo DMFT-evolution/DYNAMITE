@@ -1,5 +1,7 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Tutorial: Parameter Sweep
 
+**Audience:** new users who want to launch multiple runs with systematic parameter changes.
+
 Run a simple sweep over `lambda` while reusing grid data.
 
 Example shell loop:
@@ -14,3 +16,8 @@ done
 ```
 
 Outputs are organized under your chosen out-dir by parameter tuple.
+
+## See also
+
+- [Tutorial → First run](first-run.md)
+- [Tutorial → Reading outputs](reading-outputs.md)

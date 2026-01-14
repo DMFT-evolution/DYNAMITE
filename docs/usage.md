@@ -54,44 +54,30 @@ Choose the largest L that fits memory/time for your study; verify convergence of
 
 ### Generating grids and interpolation metadata
 
-Use the built-in grid generator to create or refresh `Grid_data/<L>/`:
+If `Grid_data/<L>/` is missing (or you want to regenerate with different settings), use the built-in grid generator.
 
-```bash
-./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
-  [--alpha X] [--delta X] \
-  [--spline-order n] [--interp-method METHOD] [--interp-order n]
-# METHODS: poly | rational | bspline
-```
+For the full `./RG-Evo grid` flag reference, outputs, and validation workflow, see
+[How-to → Generate new grids](howto/generate-grids.md).
 
-This writes:
-- `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
-- `int.dat` (N) — integration weights (controlled by `--spline-order`)
-- `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
-- Interpolation metadata for mapping theta → targets:
-	- A1 (phi1): `indsA1y.dat`, `weightsA1y.dat`
-	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
-	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
-
-Alpha/Delta (optional):
-- `--alpha` in [0,1] blends a smooth non-linear index remapping into the default mapping; `--delta >= 0` controls the softness. Defaults are 0, preserving the paper grid exactly. The chosen values are recorded in `grid_params.txt`.
-
-Method notes and trade‑offs:
-- `poly`: local barycentric Lagrange of order n (degree n). Minimal weights per entry (n+1). Good accuracy for smooth data; fastest when the sample values change often.
-- `rational`: barycentric rational variant with the same interface and locality as `poly`, typically slightly more robust on irregular grids.
-- `bspline`: B‑spline of degree n via global collocation. Exports dense weights per entry (global linear map). Prefer this when you need spline smoothness/derivatives and can reuse the same data vector across many evaluations; otherwise `poly`/`rational` are usually much faster.
+If you just want the default grids for a first run, see
+[Tutorial → Generate grids](tutorials/generate-grids.md).
 
 ## Outputs and observables
 
-- Data is exported as HDF5 `data.h5` when available; else `data.bin` plus text summaries for quick access.
-- Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec` (see [EOMs and observables](concepts/eoms-and-observables.md)).
-- Text: `params.txt`, `correlation.txt`, `energy.txt`, `rvec.txt`, `qk0.txt`, and in debug mode `step_metrics.txt` (per-step runtime and memory).
+Each run writes a self-contained output directory that contains:
 
-I/O behavior and TUI:
-- When HDF5 support is available at runtime, the code writes `data.h5`; otherwise it writes `data.bin`.
-- The save progress bar/status line is shown only with `-D false`.
-- Save stages: main [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90].
+- the full state (preferably `data.h5`, otherwise `data.bin`),
+- a provenance record (`params.txt`),
+- and lightweight text summaries for quick plotting.
 
-Resume: automatic if a compatible checkpoint is found (version policy documented in [Version compatibility](concepts/version-compatibility.md)).
+For a practical guide to locating files and doing sanity checks, see
+[Tutorial → Reading outputs](tutorials/reading-outputs.md).
+
+For the on-disk formats (including the compressed snapshot files), see
+[Concepts → Architecture](concepts/architecture.md).
+
+Resume is automatic if a compatible checkpoint is found; see
+[Concepts → Version compatibility](concepts/version-compatibility.md).
 
 ## Typical runs
 
