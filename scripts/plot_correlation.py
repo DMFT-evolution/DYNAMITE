@@ -334,6 +334,14 @@ def main() -> int:
 		t1 = tw + taus
 		theta = tw / (tw + taus)
 		y = f(t1, theta)
+
+		# Do not show values beyond the simulated time window.
+		# The compressed grid is defined only up to t_last; for t_w+tau > t_last
+		# the correlation/response is not available and should not be plotted.
+		mask = t1 > tlast
+		if np.any(mask):
+			y = np.asarray(y, dtype=float).copy()
+			y[mask] = np.nan
 		curves.append((tw, y))
 
 	# Plot

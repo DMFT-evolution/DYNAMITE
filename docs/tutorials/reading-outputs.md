@@ -223,4 +223,5 @@ Notes:
 - The script uses a spline interpolator (SciPy), however linear interpolations are often good enough.
 - The x-axis is logarithmic by default. Use `--linear-x` to switch to a linear x-axis.
 - Axis labels use robust Unicode text by default (no LaTeX dependency). If you want full LaTeX rendering and have a working LaTeX install, pass `--usetex`.
+- Curves are automatically truncated for $t_w+\tau > t_{\mathrm{last}}$ (no extrapolation beyond the simulated time window).
 - Use `--tau-min/--tau-max` and `--n-tau` to control the plotted interval and resolution.
