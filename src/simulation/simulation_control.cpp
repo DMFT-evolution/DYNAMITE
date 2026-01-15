@@ -13,17 +13,25 @@ extern SimulationData* sim;
 
 bool rollbackState(int n) {
 #if DMFE_WITH_CUDA
-    auto trim_debug_timelines = [&](size_t targetSize) {
-        if (!sim->h_debug_step_times.empty()) {
-            size_t debug_target = std::min(sim->h_debug_step_times.size(), targetSize);
-            sim->h_debug_step_times.resize(debug_target);
-        }
-        if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
-            sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
-        }
-        if (sim->h_debug_step_memory.size() > sim->h_debug_step_times.size()) {
-            sim->h_debug_step_memory.resize(sim->h_debug_step_times.size());
-        }
+    // Debug telemetry is not sparsified/downsampled; rollbacks must trim by *n*, not by t1grid size.
+    auto trim_debug_timelines_by_n = [&](size_t n_trim) {
+        auto& times = sim->h_debug_step_times;
+        auto& runtimes = sim->h_debug_step_runtimes;
+        auto& memory = sim->h_debug_step_memory;
+
+        // Bring vectors into a consistent state (best-effort) before trimming.
+        const size_t common_before = std::min(times.size(), std::min(runtimes.size(), memory.size()));
+        if (times.size() != common_before) times.resize(common_before);
+        if (runtimes.size() != common_before) runtimes.resize(common_before);
+        if (memory.size() != common_before) memory.resize(common_before);
+
+        if (common_before == 0) return;
+
+        const size_t n_effective = std::min(n_trim, common_before);
+        const size_t common_after = common_before - n_effective;
+        times.resize(common_after);
+        runtimes.resize(common_after);
+        memory.resize(common_after);
     };
 
     // Get current state size
@@ -72,23 +80,30 @@ bool rollbackState(int n) {
 
         interpolate();
     }
-    trim_debug_timelines(targetSize);
+    trim_debug_timelines_by_n(static_cast<size_t>(n));
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "
               << (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) << std::endl;
 #else
-    auto trim_debug_timelines = [&](size_t targetSize) {
-        if (!sim->h_debug_step_times.empty()) {
-            size_t debug_target = std::min(sim->h_debug_step_times.size(), targetSize);
-            sim->h_debug_step_times.resize(debug_target);
-        }
-        if (sim->h_debug_step_runtimes.size() > sim->h_debug_step_times.size()) {
-            sim->h_debug_step_runtimes.resize(sim->h_debug_step_times.size());
-        }
-        if (sim->h_debug_step_memory.size() > sim->h_debug_step_times.size()) {
-            sim->h_debug_step_memory.resize(sim->h_debug_step_times.size());
-        }
+    // Debug telemetry is not sparsified/downsampled; rollbacks must trim by *n*, not by t1grid size.
+    auto trim_debug_timelines_by_n = [&](size_t n_trim) {
+        auto& times = sim->h_debug_step_times;
+        auto& runtimes = sim->h_debug_step_runtimes;
+        auto& memory = sim->h_debug_step_memory;
+
+        const size_t common_before = std::min(times.size(), std::min(runtimes.size(), memory.size()));
+        if (times.size() != common_before) times.resize(common_before);
+        if (runtimes.size() != common_before) runtimes.resize(common_before);
+        if (memory.size() != common_before) memory.resize(common_before);
+
+        if (common_before == 0) return;
+
+        const size_t n_effective = std::min(n_trim, common_before);
+        const size_t common_after = common_before - n_effective;
+        times.resize(common_after);
+        runtimes.resize(common_after);
+        memory.resize(common_after);
     };
 
     // Get current state size
@@ -119,7 +134,7 @@ bool rollbackState(int n) {
     config.loop -= n;
 
     interpolate();
-    trim_debug_timelines(targetSize);
+    trim_debug_timelines_by_n(static_cast<size_t>(n));
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "
