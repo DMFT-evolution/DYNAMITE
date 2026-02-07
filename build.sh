@@ -47,7 +47,23 @@ fi
 
 if [[ $CLEAN -eq 1 ]]; then
   echo "[clean] Removing $BDIR" >&2
-  rm -rf "$BDIR"
+  if [[ -e "$BDIR" ]]; then
+    # On some filesystems/sync setups, a straight rm -rf can sporadically fail with
+    # "Directory not empty" due to concurrent directory entry updates. Use a
+    # rename+delete fallback to make --clean robust.
+    if ! rm -rf "$BDIR"; then
+      echo "[clean] rm -rf failed; attempting rename+delete fallback" >&2
+      tmp_dir="${BDIR}.old.$(date +%s).$$"
+      if mv "$BDIR" "$tmp_dir" 2>/dev/null; then
+        rm -rf "$tmp_dir" || true
+      fi
+      rm -rf "$BDIR" || true
+    fi
+    if [[ -e "$BDIR" ]]; then
+      echo "[clean] Failed to remove $BDIR" >&2
+      exit 1
+    fi
+  fi
 fi
 
 # Detect CUDA availability if in auto mode

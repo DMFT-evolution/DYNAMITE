@@ -188,7 +188,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -w, --sparsify-sweeps INT      Number of sparsify sweeps per maintenance pass (-1=auto, 0=off) (default: " << config.sparsify_sweeps << ")\n"
                           << "  -g, --gpu BOOL                  Enable GPU acceleration (default: " << (config.gpu ? "true" : "false") << ")\n"
                           << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
-                          << "  -R, --log-response-interp BOOL Interpolate log(QR) and log(dQR) instead of linear (default: " << (config.log_response_interp ? "true" : "false") << ")\n"
+                          << "  -R, --log-response-interp BOOL Log-space interpolation for response QR (QK interpolated normally) (default: " << (config.log_response_interp ? "true" : "false") << ")\n"
                           << "  -F, --tail-fit BOOL            Enable QK tail-fit near theta->1 (default: " << (config.tail_fit_enabled ? "true" : "false") << ")\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
                           << "  -I, --allow-incompatible-versions BOOL  Allow loading data saved with incompatible versions (default: " << (config.allow_incompatible_versions ? "true" : "false") << ")\n"

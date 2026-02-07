@@ -18,7 +18,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <dirent.h>
-#include <thrust/device_vector.h>
 #include <thrust/copy.h>
 #include <unistd.h>
 #include <limits.h>
@@ -129,7 +128,7 @@ SimulationDataSnapshot createDataSnapshot()
     // Copy vectors - directly from device for GPU runs to avoid unnecessary host copies
     if (config.gpu) {
         // Direct copy from device vectors to avoid double copying
-        auto copyDeviceToSnapshot = [](std::vector<double>& snapshot_vec, const thrust::device_vector<double>& device_vec) {
+        auto copyDeviceToSnapshot = [](std::vector<double>& snapshot_vec, const dmfe::device_vector<double>& device_vec) {
             snapshot_vec.resize(device_vec.size());
             thrust::copy(device_vec.begin(), device_vec.end(), snapshot_vec.begin());
         };
@@ -222,7 +221,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
     
     if (gpu_param) {
         // Use GPU to compute energy history efficiently
-        thrust::device_vector<double> d_energy_history(t1len);
+        dmfe::device_vector<double> d_energy_history(t1len);
 
         int threads = 64;
         size_t shmem = len_param * sizeof(double) + threads * sizeof(double);

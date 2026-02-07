@@ -1,7 +1,7 @@
 #pragma once
 #include "core/config_build.hpp"
 #if DMFE_WITH_CUDA
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #endif
 #include <cstddef>
 #include <vector>
@@ -13,9 +13,9 @@ struct RKData {
     double *avec = nullptr, *bvec = nullptr, *b2vec = nullptr, *cvec = nullptr;
     double gt = 0.0, gtfinal = 0.0, gte = 0.0, ht = 0.0, gt0 = 0.0;
 #if DMFE_WITH_CUDA
-    thrust::device_vector<double> gK, gR, gRfinal, gKfinal, gKe, gRe, gK0, gR0;
-    thrust::device_vector<double> posB1xvec, posB2xvec;
-    thrust::device_vector<double> hK, hR, hK0, hR0, d_avec;
+    dmfe::device_vector<double> gK, gR, gRfinal, gKfinal, gKe, gRe, gK0, gR0;
+    dmfe::device_vector<double> posB1xvec, posB2xvec;
+    dmfe::device_vector<double> hK, hR, hK0, hR0, d_avec;
 #else
     // CPU-only mode: use std::vector instead
     std::vector<double> gK, gR, gRfinal, gKfinal, gKe, gRe, gK0, gR0;

@@ -25,11 +25,11 @@ static void print_grid_usage(const char* prog) {
               << "  -d, --dir SUBDIR             Output subdirectory under Grid_data/ (default: <len>)\n"
               << "  -V, --validate               Do not write; validate generated theta/phi/int against saved files in SUBDIR\n"
               << "  -s, --spline-order n         Quadrature spline order for int.dat (default: 5)\n"
-              << "  -m, --interp-method METHOD   Interp method for metadata: poly | rational | bspline (default: poly)\n"
+              << "  -m, --interp-method METHOD   Interp method for metadata: poly | rational | bspline | index-bspline | index-poly | index-rational | index-hermite (default: index-poly)\n"
               << "  -o, --interp-order n         Interpolation order/degree n (default: 9)\n"
-              << "  -f, --fh-stencil m           FH window size m (rational only). Default: n+1; must satisfy m >= n+1\n"
+              << "  -f, --fh-stencil m           FH window size m (rational/index-rational only). Default: n+1; must satisfy m >= n+1\n"
               << "\n"
-              << "Defaults: Tmax=100000, method=poly, order=9.\n";
+              << "Defaults: Tmax=100000, method=index-poly, order=9.\n";
 }
 
 bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
@@ -42,7 +42,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     std::string subdir;
     bool validate = false;
     int spline_order = 5;
-    std::string interp_method = "poly"; // default: local barycentric polynomial
+    std::string interp_method = "index-poly"; // default: local barycentric polynomial in uniform index coordinate
     int interp_order = 9;               // default order for interpolation
     int fh_stencil = -1;                // optional FH window size (>= d+1); default: d+1
 
@@ -101,7 +101,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     const std::size_t N = len;
     const int n = std::max(1, interp_order);
     // Determine Floater–Hormann window size if needed (bounds: [n+1, N])
-    const int mFH = (interp_method == "rational")
+    const int mFH = (interp_method == "rational" || interp_method == "index-rational")
         ? (int)std::min<std::size_t>(N, (std::size_t)std::max(n + 1, (fh_stencil > 0 ? fh_stencil : (n + 1))))
         : 0;
 
@@ -155,6 +155,79 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         for (std::size_t k = 0; k < W2.size(); ++k) {
             for (std::size_t j = 0; j < N; ++j) weightsA2_flat[k * N + j] = W2[k].w[j];
         }
+    } else if (interp_method == "index-bspline") {
+        // Local, compact-support uniform B-spline *kernel* on the index coordinate.
+        // Use position grids (1-based fractional indices) computed from the inverse theta map.
+        auto st = dmfe::grid::compute_index_bspline_weights(posA1y, N, n);
+        const int m = n + 1;
+        inds.resize(N * N);
+        weights_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st.size(); ++k) {
+            inds[k] = st[k].start;
+            for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
+        }
+        // A2
+        auto st2 = dmfe::grid::compute_index_bspline_weights(posA2y, N, n);
+        indsA2.resize(N * N);
+        weightsA2_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st2.size(); ++k) {
+            indsA2[k] = st2[k].start;
+            for (int j = 0; j < m; ++j) weightsA2_flat[k * m + j] = st2[k].alpha[j];
+        }
+    } else if (interp_method == "index-poly") {
+        // Local, strictly-interpolatory Lagrange polynomial in the uniform index coordinate.
+        auto st = dmfe::grid::compute_index_poly_weights(posA1y, N, n);
+        const int m = n + 1;
+        inds.resize(N * N);
+        weights_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st.size(); ++k) {
+            inds[k] = st[k].start;
+            for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
+        }
+        // A2
+        auto st2 = dmfe::grid::compute_index_poly_weights(posA2y, N, n);
+        indsA2.resize(N * N);
+        weightsA2_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st2.size(); ++k) {
+            indsA2[k] = st2[k].start;
+            for (int j = 0; j < m; ++j) weightsA2_flat[k * m + j] = st2[k].alpha[j];
+        }
+    } else if (interp_method == "index-rational") {
+        // Local Floater–Hormann rational barycentric interpolation in uniform index space.
+        // Uses the same --interp-order (as FH order d) and --fh-stencil (as window size m).
+        auto st = dmfe::grid::compute_index_rational_weights(posA1y, N, n, mFH);
+        const int m = mFH;
+        inds.resize(N * N);
+        weights_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st.size(); ++k) {
+            inds[k] = st[k].start;
+            for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
+        }
+        // A2
+        auto st2 = dmfe::grid::compute_index_rational_weights(posA2y, N, n, mFH);
+        indsA2.resize(N * N);
+        weightsA2_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st2.size(); ++k) {
+            indsA2[k] = st2[k].start;
+            for (int j = 0; j < m; ++j) weightsA2_flat[k * m + j] = st2[k].alpha[j];
+        }
+    } else if (interp_method == "index-hermite") {
+        // Local cubic Hermite (Catmull–Rom) interpolation in uniform index space.
+        auto st = dmfe::grid::compute_index_hermite_weights(posA1y, N, n);
+        const int m = n + 1;
+        inds.resize(N * N);
+        weights_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st.size(); ++k) {
+            inds[k] = st[k].start;
+            for (int j = 0; j < m; ++j) weights_flat[k * m + j] = st[k].alpha[j];
+        }
+        auto st2 = dmfe::grid::compute_index_hermite_weights(posA2y, N, n);
+        indsA2.resize(N * N);
+        weightsA2_flat.resize((std::size_t)N * N * m);
+        for (std::size_t k = 0; k < st2.size(); ++k) {
+            indsA2[k] = st2[k].start;
+            for (int j = 0; j < m; ++j) weightsA2_flat[k * m + j] = st2[k].alpha[j];
+        }
     } else {
     std::cerr << dmfe::console::ERR() << "Unknown --interp-method: " << interp_method << std::endl;
         exitCode = 1; return true;
@@ -168,25 +241,64 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         // Write interpolation metadata for A1 and A2
         auto ip = write_A1_interp_metadata(inds, weights_flat, len, subdir);
         auto ip2 = write_A2_interp_metadata(indsA2, weightsA2_flat, len, subdir);
-        // Compute and write interpolation metadata for B2: xqB2 = theta[i] / (phi2[i,j] - tiny)
-        const double tiny = 1e-200;
-        std::vector<long double> xqB2; xqB2.reserve(N*N);
-        for (std::size_t i = 0; i < N; ++i) {
-            const long double ti = theta[i];
-            for (std::size_t j = 0; j < N; ++j) {
-                const long double denom = phi2[i * N + j] - tiny;
-                long double arg;
-                if (std::fabs(denom) < 1e-300L) {
-                    arg = (ti > 0) ? theta.back() : theta.front();
-                } else {
-                    arg = ti / denom;
-                }
-                xqB2.push_back(arg);
-            }
-        }
         std::vector<int> indsB2;
         std::vector<double> weightsB2_flat;
-        if (interp_method == "poly") {
+        if (interp_method == "index-bspline") {
+            // posB2y already encodes the needed inverse-theta positions (1-based index coordinate)
+            auto stB2 = dmfe::grid::compute_index_bspline_weights(posB2y, N, n);
+            const int m = n + 1;
+            indsB2.resize(N * N);
+            weightsB2_flat.resize((std::size_t)N * N * m);
+            for (std::size_t k = 0; k < stB2.size(); ++k) {
+                indsB2[k] = stB2[k].start;
+                for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
+            }
+        } else if (interp_method == "index-poly") {
+            auto stB2 = dmfe::grid::compute_index_poly_weights(posB2y, N, n);
+            const int m = n + 1;
+            indsB2.resize(N * N);
+            weightsB2_flat.resize((std::size_t)N * N * m);
+            for (std::size_t k = 0; k < stB2.size(); ++k) {
+                indsB2[k] = stB2[k].start;
+                for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
+            }
+        } else if (interp_method == "index-rational") {
+            auto stB2 = dmfe::grid::compute_index_rational_weights(posB2y, N, n, mFH);
+            const int m = mFH;
+            indsB2.resize(N * N);
+            weightsB2_flat.resize((std::size_t)N * N * m);
+            for (std::size_t k = 0; k < stB2.size(); ++k) {
+                indsB2[k] = stB2[k].start;
+                for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
+            }
+        } else if (interp_method == "index-hermite") {
+            auto stB2 = dmfe::grid::compute_index_hermite_weights(posB2y, N, n);
+            const int m = n + 1;
+            indsB2.resize(N * N);
+            weightsB2_flat.resize((std::size_t)N * N * m);
+            for (std::size_t k = 0; k < stB2.size(); ++k) {
+                indsB2[k] = stB2[k].start;
+                for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
+            }
+        } else {
+            // Compute xqB2 = theta[i] / (phi2[i,j] - tiny) in theta-space for legacy methods
+            const double tiny = 1e-200;
+            std::vector<long double> xqB2; xqB2.reserve(N*N);
+            for (std::size_t i = 0; i < N; ++i) {
+                const long double ti = theta[i];
+                for (std::size_t j = 0; j < N; ++j) {
+                    const long double denom = phi2[i * N + j] - tiny;
+                    long double arg;
+                    if (std::fabs(denom) < 1e-300L) {
+                        arg = (ti > 0) ? theta.back() : theta.front();
+                    } else {
+                        arg = ti / denom;
+                    }
+                    xqB2.push_back(arg);
+                }
+            }
+
+            if (interp_method == "poly") {
             auto stB2 = dmfe::grid::compute_barycentric_weights(theta, xqB2, n);
             const int m = n + 1;
             indsB2.resize(N * N);
@@ -195,7 +307,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
                 indsB2[k] = stB2[k].start;
                 for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
             }
-        } else if (interp_method == "rational") {
+            } else if (interp_method == "rational") {
             auto stB2 = dmfe::grid::compute_barycentric_rational_weights(theta, xqB2, n, mFH);
             const int m = mFH;
             indsB2.resize(N * N);
@@ -204,13 +316,14 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
                 indsB2[k] = stB2[k].start;
                 for (int j = 0; j < m; ++j) weightsB2_flat[k * m + j] = stB2[k].alpha[j];
             }
-        } else if (interp_method == "bspline") {
+            } else if (interp_method == "bspline") {
             auto WB2 = dmfe::grid::compute_bspline_weights(theta, xqB2, n);
             indsB2.assign(N * N, -1);
             weightsB2_flat.resize((std::size_t)N * N * N);
             for (std::size_t k = 0; k < WB2.size(); ++k) {
                 for (std::size_t j = 0; j < N; ++j) weightsB2_flat[k * N + j] = WB2[k].w[j];
             }
+        }
         }
     auto ip3 = write_B2_interp_metadata(indsB2, weightsB2_flat, len, subdir);
     std::cout << dmfe::console::DONE() << "Generated grids (len=" << len << ", Tmax=" << Tmax << ") ->\n"

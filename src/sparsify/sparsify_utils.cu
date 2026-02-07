@@ -6,7 +6,6 @@
 #include <cmath>
 #include <iostream>
 #include <vector>
-#include <thrust/device_vector.h>
 #include <thrust/transform.h>
 #include <thrust/sequence.h>
 #include <thrust/copy.h>
@@ -129,13 +128,13 @@ __global__ void gatherKernel(const double* __restrict__ v,
     out[i] = factor * v[offset + j];
 }
 
-thrust::device_vector<double> gatherGPU(const thrust::device_vector<double>& v,
-                                        const thrust::device_vector<size_t>& idxs,
+dmfe::device_vector<double> gatherGPU(const dmfe::device_vector<double>& v,
+                                        const dmfe::device_vector<size_t>& idxs,
                                         size_t len,
-                                        const thrust::device_vector<double>& scale,
+                                        const dmfe::device_vector<double>& scale,
                                         cudaStream_t stream) {
     size_t n_chunks = idxs.size();
-    thrust::device_vector<double> out(n_chunks * len);
+    dmfe::device_vector<double> out(n_chunks * len, 0.0, dmfe::cuda_async_allocator<double>(stream));
 
     size_t threads = 64;
     size_t blocks = (n_chunks * len + threads - 1) / threads;
@@ -199,7 +198,7 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
 void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
 
     size_t t1len = sim->d_t1grid.size();
-    thrust::device_vector<unsigned char> flags(t1len, 1);
+    dmfe::device_vector<unsigned char> flags(t1len, 1, dmfe::cuda_async_allocator<unsigned char>(stream));
 
     size_t threads = 128;
     size_t blocks = (t1len - 2 + threads - 1) / threads;
@@ -215,10 +214,10 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
 
     auto pol = thrust::cuda::par.on(stream);
 
-    thrust::device_vector<size_t> inds(t1len);
+    dmfe::device_vector<size_t> inds(t1len, dmfe::cuda_async_allocator<size_t>(stream));
     thrust::sequence(pol, inds.begin(), inds.end());
 
-    thrust::device_vector<size_t> filtered(t1len); // max possible size
+    dmfe::device_vector<size_t> filtered(t1len, dmfe::cuda_async_allocator<size_t>(stream)); // max possible size
     auto end_it = thrust::copy_if(
         pol,
         inds.begin(), inds.end(),
@@ -229,7 +228,7 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
     filtered.resize(end_it - filtered.begin()); // shrink to actual size
 
     // Construct indsD and tfac
-    thrust::device_vector<size_t> indsD(filtered.size(), 0);
+    dmfe::device_vector<size_t> indsD(filtered.size(), 0, dmfe::cuda_async_allocator<size_t>(stream));
     if (filtered.size() > 1) {
         thrust::transform(pol,
             filtered.begin(), filtered.end() - 1,
@@ -238,7 +237,7 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
         );
     }
 
-    thrust::device_vector<double> tfac(filtered.size(), 1.0);
+    dmfe::device_vector<double> tfac(filtered.size(), 1.0, dmfe::cuda_async_allocator<double>(stream));
     const double* t1_ptr = thrust::raw_pointer_cast(sim->d_t1grid.data());
 
     if (filtered.size() > 1) {
@@ -275,7 +274,7 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
 
     size_t new_n = sim->d_t1grid.size();
     sim->d_delta_t_ratio.resize(new_n);
-    thrust::device_vector<double> dgrid(new_n);
+    dmfe::device_vector<double> dgrid(new_n, 0.0, dmfe::cuda_async_allocator<double>(stream));
     if (new_n >= 2) {
         thrust::transform(pol, sim->d_t1grid.begin() + 1, sim->d_t1grid.end(), sim->d_t1grid.begin(), dgrid.begin() + 1, thrust::minus<double>());
     }

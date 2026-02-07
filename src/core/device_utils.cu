@@ -20,30 +20,30 @@ __global__ static void update_gK_gR_kernel(
 	}
 }
 
-thrust::device_vector<double> SubtractGPU(const thrust::device_vector<double>& a, const thrust::device_vector<double>& b) {
-	thrust::device_vector<double> result(a.size());
+dmfe::device_vector<double> SubtractGPU(const dmfe::device_vector<double>& a, const dmfe::device_vector<double>& b) {
+	dmfe::device_vector<double> result(a.size());
 	thrust::transform(a.begin(), a.end(), b.begin(), result.begin(), thrust::minus<double>());
 	return result;
 }
 
-thrust::device_vector<double> scalarMultiply(const thrust::device_vector<double>& vec, double scalar) {
-	thrust::device_vector<double> result(vec.size());
+dmfe::device_vector<double> scalarMultiply(const dmfe::device_vector<double>& vec, double scalar) {
+	dmfe::device_vector<double> result(vec.size());
 	thrust::transform(vec.begin(), vec.end(), result.begin(), [scalar] __device__(double x) { return x * scalar; });
 	return result;
 }
 
-thrust::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& vec, double scalar, size_t len) {
-	thrust::device_vector<double> result(len);
+dmfe::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& vec, double scalar, size_t len) {
+	dmfe::device_vector<double> result(len);
 	thrust::transform(vec, vec + len, result.begin(), [scalar] __device__(double x) { return x * scalar; });
 	return result;
 }
 
-void AddSubtractGPU(thrust::device_vector<double>& gK,
-					const thrust::device_vector<double>& gKfinal,
-					const thrust::device_vector<double>& gK0,
-					thrust::device_vector<double>& gR,
-					const thrust::device_vector<double>& gRfinal,
-					const thrust::device_vector<double>& gR0,
+void AddSubtractGPU(dmfe::device_vector<double>& gK,
+					const dmfe::device_vector<double>& gKfinal,
+					const dmfe::device_vector<double>& gK0,
+					dmfe::device_vector<double>& gR,
+					const dmfe::device_vector<double>& gRfinal,
+					const dmfe::device_vector<double>& gR0,
 					cudaStream_t stream) {
 	int N = static_cast<int>(gK.size());
 	int blockSize = 128;
@@ -82,13 +82,13 @@ __global__ static void FusedUpdateKernel(
 
 void FusedUpdate(const thrust::device_ptr<double>& a,
 				 const thrust::device_ptr<double>& b,
-				 const thrust::device_vector<double>& out,
+				 const dmfe::device_vector<double>& out,
 				 const double* alpha,
 				 const double* beta,
-				 const thrust::device_vector<double>* delta,
-				 const thrust::device_vector<double>* extra1,
-				 const thrust::device_vector<double>* extra2,
-				 const thrust::device_vector<double>* extra3,
+				 const dmfe::device_vector<double>* delta,
+				 const dmfe::device_vector<double>* extra1,
+				 const dmfe::device_vector<double>* extra2,
+				 const dmfe::device_vector<double>* extra3,
 				 const thrust::device_ptr<double>& subtract,
 				 cudaStream_t stream) {
 	size_t N = out.size();
@@ -102,7 +102,7 @@ void FusedUpdate(const thrust::device_ptr<double>& a,
 		extra3 ? thrust::raw_pointer_cast(extra3->data()) : nullptr,
 		delta ? thrust::raw_pointer_cast(delta->data()) : nullptr,
 		subtract ? thrust::raw_pointer_cast(subtract) : nullptr,
-		thrust::raw_pointer_cast(const_cast<thrust::device_vector<double>&>(out).data()),
+		thrust::raw_pointer_cast(const_cast<dmfe::device_vector<double>&>(out).data()),
 		alpha, beta, N);
 }
 
@@ -127,6 +127,19 @@ bool isCompatibleGPUInstalled() {
 
 	std::cerr << dmfe::console::WARN() << "No compatible GPU found (compute capability >= 8.6)." << std::endl;
     return false;
+}
+
+bool canCreateCudaStream(std::string* errorMessage) {
+	cudaStream_t stream = nullptr;
+	cudaError_t err = cudaStreamCreate(&stream);
+	if (err != cudaSuccess) {
+		if (errorMessage) {
+			*errorMessage = cudaGetErrorString(err);
+		}
+		return false;
+	}
+	cudaStreamDestroy(stream);
+	return true;
 }
 
 // External declarations

@@ -2,7 +2,6 @@
  #include "core/device_utils.cuh"
  #include "math/math_ops.hpp"
  #include <vector>
- #include <thrust/device_vector.h>
  #include <thrust/transform.h>
  #include <thrust/iterator/zip_iterator.h>
  #include <thrust/execution_policy.h>
@@ -49,7 +48,7 @@ __global__ void computeSigmaKandRKernel(const double* __restrict__ qK,
 }
 
 // Host and device entry points for SigmaK/SigmaR
-void SigmaKGPU(const thrust::device_vector<double>& qk, thrust::device_vector<double>& result, cudaStream_t stream) {
+void SigmaKGPU(const dmfe::device_vector<double>& qk, dmfe::device_vector<double>& result, cudaStream_t stream) {
     assert(qk.size() == result.size());
 
     thrust::transform(
@@ -62,9 +61,9 @@ void SigmaKGPU(const thrust::device_vector<double>& qk, thrust::device_vector<do
     );
 }
 
-void SigmaRGPU(const thrust::device_vector<double>& qk, 
-               const thrust::device_vector<double>& qr, 
-               thrust::device_vector<double>& result,
+void SigmaRGPU(const dmfe::device_vector<double>& qk, 
+               const dmfe::device_vector<double>& qr, 
+               dmfe::device_vector<double>& result,
                cudaStream_t stream) {
     assert(qk.size() == qr.size() && qk.size() == result.size());
 

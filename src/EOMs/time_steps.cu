@@ -23,11 +23,11 @@ using namespace std;
 extern SimulationConfig config;
 
 // GPU-specific utility function for extracting last entries
-thrust::device_vector<double> getLastLenEntriesGPU(const thrust::device_vector<double>& vec, size_t len) {
+dmfe::device_vector<double> getLastLenEntriesGPU(const dmfe::device_vector<double>& vec, size_t len) {
     if (len > vec.size()) {
         throw std::invalid_argument("len is greater than the size of the vector.");
     }
-    return thrust::device_vector<double>(vec.end() - len, vec.end());
+    return dmfe::device_vector<double>(vec.end() - len, vec.end());
 }
 
 // Kernel implementations
@@ -195,10 +195,10 @@ __global__ void replace4Kernel(
 
 // GPU time-step functions (CPU versions are in time_steps.cpp)
 void QRstepFused(const thrust::device_ptr<double>& qR,
-                 const thrust::device_vector<double>& theta,
-                 const thrust::device_vector<double>& conv1,
-                 const thrust::device_vector<double>& conv2,
-                 const thrust::device_vector<double>& r,
+                    const dmfe::device_vector<double>& theta,
+                    const dmfe::device_vector<double>& conv1,
+                    const dmfe::device_vector<double>& conv2,
+                    const dmfe::device_vector<double>& r,
                  double* out,
                  cudaStream_t stream) {
     size_t len = theta.size();
@@ -215,25 +215,25 @@ void QRstepFused(const thrust::device_ptr<double>& qR,
     );
 }
 
-thrust::device_vector<double> QKstepGPU(
-    const thrust::device_vector<double>& QKv,
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& QKB1int,
-    const thrust::device_vector<double>& QKB2int,
-    const thrust::device_vector<double>& QKA1int,
-    const thrust::device_vector<double>& QRA1int,
-    const thrust::device_vector<double>& QRA2int,
-    const thrust::device_vector<double>& QRB1int,
-    const thrust::device_vector<double>& SigmaRA1int,
-    const thrust::device_vector<double>& SigmaRA2int,
-    const thrust::device_vector<double>& SigmaKB1int,
-    const thrust::device_vector<double>& SigmaKB2int,
-    const thrust::device_vector<double>& SigmaKA1int,
-    const thrust::device_vector<double>& SigmaRB1int,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& rInt,
+dmfe::device_vector<double> QKstepGPU(
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& QKB1int,
+    const dmfe::device_vector<double>& QKB2int,
+    const dmfe::device_vector<double>& QKA1int,
+    const dmfe::device_vector<double>& QRA1int,
+    const dmfe::device_vector<double>& QRA2int,
+    const dmfe::device_vector<double>& QRB1int,
+    const dmfe::device_vector<double>& SigmaRA1int,
+    const dmfe::device_vector<double>& SigmaRA2int,
+    const dmfe::device_vector<double>& SigmaKB1int,
+    const dmfe::device_vector<double>& SigmaKB2int,
+    const dmfe::device_vector<double>& SigmaKA1int,
+    const dmfe::device_vector<double>& SigmaRB1int,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& rInt,
     double T0,
     double Gamma,
     StreamPool& pool) {
@@ -300,15 +300,15 @@ thrust::device_vector<double> QKstepGPU(
     return sim->temp2;
 }
 
-thrust::device_vector<double> QRstepGPU(
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& rInt,
-    const thrust::device_vector<double>& SigmaRA2int,
-    const thrust::device_vector<double>& QRB2int,
-    const thrust::device_vector<double>& QRA2int,
-    const thrust::device_vector<double>& SigmaRB2int,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& theta,
+dmfe::device_vector<double> QRstepGPU(
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& rInt,
+    const dmfe::device_vector<double>& SigmaRA2int,
+    const dmfe::device_vector<double>& QRB2int,
+    const dmfe::device_vector<double>& QRA2int,
+    const dmfe::device_vector<double>& SigmaRB2int,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& theta,
     StreamPool& pool) {
     
     size_t len = theta.size();
@@ -325,28 +325,28 @@ thrust::device_vector<double> QRstepGPU(
 }
 
 void QKRstepGPU(
-    const thrust::device_vector<double>& QKv,
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& QKB1int,
-    const thrust::device_vector<double>& QKB2int,
-    const thrust::device_vector<double>& QKA1int,
-    const thrust::device_vector<double>& QRA1int,
-    const thrust::device_vector<double>& QRA2int,
-    const thrust::device_vector<double>& QRB1int,
-    const thrust::device_vector<double>& QRB2int,
-    const thrust::device_vector<double>& SigmaRA1int,
-    const thrust::device_vector<double>& SigmaRA2int,
-    const thrust::device_vector<double>& SigmaKB1int,
-    const thrust::device_vector<double>& SigmaKB2int,
-    const thrust::device_vector<double>& SigmaKA1int,
-    const thrust::device_vector<double>& SigmaRB1int,
-    const thrust::device_vector<double>& SigmaRB2int,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& rInt,
-    thrust::device_vector<double>& outK,
-    thrust::device_vector<double>& outR,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& QKB1int,
+    const dmfe::device_vector<double>& QKB2int,
+    const dmfe::device_vector<double>& QKA1int,
+    const dmfe::device_vector<double>& QRA1int,
+    const dmfe::device_vector<double>& QRA2int,
+    const dmfe::device_vector<double>& QRB1int,
+    const dmfe::device_vector<double>& QRB2int,
+    const dmfe::device_vector<double>& SigmaRA1int,
+    const dmfe::device_vector<double>& SigmaRA2int,
+    const dmfe::device_vector<double>& SigmaKB1int,
+    const dmfe::device_vector<double>& SigmaKB2int,
+    const dmfe::device_vector<double>& SigmaKA1int,
+    const dmfe::device_vector<double>& SigmaRB1int,
+    const dmfe::device_vector<double>& SigmaRB2int,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& rInt,
+    dmfe::device_vector<double>& outK,
+    dmfe::device_vector<double>& outR,
     double T0,
     double Gamma,
     int n,
@@ -411,8 +411,8 @@ double rstepGPU(
     const thrust::device_ptr<const double>& qK,
     const thrust::device_ptr<const double>& qR,
     double t,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
     double Gamma,
     double T0,
     StreamPool& pool) {
@@ -452,11 +452,11 @@ double rstepGPU(
 }
 
 double rstepGPU(
-    const thrust::device_vector<double>& QKv,
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
     double Gamma,
     double T0,
     StreamPool& pool) {
@@ -472,21 +472,21 @@ double rstepGPU(
 }
 
 double drstepGPU(
-    const thrust::device_vector<double>& QKv,
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& dQKv,
-    const thrust::device_vector<double>& dQRv,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& dQKv,
+    const dmfe::device_vector<double>& dQRv,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
     double T0) {
     
     size_t len = QKv.size();
     const double t = t1grid.back();
-    thrust::device_vector<double> sigmaK(len, 0.0);
-    thrust::device_vector<double> sigmaR(len, 0.0);
-    thrust::device_vector<double> dsigmaK(len, 0.0);
-    thrust::device_vector<double> dsigmaR(len, 0.0);
+    dmfe::device_vector<double> sigmaK(len, 0.0);
+    dmfe::device_vector<double> sigmaR(len, 0.0);
+    dmfe::device_vector<double> dsigmaK(len, 0.0);
+    dmfe::device_vector<double> dsigmaR(len, 0.0);
 
     // Compute sigmaK
     thrust::transform(
@@ -535,12 +535,12 @@ double drstepGPU(
     );
 
     // Compute convolution results
-    thrust::device_vector<double> convA_sigmaR_qK = ConvAGPU(sigmaR, QKv, t, integ, theta);
-    thrust::device_vector<double> convA_sigmaK_qR = ConvAGPU(sigmaK, QRv, t, integ, theta);
-    thrust::device_vector<double> convA_dsigmaR_qK = ConvAGPU(dsigmaR, QKv, t, integ, theta);
-    thrust::device_vector<double> convA_dsigmaK_qR = ConvAGPU(dsigmaK, QRv, t, integ, theta);
-    thrust::device_vector<double> convA_sigmaR_dqK = ConvAGPU(sigmaR, dQKv, t, integ, theta);
-    thrust::device_vector<double> convA_sigmaK_dqR = ConvAGPU(sigmaK, dQRv, t, integ, theta);
+    dmfe::device_vector<double> convA_sigmaR_qK = ConvAGPU(sigmaR, QKv, t, integ, theta);
+    dmfe::device_vector<double> convA_sigmaK_qR = ConvAGPU(sigmaK, QRv, t, integ, theta);
+    dmfe::device_vector<double> convA_dsigmaR_qK = ConvAGPU(dsigmaR, QKv, t, integ, theta);
+    dmfe::device_vector<double> convA_dsigmaK_qR = ConvAGPU(dsigmaK, QRv, t, integ, theta);
+    dmfe::device_vector<double> convA_sigmaR_dqK = ConvAGPU(sigmaR, dQKv, t, integ, theta);
+    dmfe::device_vector<double> convA_sigmaK_dqR = ConvAGPU(sigmaK, dQRv, t, integ, theta);
 
     // Compute final result
     computeDrstepResult<<<1, 1, 0>>>(
@@ -639,11 +639,11 @@ double drstep2GPU(
 }
 
 double energyGPU(
-    const thrust::device_vector<double>& QKv,
-    const thrust::device_vector<double>& QRv,
-    const thrust::device_vector<double>& t1grid,
-    const thrust::device_vector<double>& integ,
-    const thrust::device_vector<double>& theta,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    const dmfe::device_vector<double>& t1grid,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
     double T0) {
     
     size_t len = theta.size();
@@ -674,14 +674,14 @@ double energyGPU(
 }
 
 // GPU append/replace functions (CPU versions are in time_steps.cpp)
-void appendGPU(thrust::device_vector<double>& dest,
-                                        const thrust::device_vector<double>& src, double scale) {
+void appendGPU(dmfe::device_vector<double>& dest,
+                                        const dmfe::device_vector<double>& src, double scale) {
     size_t required_size = dest.size() + src.size();
 
     if (dest.capacity() < required_size) {
         // Allocate a new vector with more capacity (e.g., double the required size)
         size_t new_capacity = std::max(required_size, 2 * dest.capacity());
-        thrust::device_vector<double> tmp;
+        dmfe::device_vector<double> tmp;
         tmp.reserve(new_capacity);            // Preallocate
         tmp.resize(dest.size());              // Set to current size
         thrust::copy(dest.begin(), dest.end(), tmp.begin());
@@ -700,7 +700,7 @@ void appendGPU(thrust::device_vector<double>& dest,
     );
 }
 
-void appendGPU_ptr(thrust::device_vector<double>& dest,
+void appendGPU_ptr(dmfe::device_vector<double>& dest,
                                         const thrust::device_ptr<double>& src, double size, double scale, cudaStream_t stream) {
     size_t required_size = dest.size() + size;
 
@@ -725,10 +725,10 @@ void appendGPU_ptr(thrust::device_vector<double>& dest,
 }
 
 void appendAllGPU(
-    const thrust::device_vector<double>& qK,
-    const thrust::device_vector<double>& qR,
-    const thrust::device_vector<double>& dqK,
-    const thrust::device_vector<double>& dqR,
+    const dmfe::device_vector<double>& qK,
+    const dmfe::device_vector<double>& qR,
+    const dmfe::device_vector<double>& dqK,
+    const dmfe::device_vector<double>& dqR,
     const double dr,
     const double t,
     StreamPool& pool)
@@ -758,8 +758,8 @@ void appendAllGPU(
     // 2) finally update drvec and rvec
     sim->d_drvec.push_back(tdiff * dr);
 
-    const thrust::device_ptr<const double> lastQK = qK.data();
-    const thrust::device_ptr<const double> lastQR = qR.data();
+    const thrust::device_ptr<const double> lastQK = thrust::device_pointer_cast(qK.data());
+    const thrust::device_ptr<const double> lastQR = thrust::device_pointer_cast(qR.data());
     sim->d_rvec.push_back(rstepGPU(lastQK, lastQR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool));
 }
 
@@ -831,10 +831,10 @@ void appendAllGPU_ptr(
 }
 
 void replaceAllGPU(
-    const thrust::device_vector<double>& qK,
-    const thrust::device_vector<double>& qR,
-    const thrust::device_vector<double>& dqK,
-    const thrust::device_vector<double>& dqR,
+    const dmfe::device_vector<double>& qK,
+    const dmfe::device_vector<double>& qR,
+    const dmfe::device_vector<double>& dqK,
+    const dmfe::device_vector<double>& dqR,
     const double dr,
     const double t,
     StreamPool& pool)
@@ -865,8 +865,8 @@ void replaceAllGPU(
         sim->d_drvec.back() = tdiff * dr;
 
         const size_t idx = sim->d_t1grid.size() - 1;
-        const thrust::device_ptr<const double> lastQK = qK.data();
-        const thrust::device_ptr<const double> lastQR = qR.data();
+        const thrust::device_ptr<const double> lastQK = thrust::device_pointer_cast(qK.data());
+        const thrust::device_ptr<const double> lastQR = thrust::device_pointer_cast(qR.data());
         sim->d_rvec.back() = rstepGPU(lastQK, lastQR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
     }
 }

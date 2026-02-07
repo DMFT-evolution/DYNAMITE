@@ -46,7 +46,12 @@ vector<double> QKstep()
     return d1qK + (d2qK * sim->h_theta);
 }
 
-void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector<double>& dqK, const vector<double>& dqR, const double dr, const double t)
+void replaceAll(const vector<double>& qK,
+                const vector<double>& qR,
+                const vector<double>& dqK,
+                const vector<double>& dqR,
+                const double dr,
+                const double t)
 {
     // Replace the existing values in the vectors with the new values
     size_t replaceLength = qK.size();
@@ -71,8 +76,8 @@ void replaceAll(const vector<double>& qK, const vector<double>& qR, const vector
         {
             sim->h_QKv[length + i] = qK[i];
             sim->h_QRv[length + i] = qR[i];
-            sim->h_dQKv[length + i] = tdiff * dqK[i];
-            sim->h_dQRv[length + i] = tdiff * dqR[i];
+            sim->h_dQKv[length + i] = dqK[i] * tdiff;
+            sim->h_dQRv[length + i] = dqR[i] * tdiff;
         }
 
         sim->h_drvec.back() = tdiff * dr;
@@ -104,8 +109,8 @@ double drstep()
     vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0), dsigmaK(config.len, 0.0), dsigmaR(config.len, 0.0);
     vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
     vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> dqK = getLastLenEntries(sim->h_dQKv, config.len);
-    vector<double> dqR = getLastLenEntries(sim->h_dQRv, config.len);
+    vector<double> dqK = QKstep();
+    vector<double> dqR = QRstep();
     const double t = sim->h_t1grid.back();
     SigmaK(qK, sigmaK);
     SigmaR(qK, qR, sigmaR);
@@ -152,8 +157,8 @@ void appendAll(const vector<double>& qK,
     {
         sim->h_QKv.push_back(qK[i]);
         sim->h_QRv.push_back(qR[i]);
-        sim->h_dQKv.push_back(tdiff * dqK[i]);
-        sim->h_dQRv.push_back(tdiff * dqR[i]);
+        sim->h_dQKv.push_back(dqK[i] * tdiff);
+        sim->h_dQRv.push_back(dqR[i] * tdiff);
     }
 
     // 2) finally update drvec and rvec

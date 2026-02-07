@@ -4,7 +4,7 @@
 #include <vector>
 
 #if DMFE_WITH_CUDA
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 
 // GPU kernel and host wrappers for SigmaK/SigmaR evaluations
 __global__ void computeSigmaKandRKernel(const double* __restrict__ qK,
@@ -14,8 +14,8 @@ __global__ void computeSigmaKandRKernel(const double* __restrict__ qK,
 										size_t len);
 
 // Sigma GPU function declarations
-void SigmaKGPU(const thrust::device_vector<double>& qk, thrust::device_vector<double>& result, cudaStream_t stream = 0);
-void SigmaRGPU(const thrust::device_vector<double>& qk, const thrust::device_vector<double>& qr, thrust::device_vector<double>& result, cudaStream_t stream = 0);
+void SigmaKGPU(const dmfe::device_vector<double>& qk, dmfe::device_vector<double>& result, cudaStream_t stream = 0);
+void SigmaRGPU(const dmfe::device_vector<double>& qk, const dmfe::device_vector<double>& qr, dmfe::device_vector<double>& result, cudaStream_t stream = 0);
 #endif // DMFE_WITH_CUDA
 
 // Sigma CPU function declarations

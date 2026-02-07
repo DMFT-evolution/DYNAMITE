@@ -61,14 +61,14 @@ __global__ void ConvAGPUKernel(const double* __restrict__ f,
     }
 }
 
-thrust::device_vector<double> ConvAGPU(const thrust::device_vector<double>& f,
-                                       const thrust::device_vector<double>& g,
+dmfe::device_vector<double> ConvAGPU(const dmfe::device_vector<double>& f,
+                                       const dmfe::device_vector<double>& g,
                                        double t,
-                                       const thrust::device_vector<double>& integ,
-                                       const thrust::device_vector<double>& theta,
+                                       const dmfe::device_vector<double>& integ,
+                                       const dmfe::device_vector<double>& theta,
                                        cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
-    thrust::device_vector<double> out(depth, 0.0);
+    dmfe::device_vector<double> out(depth, 0.0, dmfe::cuda_async_allocator<double>(stream));
     int threads = 64; size_t shmem = threads * sizeof(double);
     ConvAGPUKernel<<<depth, threads, shmem, stream>>>(
         thrust::raw_pointer_cast(f.data()),
@@ -79,14 +79,14 @@ thrust::device_vector<double> ConvAGPU(const thrust::device_vector<double>& f,
     return out;
 }
 
-thrust::device_vector<double> ConvAGPU(const thrust::device_vector<double>& f,
+dmfe::device_vector<double> ConvAGPU(const dmfe::device_vector<double>& f,
                                        const thrust::device_ptr<double>& g,
                                        double t,
-                                       const thrust::device_vector<double>& integ,
-                                       const thrust::device_vector<double>& theta,
+                                       const dmfe::device_vector<double>& integ,
+                                       const dmfe::device_vector<double>& theta,
                                        cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
-    thrust::device_vector<double> out(depth, 0.0);
+    dmfe::device_vector<double> out(depth, 0.0, dmfe::cuda_async_allocator<double>(stream));
     int threads = 64; size_t shmem = threads * sizeof(double);
     ConvAGPUKernel<<<depth, threads, shmem, stream>>>(
         thrust::raw_pointer_cast(f.data()),
@@ -97,12 +97,12 @@ thrust::device_vector<double> ConvAGPU(const thrust::device_vector<double>& f,
     return out;
 }
 
-void ConvAGPU_Stream(const thrust::device_vector<double>& f,
-                     const thrust::device_vector<double>& g,
-                     thrust::device_vector<double>& out,
-                     thrust::device_vector<double>& t,
-                     const thrust::device_vector<double>& integ,
-                     const thrust::device_vector<double>& theta,
+void ConvAGPU_Stream(const dmfe::device_vector<double>& f,
+                     const dmfe::device_vector<double>& g,
+                     dmfe::device_vector<double>& out,
+                     dmfe::device_vector<double>& t,
+                     const dmfe::device_vector<double>& integ,
+                     const dmfe::device_vector<double>& theta,
                      cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
     int threads = 64; size_t shmem = threads * sizeof(double);
@@ -115,12 +115,12 @@ void ConvAGPU_Stream(const thrust::device_vector<double>& f,
         thrust::raw_pointer_cast(t.data()), length, depth);
 }
 
-void ConvAGPU_Stream(const thrust::device_vector<double>& f,
+void ConvAGPU_Stream(const dmfe::device_vector<double>& f,
                      const thrust::device_ptr<double>& g,
-                     thrust::device_vector<double>& out,
+                     dmfe::device_vector<double>& out,
                      double t,
-                     const thrust::device_vector<double>& integ,
-                     const thrust::device_vector<double>& theta,
+                     const dmfe::device_vector<double>& integ,
+                     const dmfe::device_vector<double>& theta,
                      cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
     int threads = 64; size_t shmem = threads * sizeof(double);
@@ -133,12 +133,12 @@ void ConvAGPU_Stream(const thrust::device_vector<double>& f,
 }
 
 // Const-pointer overload
-void ConvAGPU_Stream(const thrust::device_vector<double>& f,
+void ConvAGPU_Stream(const dmfe::device_vector<double>& f,
                      const thrust::device_ptr<const double>& g,
-                     thrust::device_vector<double>& out,
+                     dmfe::device_vector<double>& out,
                      double t,
-                     const thrust::device_vector<double>& integ,
-                     const thrust::device_vector<double>& theta,
+                     const dmfe::device_vector<double>& integ,
+                     const dmfe::device_vector<double>& theta,
                      cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
     int threads = 64; size_t shmem = threads * sizeof(double);
@@ -193,14 +193,14 @@ __global__ void ConvRKernel(const double* __restrict__ f,
     if (tid == 0) out[j] = t[0] * (1.0 - theta[j]) * reduction_shared[0];
 }
 
-thrust::device_vector<double> ConvRGPU(const thrust::device_vector<double>& f,
-                                       const thrust::device_vector<double>& g,
+dmfe::device_vector<double> ConvRGPU(const dmfe::device_vector<double>& f,
+                                       const dmfe::device_vector<double>& g,
                                        double t,
-                                       const thrust::device_vector<double>& integ,
-                                       const thrust::device_vector<double>& theta,
+                                       const dmfe::device_vector<double>& integ,
+                                       const dmfe::device_vector<double>& theta,
                                        cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
-    thrust::device_vector<double> out(depth, 0.0);
+    dmfe::device_vector<double> out(depth, 0.0, dmfe::cuda_async_allocator<double>(stream));
     int threads = 64; size_t shmem = length * sizeof(double) + threads * sizeof(double);
     ConvRKernel<<<depth, threads, shmem, stream>>>(
         thrust::raw_pointer_cast(f.data()),
@@ -211,12 +211,12 @@ thrust::device_vector<double> ConvRGPU(const thrust::device_vector<double>& f,
     return out;
 }
 
-void ConvRGPU_Stream(const thrust::device_vector<double>& f,
-                     const thrust::device_vector<double>& g,
-                     thrust::device_vector<double>& out,
-                     const thrust::device_vector<double>& t,
-                     const thrust::device_vector<double>& integ,
-                     const thrust::device_vector<double>& theta,
+void ConvRGPU_Stream(const dmfe::device_vector<double>& f,
+                     const dmfe::device_vector<double>& g,
+                     dmfe::device_vector<double>& out,
+                     const dmfe::device_vector<double>& t,
+                     const dmfe::device_vector<double>& integ,
+                     const dmfe::device_vector<double>& theta,
                      cudaStream_t stream) {
     size_t length = integ.size(); size_t depth = f.size() / length;
     int threads = 64; size_t shmem = length * sizeof(double) + threads * sizeof(double);

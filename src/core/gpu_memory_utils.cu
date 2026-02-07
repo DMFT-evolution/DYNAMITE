@@ -2,11 +2,16 @@
 #include "simulation/simulation_data.hpp"
 #include "core/device_constants.hpp"
 #include <thrust/copy.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
+#include "core/config.hpp"
 #include <iostream>
+#include <stdexcept>
 #include "core/console.hpp"
 
 // d_p, d_p2, d_lambda declared in device_constants.hpp and defined in device_constants.cu
+
+// External declarations
+extern SimulationConfig config;
 
 void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	// Scalars / simple lists
@@ -86,6 +91,13 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	sim.Stemp2.resize(len);
 
 	sim.error_result.resize(1, 0.0);
+
+	if (config.debug) {
+		cudaError_t err = cudaDeviceSynchronize();
+		if (err != cudaSuccess) {
+			throw std::runtime_error(std::string("CUDA error during host->device copy: ") + cudaGetErrorString(err));
+		}
+	}
 
 	std::cout << dmfe::console::INFO() << "Host -> Device vector copy complete." << std::endl;
 }
@@ -193,9 +205,18 @@ void clearAllHostVectors(SimulationData& sim) {
 }
 
 void copyParametersToDevice(int p_host, int p2_host, double lambda_host) {
-	cudaMemcpyToSymbol(d_p, &p_host, sizeof(int));
-	cudaMemcpyToSymbol(d_p2, &p2_host, sizeof(int));
-	cudaMemcpyToSymbol(d_lambda, &lambda_host, sizeof(double));
+	cudaError_t err = cudaMemcpyToSymbol(d_p, &p_host, sizeof(int));
+	if (err != cudaSuccess) {
+		throw std::runtime_error(std::string("cudaMemcpyToSymbol(d_p) failed: ") + cudaGetErrorString(err));
+	}
+	err = cudaMemcpyToSymbol(d_p2, &p2_host, sizeof(int));
+	if (err != cudaSuccess) {
+		throw std::runtime_error(std::string("cudaMemcpyToSymbol(d_p2) failed: ") + cudaGetErrorString(err));
+	}
+	err = cudaMemcpyToSymbol(d_lambda, &lambda_host, sizeof(double));
+	if (err != cudaSuccess) {
+		throw std::runtime_error(std::string("cudaMemcpyToSymbol(d_lambda) failed: ") + cudaGetErrorString(err));
+	}
 }
 
 double* copyVectorToDeviceRaw(const std::vector<double>& host_vec) {

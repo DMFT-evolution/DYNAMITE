@@ -4,7 +4,7 @@
 #include <cstddef>
 
 #if DMFE_WITH_CUDA
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #include <cuda_runtime.h>
 #endif
 
@@ -18,29 +18,29 @@ void indexMatAll(const std::vector<double>& posx,
 
 #if DMFE_WITH_CUDA
 // Forward declaration of optimizer interface
-void indexMatAllGPU(const thrust::device_vector<double>& posx,
-                    const thrust::device_vector<size_t>& indsy,
-                    const thrust::device_vector<double>& weightsy,
-                    const thrust::device_vector<double>& dtratio,
-                    thrust::device_vector<double>& qK_result,
-                    thrust::device_vector<double>& qR_result,
-                    const thrust::device_vector<double>& QKv,
-                    const thrust::device_vector<double>& QRv,
-                    const thrust::device_vector<double>& dQKv,
-                    const thrust::device_vector<double>& dQRv,
+void indexMatAllGPU(const dmfe::device_vector<double>& posx,
+                    const dmfe::device_vector<size_t>& indsy,
+                    const dmfe::device_vector<double>& weightsy,
+                    const dmfe::device_vector<double>& dtratio,
+                    dmfe::device_vector<double>& qK_result,
+                    dmfe::device_vector<double>& qR_result,
+                    const dmfe::device_vector<double>& QKv,
+                    const dmfe::device_vector<double>& QRv,
+                    const dmfe::device_vector<double>& dQKv,
+                    const dmfe::device_vector<double>& dQRv,
                     size_t len,
                     cudaStream_t stream = 0);
 
-void indexMatAllGPU_log(const thrust::device_vector<double>& posx,
-                    const thrust::device_vector<size_t>& indsy,
-                    const thrust::device_vector<double>& weightsy,
-                    const thrust::device_vector<double>& dtratio,
-                    thrust::device_vector<double>& qK_result,
-                    thrust::device_vector<double>& qR_result,
-                    const thrust::device_vector<double>& QKv,
-                    const thrust::device_vector<double>& QRv,
-                    const thrust::device_vector<double>& dQKv,
-                    const thrust::device_vector<double>& dQRv,
+void indexMatAllGPU_log(const dmfe::device_vector<double>& posx,
+                    const dmfe::device_vector<size_t>& indsy,
+                    const dmfe::device_vector<double>& weightsy,
+                    const dmfe::device_vector<double>& dtratio,
+                    dmfe::device_vector<double>& qK_result,
+                    dmfe::device_vector<double>& qR_result,
+                    const dmfe::device_vector<double>& QKv,
+                    const dmfe::device_vector<double>& QRv,
+                    const dmfe::device_vector<double>& dQKv,
+                    const dmfe::device_vector<double>& dQRv,
                     size_t len,
                     cudaStream_t stream = 0);
 #endif

@@ -159,8 +159,15 @@ void init()
 #if DMFE_WITH_CUDA
     if (config.gpu) {
         if (isCompatibleGPUInstalled()) {
-            std::cout << dmfe::console::INFO() << "GPU acceleration enabled." << std::endl;
-            config.gpu = true;
+            std::string streamError;
+            if (canCreateCudaStream(&streamError)) {
+                std::cout << dmfe::console::INFO() << "GPU acceleration enabled." << std::endl;
+                config.gpu = true;
+            } else {
+                std::cout << dmfe::console::WARN() << "GPU detected but CUDA stream creation failed (" << streamError
+                          << "). Falling back to CPU." << std::endl;
+                config.gpu = false;
+            }
         } else {
             std::cout << dmfe::console::WARN() << "GPU acceleration requested but no compatible GPU found. Falling back to CPU." << std::endl;
             config.gpu = false;
@@ -216,8 +223,6 @@ void init()
 
         sim->h_QKv.resize(config.len, 1.0);
         sim->h_QRv.resize(config.len, 1.0);
-        sim->h_dQKv.resize(config.len, 0.0);
-        sim->h_dQRv.resize(config.len, 0.0);
         sim->h_rvec.resize(1, config.Gamma + Dflambda(1) / config.T0);
         sim->h_drvec.resize(1, rstep());
     } else {
@@ -268,6 +273,13 @@ void init()
             init_RK54GPU();   // RK54
         } else {
             init_SSPRK104GPU(); // SSPRK104
+        }
+
+        if (config.debug) {
+            cudaError_t err = cudaDeviceSynchronize();
+            if (err != cudaSuccess) {
+                throw std::runtime_error(std::string("CUDA error after RK init: ") + cudaGetErrorString(err));
+            }
         }
 
         // Initial interpolation on GPU

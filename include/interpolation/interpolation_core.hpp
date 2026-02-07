@@ -7,7 +7,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #endif
 
 // CPU interpolation function
@@ -23,9 +23,9 @@ void interpolateGPU(const double* posB1xIn = nullptr,
                     StreamPool* pool = nullptr);
 
 // Helper functions
-void diffNfloor(const thrust::device_vector<double>& posB1x,
-                thrust::device_vector<size_t>& Floor,
-                thrust::device_vector<double>& diff,
+void diffNfloor(const dmfe::device_vector<double>& posB1x,
+                dmfe::device_vector<size_t>& Floor,
+                dmfe::device_vector<double>& diff,
                 cudaStream_t stream = 0);
 
 // CUDA kernel

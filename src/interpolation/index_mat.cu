@@ -48,6 +48,23 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic(const double*
     size_t j = blockIdx.x * blockDim.x + threadIdx.x;
     if (j >= prod) return;
 
+    if (t1len < 2) {
+        size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
+        size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
+        size_t inds = (indsx - 1) * len + indsy[j];
+        const double* weights = weightsy + j * depth;
+        double qK0 = 0.0, qR0 = 0.0;
+        for (size_t d = 0; d < depth; ++d) {
+            size_t offset = inds + d;
+            double w = weights[d];
+            qK0 += w * QKv[offset];
+            qR0 += w * QRv[offset];
+        }
+        qK_result[j] = qK0;
+        qR_result[j] = qR0;
+        return;
+    }
+
     size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
     size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
 
@@ -105,6 +122,24 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_specialized(const dou
     size_t j = blockIdx.x * blockDim.x + threadIdx.x;
     if (j >= prod) return;
 
+    if (t1len < 2) {
+        size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
+        size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
+        size_t inds = (indsx - 1) * len + indsy[j];
+        const double* weights = weightsy + j * DEPTH;
+        double qK0 = 0.0, qR0 = 0.0;
+#pragma unroll
+        for (int d = 0; d < DEPTH; ++d) {
+            size_t offset = inds + d;
+            double w = weights[d];
+            qK0 += w * QKv[offset];
+            qR0 += w * QRv[offset];
+        }
+        qK_result[j] = qK0;
+        qR_result[j] = qR0;
+        return;
+    }
+
     size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
     size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
 
@@ -145,7 +180,8 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_specialized(const dou
     }
 }
 
-// Dynamic-depth kernel for log-space QR (QK stays linear). Uses f=log(QR), g=dQR/QR.
+// Dynamic-depth kernel for log-space interpolation.
+// Response: fR=log(QR), gR=dQR/QR. Correlation QK is interpolated in the ordinary linear domain.
 __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic_log(const double* __restrict__ posx,
                                           const size_t* __restrict__ indsy,
                                           const double* __restrict__ weightsy,
@@ -162,6 +198,24 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic_log(const dou
                                           size_t prod) {
     size_t j = blockIdx.x * blockDim.x + threadIdx.x;
     if (j >= prod) return;
+
+    if (t1len < 2) {
+        size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
+        size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
+        size_t inds = (indsx - 1) * len + indsy[j];
+        const double* weights = weightsy + j * depth;
+        double qK_lin = 0.0, QR0 = 0.0;
+        for (size_t d = 0; d < depth; ++d) {
+            size_t offset = inds + d;
+            double w = weights[d];
+            const double qkv = QKv[offset];
+            qK_lin += w * qkv;
+            QR0 += w * QRv[offset];
+        }
+        qK_result[j] = qK_lin;
+        qR_result[j] = QR0;
+        return;
+    }
 
     size_t max_indx = (size_t)(posx[prod - 1] - 0.5);
     size_t indsx = max(min((size_t)(posx[j]), max_indx), (size_t)1);
@@ -192,7 +246,7 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic_log(const dou
         dqK2 += w * dQKv[offset2];
     }
 
-    // QK linear Hermite always
+    // QK: ordinary linear-domain Hermite interpolation
     if (indsx < t1len - 1) {
         double denom = dtratio[indsx + 1];
         qK_result[j] = (1 - 3 * inx2 + 2 * inx3) * qK0 + (inx - 2 * inx2 + inx3) * dqK1 + (3 * inx2 - 2 * inx3) * qK1 + (-inx2 + inx3) * dqK2 / denom;
@@ -229,32 +283,32 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic_log(const dou
 // Simple dispatcher selecting specialized vs dynamic kernel based on depth
 class IndexMatAllOptimizer {
     static size_t cached_depth;
-    using KernelFn = void(*)(const thrust::device_vector<double>&,
-                             const thrust::device_vector<size_t>&,
-                             const thrust::device_vector<double>&,
-                             const thrust::device_vector<double>&,
-                             thrust::device_vector<double>&,
-                             thrust::device_vector<double>&,
-                             const thrust::device_vector<double>&,
-                             const thrust::device_vector<double>&,
-                             const thrust::device_vector<double>&,
-                             const thrust::device_vector<double>&,
+    using KernelFn = void(*)(const dmfe::device_vector<double>&,
+                             const dmfe::device_vector<size_t>&,
+                             const dmfe::device_vector<double>&,
+                             const dmfe::device_vector<double>&,
+                             dmfe::device_vector<double>&,
+                             dmfe::device_vector<double>&,
+                             const dmfe::device_vector<double>&,
+                             const dmfe::device_vector<double>&,
+                             const dmfe::device_vector<double>&,
+                             const dmfe::device_vector<double>&,
                              size_t,
                              cudaStream_t);
     static KernelFn cached_kernel;
 
     template<int DEPTH>
     static void call_specialized(
-        const thrust::device_vector<double>& posx,
-        const thrust::device_vector<size_t>& indsy,
-        const thrust::device_vector<double>& weightsy,
-        const thrust::device_vector<double>& dtratio,
-        thrust::device_vector<double>& qK_result,
-        thrust::device_vector<double>& qR_result,
-        const thrust::device_vector<double>& QKv,
-        const thrust::device_vector<double>& QRv,
-        const thrust::device_vector<double>& dQKv,
-        const thrust::device_vector<double>& dQRv,
+        const dmfe::device_vector<double>& posx,
+        const dmfe::device_vector<size_t>& indsy,
+        const dmfe::device_vector<double>& weightsy,
+        const dmfe::device_vector<double>& dtratio,
+        dmfe::device_vector<double>& qK_result,
+        dmfe::device_vector<double>& qR_result,
+        const dmfe::device_vector<double>& QKv,
+        const dmfe::device_vector<double>& QRv,
+        const dmfe::device_vector<double>& dQKv,
+        const dmfe::device_vector<double>& dQRv,
         size_t len,
         cudaStream_t stream) {
         size_t prod = indsy.size();
@@ -276,16 +330,16 @@ class IndexMatAllOptimizer {
     }
 
     static void call_dynamic(
-        const thrust::device_vector<double>& posx,
-        const thrust::device_vector<size_t>& indsy,
-        const thrust::device_vector<double>& weightsy,
-        const thrust::device_vector<double>& dtratio,
-        thrust::device_vector<double>& qK_result,
-        thrust::device_vector<double>& qR_result,
-        const thrust::device_vector<double>& QKv,
-        const thrust::device_vector<double>& QRv,
-        const thrust::device_vector<double>& dQKv,
-        const thrust::device_vector<double>& dQRv,
+        const dmfe::device_vector<double>& posx,
+        const dmfe::device_vector<size_t>& indsy,
+        const dmfe::device_vector<double>& weightsy,
+        const dmfe::device_vector<double>& dtratio,
+        dmfe::device_vector<double>& qK_result,
+        dmfe::device_vector<double>& qR_result,
+        const dmfe::device_vector<double>& QKv,
+        const dmfe::device_vector<double>& QRv,
+        const dmfe::device_vector<double>& dQKv,
+        const dmfe::device_vector<double>& dQRv,
         size_t len,
         cudaStream_t stream) {
         size_t prod = indsy.size();
@@ -322,16 +376,16 @@ public:
         }
     }
     static void run(
-        const thrust::device_vector<double>& posx,
-        const thrust::device_vector<size_t>& indsy,
-        const thrust::device_vector<double>& weightsy,
-        const thrust::device_vector<double>& dtratio,
-        thrust::device_vector<double>& qK_result,
-        thrust::device_vector<double>& qR_result,
-        const thrust::device_vector<double>& QKv,
-        const thrust::device_vector<double>& QRv,
-        const thrust::device_vector<double>& dQKv,
-        const thrust::device_vector<double>& dQRv,
+        const dmfe::device_vector<double>& posx,
+        const dmfe::device_vector<size_t>& indsy,
+        const dmfe::device_vector<double>& weightsy,
+        const dmfe::device_vector<double>& dtratio,
+        dmfe::device_vector<double>& qK_result,
+        dmfe::device_vector<double>& qR_result,
+        const dmfe::device_vector<double>& QKv,
+        const dmfe::device_vector<double>& QRv,
+        const dmfe::device_vector<double>& dQKv,
+        const dmfe::device_vector<double>& dQRv,
         size_t len,
         cudaStream_t stream) {
         cached_kernel(posx, indsy, weightsy, dtratio, qK_result, qR_result, QKv, QRv, dQKv, dQRv, len, stream);
@@ -341,16 +395,16 @@ public:
 size_t IndexMatAllOptimizer::cached_depth = 0;
 IndexMatAllOptimizer::KernelFn IndexMatAllOptimizer::cached_kernel = nullptr;
 
-void indexMatAllGPU(const thrust::device_vector<double>& posx,
-                    const thrust::device_vector<size_t>& indsy,
-                    const thrust::device_vector<double>& weightsy,
-                    const thrust::device_vector<double>& dtratio,
-                    thrust::device_vector<double>& qK_result,
-                    thrust::device_vector<double>& qR_result,
-                    const thrust::device_vector<double>& QKv,
-                    const thrust::device_vector<double>& QRv,
-                    const thrust::device_vector<double>& dQKv,
-                    const thrust::device_vector<double>& dQRv,
+void indexMatAllGPU(const dmfe::device_vector<double>& posx,
+                    const dmfe::device_vector<size_t>& indsy,
+                    const dmfe::device_vector<double>& weightsy,
+                    const dmfe::device_vector<double>& dtratio,
+                    dmfe::device_vector<double>& qK_result,
+                    dmfe::device_vector<double>& qR_result,
+                    const dmfe::device_vector<double>& QKv,
+                    const dmfe::device_vector<double>& QRv,
+                    const dmfe::device_vector<double>& dQKv,
+                    const dmfe::device_vector<double>& dQRv,
                     size_t len,
                     cudaStream_t stream) {
     const size_t depth = weightsy.size() / indsy.size();
@@ -359,16 +413,16 @@ void indexMatAllGPU(const thrust::device_vector<double>& posx,
 }
 
 // Log-space launcher
-void indexMatAllGPU_log(const thrust::device_vector<double>& posx,
-                    const thrust::device_vector<size_t>& indsy,
-                    const thrust::device_vector<double>& weightsy,
-                    const thrust::device_vector<double>& dtratio,
-                    thrust::device_vector<double>& qK_result,
-                    thrust::device_vector<double>& qR_result,
-                    const thrust::device_vector<double>& QKv,
-                    const thrust::device_vector<double>& QRv,
-                    const thrust::device_vector<double>& dQKv,
-                    const thrust::device_vector<double>& dQRv,
+void indexMatAllGPU_log(const dmfe::device_vector<double>& posx,
+                    const dmfe::device_vector<size_t>& indsy,
+                    const dmfe::device_vector<double>& weightsy,
+                    const dmfe::device_vector<double>& dtratio,
+                    dmfe::device_vector<double>& qK_result,
+                    dmfe::device_vector<double>& qR_result,
+                    const dmfe::device_vector<double>& QKv,
+                    const dmfe::device_vector<double>& QRv,
+                    const dmfe::device_vector<double>& dQKv,
+                    const dmfe::device_vector<double>& dQRv,
                     size_t len,
                     cudaStream_t stream) {
     size_t prod = indsy.size();

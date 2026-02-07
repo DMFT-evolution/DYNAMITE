@@ -7,7 +7,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #include <thrust/device_ptr.h>
 
 // Debug-only CUDA error check utilities. Use tiny inline helpers + macros to avoid overhead when not debugging.
@@ -43,6 +43,11 @@ inline void __dmfe_cuda_post_launch_check(const char* where, const char* file, i
 // Device capability check
 bool isCompatibleGPUInstalled();
 
+#if DMFE_WITH_CUDA
+// Runtime probe: can we create a CUDA stream on the current device?
+bool canCreateCudaStream(std::string* errorMessage = nullptr);
+#endif
+
 // System utility functions
 bool isHDF5Available();
 size_t getCurrentMemoryUsageMB();
@@ -59,26 +64,26 @@ extern size_t peak_gpu_memory_mb;
 
 #if DMFE_WITH_CUDA
 // Device vector helpers (implemented in device_utils.cu)
-thrust::device_vector<double> SubtractGPU(const thrust::device_vector<double>& a, const thrust::device_vector<double>& b);
-thrust::device_vector<double> scalarMultiply(const thrust::device_vector<double>& vec, double scalar);
-thrust::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& vec, double scalar, size_t len);
-void AddSubtractGPU(thrust::device_vector<double>& gK,
-                    const thrust::device_vector<double>& gKfinal,
-                    const thrust::device_vector<double>& gK0,
-                    thrust::device_vector<double>& gR,
-                    const thrust::device_vector<double>& gRfinal,
-                    const thrust::device_vector<double>& gR0,
+dmfe::device_vector<double> SubtractGPU(const dmfe::device_vector<double>& a, const dmfe::device_vector<double>& b);
+dmfe::device_vector<double> scalarMultiply(const dmfe::device_vector<double>& vec, double scalar);
+dmfe::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& vec, double scalar, size_t len);
+void AddSubtractGPU(dmfe::device_vector<double>& gK,
+                    const dmfe::device_vector<double>& gKfinal,
+                    const dmfe::device_vector<double>& gK0,
+                    dmfe::device_vector<double>& gR,
+                    const dmfe::device_vector<double>& gRfinal,
+                    const dmfe::device_vector<double>& gR0,
                     cudaStream_t stream = 0);
 
 void FusedUpdate(const thrust::device_ptr<double>& a,
                  const thrust::device_ptr<double>& b,
-                 const thrust::device_vector<double>& out,
+                 const dmfe::device_vector<double>& out,
                  const double* alpha,
                  const double* beta,
-                 const thrust::device_vector<double>* delta = nullptr,
-                 const thrust::device_vector<double>* extra1 = nullptr,
-                 const thrust::device_vector<double>* extra2 = nullptr,
-                 const thrust::device_vector<double>* extra3 = nullptr,
+                 const dmfe::device_vector<double>* delta = nullptr,
+                 const dmfe::device_vector<double>* extra1 = nullptr,
+                 const dmfe::device_vector<double>* extra2 = nullptr,
+                 const dmfe::device_vector<double>* extra3 = nullptr,
                  const thrust::device_ptr<double>& subtract = nullptr,
                  cudaStream_t stream = 0);
 

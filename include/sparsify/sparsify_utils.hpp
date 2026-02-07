@@ -6,7 +6,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #endif
 
 // CPU sparsification and scaling function
@@ -17,10 +17,10 @@ void sparsifyNscale(double threshold);
 void sparsifyNscaleGPU(double threshold, cudaStream_t stream = 0);
 
 // GPU gather function
-thrust::device_vector<double> gatherGPU(const thrust::device_vector<double>& v,
-                                        const thrust::device_vector<size_t>& idxs,
+dmfe::device_vector<double> gatherGPU(const dmfe::device_vector<double>& v,
+                                        const dmfe::device_vector<size_t>& idxs,
                                         size_t len,
-                                        const thrust::device_vector<double>& scale = {},
+                                        const dmfe::device_vector<double>& scale = {},
                                         cudaStream_t stream = 0);
 
 // CUDA kernels

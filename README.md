@@ -67,7 +67,7 @@ Examples:
 
 ```bash
 # Generate 512-point grids with barycentric Lagrange (degree 9)
-./RG-Evo grid --len 512 --Tmax 100000 --dir 512 --interp-method poly --interp-order 9
+./RG-Evo grid --len 512 --Tmax 100000 --dir 512 --interp-method index-poly --interp-order 9
 
 # Generate with rational barycentric (Floater–Hormann style interface) of order 9
 ./RG-Evo grid -L 512 --interp-method rational --interp-order 9
@@ -106,7 +106,7 @@ When you start a simulation, the code ensures that interpolation grids for the r
 
 - It first checks `Grid_data/<L>/` for the required files.
 - If missing, it scans other subdirectories under `Grid_data/` for a matching `grid_params.txt` with `len=<L>` and will reuse it via a symlink (`Grid_data/<L> -> Grid_data/<subdir>`) or by copying files.
-- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
+- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=index-poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
 
 This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
 
@@ -217,7 +217,7 @@ cmake -S . -B build \
 	- `-t FLOAT` max simulation time
 	- `-d FLOAT` minimum time step
 	- `-e, --error FLOAT` max error per step
-	- `-R, --log-response-interp BOOL` interpolate QR/dQR in log space (default false; auto-fallback to linear if any QR<=0)
+	- `-R, --log-response-interp BOOL` log-space interpolation for the response: interpolate $QR$ via $f_R=\log(QR)$ and $g_R=dQR/QR$ (fallback to linear if any stencil has $QR\le 0$). The correlation $QK$ is interpolated in the ordinary linear domain.
 	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
 	- `-s BOOL` save outputs (default true; pass `false` to disable)
 	- `-S, --serk2 BOOL` use SERK2 method (default true)

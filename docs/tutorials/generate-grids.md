@@ -8,7 +8,7 @@ Goal: create a ready-to-use interpolation grid folder `Grid_data/<L>/` (paper de
 
 ```bash
 ./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
-  --interp-method poly --interp-order 9 --spline-order 5
+  --interp-method index-poly --interp-order 9 --spline-order 5
 ```
 
 Outputs (`Grid_data/512/`):

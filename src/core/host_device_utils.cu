@@ -28,21 +28,21 @@ void printVectorDifference(const std::vector<double>& a, const std::vector<doubl
     std::cout << dmfe::console::INFO() << "Total Differences between vectors: " << total << "\n";
 }
 
-thrust::device_vector<double> SubtractGPU(const thrust::device_vector<double>& a, const thrust::device_vector<double>& b) {
+dmfe::device_vector<double> SubtractGPU(const dmfe::device_vector<double>& a, const dmfe::device_vector<double>& b) {
     assert(a.size() == b.size());
-    thrust::device_vector<double> result(a.size());
+    dmfe::device_vector<double> result(a.size());
     thrust::transform(a.begin(), a.end(), b.begin(), result.begin(), thrust::minus<double>());
     return result;
 }
 
-thrust::device_vector<double> scalarMultiply(const thrust::device_vector<double>& v, double s) {
-    thrust::device_vector<double> r(v.size());
+dmfe::device_vector<double> scalarMultiply(const dmfe::device_vector<double>& v, double s) {
+    dmfe::device_vector<double> r(v.size());
     thrust::transform(v.begin(), v.end(), r.begin(), [s] __device__(double x){ return x * s; });
     return r;
 }
 
-thrust::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& v, double s, size_t len) {
-    thrust::device_vector<double> r(len);
+dmfe::device_vector<double> scalarMultiply_ptr(const thrust::device_ptr<double>& v, double s, size_t len) {
+    dmfe::device_vector<double> r(len);
     thrust::transform(v, v + len, r.begin(), [s] __device__(double x){ return x * s; });
     return r;
 }
@@ -57,12 +57,12 @@ __global__ void update_gK_gR_kernel(
     }
 }
 
-void AddSubtractGPU(thrust::device_vector<double>& gK,
-                    const thrust::device_vector<double>& gKfinal,
-                    const thrust::device_vector<double>& gK0,
-                    thrust::device_vector<double>& gR,
-                    const thrust::device_vector<double>& gRfinal,
-                    const thrust::device_vector<double>& gR0,
+void AddSubtractGPU(dmfe::device_vector<double>& gK,
+                    const dmfe::device_vector<double>& gKfinal,
+                    const dmfe::device_vector<double>& gK0,
+                    dmfe::device_vector<double>& gR,
+                    const dmfe::device_vector<double>& gRfinal,
+                    const dmfe::device_vector<double>& gR0,
                     cudaStream_t stream) {
     int N = gK.size();
     int blockSize = 128;
@@ -101,13 +101,13 @@ __global__ void FusedUpdateKernel(
 
 void FusedUpdate(const thrust::device_ptr<double>& a,
                  const thrust::device_ptr<double>& b,
-                 const thrust::device_vector<double>& out,
+                 const dmfe::device_vector<double>& out,
                  const double* alpha,
                  const double* beta,
-                 const thrust::device_vector<double>* delta,
-                 const thrust::device_vector<double>* extra1,
-                 const thrust::device_vector<double>* extra2,
-                 const thrust::device_vector<double>* extra3,
+                 const dmfe::device_vector<double>* delta,
+                 const dmfe::device_vector<double>* extra1,
+                 const dmfe::device_vector<double>* extra2,
+                 const dmfe::device_vector<double>* extra3,
                  const thrust::device_ptr<double>& subtract,
                  cudaStream_t stream) {
     size_t N = out.size();
@@ -121,7 +121,7 @@ void FusedUpdate(const thrust::device_ptr<double>& a,
         extra3 ? thrust::raw_pointer_cast(extra3->data()) : nullptr,
         delta ? thrust::raw_pointer_cast(delta->data()) : nullptr,
         subtract.get(),
-        thrust::raw_pointer_cast(const_cast<thrust::device_vector<double>&>(out).data()),
+        thrust::raw_pointer_cast(const_cast<dmfe::device_vector<double>&>(out).data()),
         alpha,
         beta,
         N);

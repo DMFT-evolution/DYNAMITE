@@ -6,7 +6,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #endif
 
 // CPU binary search function
@@ -14,19 +14,19 @@ std::vector<double> bsearchPosSorted(const std::vector<double>& list, const std:
 
 #if DMFE_WITH_CUDA
 // GPU binary search functions
-thrust::device_vector<double> bsearchPosSortedGPU_slow(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem);
+dmfe::device_vector<double> bsearchPosSortedGPU_slow(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem);
 
-thrust::device_vector<double> bsearchPosSortedGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
+dmfe::device_vector<double> bsearchPosSortedGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
     cudaStream_t stream = 0);
 
 void bsearchPosSortedGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
-    thrust::device_vector<double>& result,
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
+    dmfe::device_vector<double>& result,
     cudaStream_t stream = 0);
 #endif
 
@@ -35,10 +35,10 @@ std::vector<double> isearchPosSortedInit(const std::vector<double>& list, const 
 
 #if DMFE_WITH_CUDA
 // GPU interpolation search with initial values
-thrust::device_vector<double> isearchPosSortedInitGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
-    const thrust::device_vector<double>& inits);
+dmfe::device_vector<double> isearchPosSortedInitGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
+    const dmfe::device_vector<double>& inits);
 
 // CUDA kernel declarations (only for CUDA compilation)
 #ifdef __CUDACC__

@@ -68,7 +68,7 @@ Public headers are under `include/`, sources under `src/`:
 
   ```
   ./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
-                --interp-method poly --interp-order 9
+                --interp-method index-poly --interp-order 9
   # Optional smooth index remapping:
   ./RG-Evo grid -L 512 --alpha 0.25 --delta 0.5 --dir 512-custom
   ```
@@ -80,7 +80,7 @@ Public headers are under `include/`, sources under `src/`:
   - `--spline-order s` sets the B‑spline degree for `int.dat` (default 5).
   - `--alpha X` in [0,1] and `--delta X ≥ 0` apply an optional smooth non‑linear index remapping for θ; defaults are 0 (paper‑exact grid). Values are recorded in `grid_params.txt`.
 
-  Defaults if omitted: `--Tmax 100000`, `--interp-method poly`, `--interp-order 9`, `--spline-order 5`, and for `rational` the default `--fh-stencil` is `n+1`.
+  Defaults if omitted: `--Tmax 100000`, `--interp-method index-poly`, `--interp-order 9`, `--spline-order 5`, and for `rational` the default `--fh-stencil` is `n+1`.
 
   Artifacts written: `theta.dat`, `phi1.dat`, `phi2.dat`, `int.dat`, `posA1y.dat`, `posA2y.dat`, `posB2y.dat`, and interpolation indices/weights for A1/A2/B2. The file `grid_params.txt` captures provenance, including `alpha`/`delta` when used.
 

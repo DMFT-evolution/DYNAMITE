@@ -13,18 +13,18 @@ using namespace std;
 // External declaration for global config variable
 extern SimulationConfig config;
 
-thrust::device_vector<double> bsearchPosSortedGPU_slow(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem)
+dmfe::device_vector<double> bsearchPosSortedGPU_slow(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem)
 {
     size_t list_size = list.size();
     size_t elem_size = elem.size();
 
     // Output vector
-    thrust::device_vector<double> result(elem_size);
+    dmfe::device_vector<double> result(elem_size);
 
     // Step 1: Perform thrust::lower_bound to get insertion indices
-    thrust::device_vector<size_t> indices(elem_size);
+    dmfe::device_vector<size_t> indices(elem_size);
 
     thrust::lower_bound(
         thrust::device,
@@ -111,15 +111,15 @@ __global__ __launch_bounds__(64, 1) void bsearch_interp_kernel(
         : (double)m + (El - Lm_1) / denom;
 }
 
-thrust::device_vector<double> bsearchPosSortedGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
+dmfe::device_vector<double> bsearchPosSortedGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
     cudaStream_t stream)
 {
     size_t list_size = list.size();
     size_t elem_size = elem.size();
 
-    thrust::device_vector<double> result(elem_size);
+    dmfe::device_vector<double> result(elem_size, 0.0, dmfe::cuda_async_allocator<double>(stream));
 
     int threads = 64;
     int blocks = (elem_size + threads - 1) / threads;
@@ -137,9 +137,9 @@ thrust::device_vector<double> bsearchPosSortedGPU(
 }
 
 void bsearchPosSortedGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
-    thrust::device_vector<double>& result,
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
+    dmfe::device_vector<double>& result,
     cudaStream_t stream)
 {
     size_t list_size = list.size();
@@ -159,17 +159,17 @@ void bsearchPosSortedGPU(
     // cudaDeviceSynchronize(); //removed // Optional, remove if used asynchronously
 }
 
-thrust::device_vector<double> isearchPosSortedInitGPU(
-    const thrust::device_vector<double>& list,
-    const thrust::device_vector<double>& elem,
-    const thrust::device_vector<double>& inits)
+dmfe::device_vector<double> isearchPosSortedInitGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elem,
+    const dmfe::device_vector<double>& inits)
 {
     size_t N = elem.size();
     assert(inits.size() == N);
     size_t length = list.size();
     double last = list.back();
 
-    thrust::device_vector<double> result(N);
+    dmfe::device_vector<double> result(N);
 
     thrust::transform(
         thrust::make_counting_iterator<size_t>(0),

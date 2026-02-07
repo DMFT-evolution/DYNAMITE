@@ -34,7 +34,7 @@ Note: At present, the mixed spherical p-spin equations are hardcoded as in the a
 - `-D` debug logging; `-v` print build/version; `-I` allow resume across incompatible versions (use with care).
 
 Interpolation mode:
-- `-R, --log-response-interp` boolean: interpolate QR and dQR in log space (default false). If enabled, the code interpolates f=log(QR) and g=dQR/QR and exponentiates back; it automatically falls back to linear when any stencil QR<=0. QK/dQK remain linear.
+- `-R, --log-response-interp` boolean: interpolate the response $QR$ in log space (default false). If enabled, the code interpolates $f_R=\log(QR)$ with $g_R=dQR/QR$ and exponentiates back (fallback to linear when any stencil has $QR\le 0$). The correlation $QK$ is interpolated in the ordinary linear domain.
 
 Sparsification:
 - `-w, --sparsify-sweeps INT`: number of sparsify sweeps per maintenance pass.

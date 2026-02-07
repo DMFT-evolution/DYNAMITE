@@ -12,7 +12,6 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <thrust/device_vector.h>
 
 using namespace std;
 
@@ -43,9 +42,9 @@ __global__ void diffNfloorKernel(
 }
 
 void diffNfloor(
-    const thrust::device_vector<double>& posB1x,
-    thrust::device_vector<size_t>& Floor,
-    thrust::device_vector<double>& diff,
+    const dmfe::device_vector<double>& posB1x,
+    dmfe::device_vector<size_t>& Floor,
+    dmfe::device_vector<double>& diff,
     cudaStream_t stream)
 {
     size_t len = posB1x.size();
@@ -127,31 +126,31 @@ void interpolateGPU(
     // cudaDeviceSynchronize(); //removed  // Ensure all kernels are complete before returning
 
     computeSigmaKandRKernel<<<blocks, threads, 0, (*pool)[2]>>>(
-        sim->d_QKA1int.data().get(),
-        sim->d_QRA1int.data().get(),
-        sim->d_SigmaKA1int.data().get(),
-        sim->d_SigmaRA1int.data().get(),
+        thrust::raw_pointer_cast(sim->d_QKA1int.data()),
+        thrust::raw_pointer_cast(sim->d_QRA1int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaKA1int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaRA1int.data()),
         len*len);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("computeSigmaKandRKernel A1");
     computeSigmaKandRKernel<<<blocks, threads, 0, (*pool)[3]>>>(
-        sim->d_QKA2int.data().get(),
-        sim->d_QRA2int.data().get(),
-        sim->d_SigmaKA2int.data().get(),
-        sim->d_SigmaRA2int.data().get(),
+        thrust::raw_pointer_cast(sim->d_QKA2int.data()),
+        thrust::raw_pointer_cast(sim->d_QRA2int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaKA2int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaRA2int.data()),
         len*len);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("computeSigmaKandRKernel A2");
     computeSigmaKandRKernel<<<blocks, threads, 0, (*pool)[0]>>>(
-        sim->d_QKB1int.data().get(),
-        sim->d_QRB1int.data().get(),
-        sim->d_SigmaKB1int.data().get(),
-        sim->d_SigmaRB1int.data().get(),
+        thrust::raw_pointer_cast(sim->d_QKB1int.data()),
+        thrust::raw_pointer_cast(sim->d_QRB1int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaKB1int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaRB1int.data()),
         len*len);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("computeSigmaKandRKernel B1");
     computeSigmaKandRKernel<<<blocks, threads, 0, (*pool)[1]>>>(
-        sim->d_QKB2int.data().get(),
-        sim->d_QRB2int.data().get(),
-        sim->d_SigmaKB2int.data().get(),
-        sim->d_SigmaRB2int.data().get(),
+        thrust::raw_pointer_cast(sim->d_QKB2int.data()),
+        thrust::raw_pointer_cast(sim->d_QRB2int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaKB2int.data()),
+        thrust::raw_pointer_cast(sim->d_SigmaRB2int.data()),
         len*len);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("computeSigmaKandRKernel B2");
 

@@ -98,6 +98,83 @@ compute_bspline_weights(const std::vector<long double>& x,   // input nodes (str
                         const std::vector<long double>& xq,  // query points (long double)
                         int n);                               // spline degree
 
+// Local uniform index-coordinate B-spline *kernel* weights.
+//
+// This is intended for highly non-uniform x grids where you already have an accurate
+// inverse map x -> u (a fractional 1-based index in [1,N]) for each query.
+//
+// Given samples y[i] defined on a uniform index coordinate u=i+1 (1-based), this
+// routine produces compact (degree+1)-point stencils to evaluate a uniform B-spline
+// kernel at fractional u.
+//
+// Notes:
+// - This is a local, compact-support spline kernel on the *index* coordinate.
+// - It does not solve the global B-spline interpolation system; i.e. it behaves like
+//   a stable smoothing/interpolation kernel using the samples directly as coefficients.
+// - Output format matches other local methods: contiguous indices starting at `start`.
+// - Inputs u_q must be 1-based fractional indices (like posA1y/posA2y/posB2y).
+std::vector<BarycentricStencil>
+compute_index_bspline_weights(const std::vector<double>& u_q, // 1-based fractional indices in [1,N]
+                              std::size_t N,                  // number of samples (theta grid length)
+                              int degree);                    // B-spline degree (>=0)
+
+// Local uniform index-coordinate polynomial interpolation weights (Lagrange), using
+// barycentric evaluation on a contiguous stencil of size n+1.
+//
+// This is a *true interpolant* in index space: for integer u=i (1-based), it reproduces
+// the sample exactly (up to floating point tolerance) when that point is within the chosen stencil.
+//
+// Inputs u_q must be 1-based fractional indices in [1,N] (like posA1y/posA2y/posB2y).
+// Output format matches other local methods: contiguous indices starting at `start`.
+std::vector<BarycentricStencil>
+compute_index_poly_weights(const std::vector<double>& u_q, // 1-based fractional indices in [1,N]
+                           std::size_t N,                  // number of samples
+                           int n);                         // polynomial degree/order (>=0)
+
+// Local uniform index-coordinate barycentric rational interpolation weights (Floater–Hormann).
+//
+// Inputs u_q are 1-based fractional indices in [1,N]. Internally we work on the uniform
+// 0-based coordinate t=u-1 with implicit nodes 0,1,...,N-1.
+//
+// Parameters:
+// - d: FH order (degree parameter), must satisfy d>=0.
+// - m: window size (number of points used), must satisfy m>=d+1.
+//
+// Output format matches other local methods: contiguous indices starting at `start` and
+// weights alpha of length m.
+std::vector<BarycentricStencil>
+compute_index_rational_weights(const std::vector<double>& u_q, // 1-based fractional indices in [1,N]
+                               std::size_t N,                  // number of samples
+                               int d,                          // FH order
+                               int m);                         // window size (>= d+1)
+
+// Local uniform index-coordinate Hermite interpolation weights (piecewise cubic).
+//
+// This is a *true interpolant* in index space: it interpolates the samples at integer
+// indices (up to floating point tolerance). Between nodes, it uses a cubic Hermite
+// segment on each interval [i,i+1].
+//
+// The "order" parameter controls the size of the local stencil (m = order+1) used
+// to estimate endpoint slopes via polynomial interpolation derivatives on that stencil.
+// Larger order typically improves accuracy while keeping the method stable and local.
+//
+// Notes:
+// - Output format matches other local methods: contiguous indices starting at `start`.
+// - Inputs u_q must be 1-based fractional indices in [1,N] (like posA1y/posA2y/posB2y).
+// - For very small N, we fall back to index-poly.
+std::vector<BarycentricStencil>
+compute_index_hermite_weights(const std::vector<double>& u_q, // 1-based fractional indices in [1,N]
+                              std::size_t N,                  // number of samples
+                              int order);                     // interpolation order n (stencil size n+1)
+
+// Backward-compatible convenience overload: m defaults to d+1.
+inline std::vector<BarycentricStencil>
+compute_index_rational_weights(const std::vector<double>& u_q,
+                               std::size_t N,
+                               int d) {
+    return compute_index_rational_weights(u_q, N, d, d + 1);
+}
+
 // Backward-compatible overloads for double xq
 inline std::vector<BarycentricStencil>
 compute_barycentric_weights(const std::vector<long double>& x,

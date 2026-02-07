@@ -35,27 +35,30 @@ void indexVecLN3(const std::vector<double>& weights, const std::vector<size_t>& 
     #pragma omp parallel for schedule(static)
     for (size_t j = 0; j < prod; j++) {
         const double* weights_start = &weights[depth * j];
-        // QK: always linear domain
-        qk_result[j] = std::inner_product(weights_start, weights_start + depth, QK_start + inds[j], 0.0);
         if (!::config.log_response_interp) {
+            // QK/Q R: linear domain
+            qk_result[j] = std::inner_product(weights_start, weights_start + depth, QK_start + inds[j], 0.0);
             qr_result[j] = std::inner_product(weights_start, weights_start + depth, QR_start + inds[j], 0.0);
         } else {
-            // Use precomputed log values; fallback to linear if any sample non-positive (stored as original value)
-            double lin_sum = 0.0;
-            long double log_sum = 0.0L;
-            bool invalid = false;
+            // Legacy behavior: QR interpolated in log-space with linear fallback; QK interpolated normally.
+            qk_result[j] = std::inner_product(weights_start, weights_start + depth, QK_start + inds[j], 0.0);
+            double qr_lin_sum = 0.0;
+            long double qr_log_sum = 0.0L;
+            bool qr_invalid = false;
             for (size_t d = 0; d < depth; ++d) {
                 const size_t idx = inds[j] + d;
-                const double val = QR_start[idx];
                 const double w = weights_start[d];
-                lin_sum += w * val;
-                if (val > 0.0) {
-                    log_sum += static_cast<long double>(w) * logQR_cache[idx];
+
+                const double qrv = QR_start[idx];
+                qr_lin_sum += w * qrv;
+                if (qrv > 0.0) {
+                    qr_log_sum += static_cast<long double>(w) * logQR_cache[idx];
                 } else {
-                    invalid = true;
+                    qr_invalid = true;
                 }
             }
-            qr_result[j] = invalid ? lin_sum : exp(static_cast<double>(log_sum));
+
+            qr_result[j] = qr_invalid ? qr_lin_sum : exp(static_cast<double>(qr_log_sum));
         }
     }
 }
@@ -63,72 +66,36 @@ void indexVecLN3(const std::vector<double>& weights, const std::vector<size_t>& 
 void indexVecN(const size_t length, const std::vector<double>& weights, const std::vector<size_t>& inds,
                const std::vector<double>& dtratio, std::vector<double>& qK_result, std::vector<double>& qR_result, size_t len)
 {
+    (void)length;
+    (void)dtratio;
     size_t dims[] = {len, len};
     size_t t1len = dtratio.size();
 
     #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < dims[0]; i++)
     {
-        double in3 = weights[i] * weights[i];
-        double in4 = in3 * weights[i];
-        if (inds[i] < t1len - 1)
+        (void)t1len;
+        const double weight = weights[i];
+        const size_t base_i = inds[i] - 1;
+        const size_t curr_i = inds[i];
+        for (size_t j = 0; j < dims[1]; j++)
         {
-            for (size_t j = 0; j < dims[1]; j++)
-            {
-        // QK in linear domain
-        qK_result[j + dims[1] * i] = (1 - 3 * in3 - 2 * in4) * sim->h_QKv[(inds[i] - 1) * dims[1] + j] + (3 * in3 + 2 * in4) * sim->h_QKv[inds[i] * dims[1] + j] - (weights[i] + 2 * in3 + in4) * sim->h_dQKv[inds[i] * dims[1] + j] - (in3 + in4) * sim->h_dQKv[(inds[i] + 1) * dims[1] + j] / dtratio[inds[i] + 1];
-        if (!::config.log_response_interp) {
-                    qR_result[j + dims[1] * i] = (1 - 3 * in3 - 2 * in4) * sim->h_QRv[(inds[i] - 1) * dims[1] + j] + (3 * in3 + 2 * in4) * sim->h_QRv[inds[i] * dims[1] + j] - (weights[i] + 2 * in3 + in4) * sim->h_dQRv[inds[i] * dims[1] + j] - (in3 + in4) * sim->h_dQRv[(inds[i] + 1) * dims[1] + j] / dtratio[inds[i] + 1];
+            const double qK_base = sim->h_QKv[base_i * dims[1] + j];
+            const double qK_curr = sim->h_QKv[curr_i * dims[1] + j];
+            qK_result[j + dims[1] * i] = (1.0 - weight) * qK_base + weight * qK_curr;
+
+            const double qR_base = sim->h_QRv[base_i * dims[1] + j];
+            const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
+            if (!::config.log_response_interp) {
+                qR_result[j + dims[1] * i] = (1.0 - weight) * qR_base + weight * qR_curr;
+            } else {
+                if (qR_base > 0.0 && qR_curr > 0.0) {
+                    const double f_base = log(qR_base);
+                    const double f_curr = log(qR_curr);
+                    const double f_interp = (1.0 - weight) * f_base + weight * f_curr;
+                    qR_result[j + dims[1] * i] = exp(f_interp);
                 } else {
-                    // Staggered storage: derivative at left node (i-1) is stored at index i,
-                    // and derivative at right node (i) is stored at index i+1.
-                    const size_t base_i = inds[i] - 1;
-                    const size_t curr_i = inds[i];
-                    const double qR_base = sim->h_QRv[base_i * dims[1] + j];
-                    const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
-                    const double dqR_left  = sim->h_dQRv[curr_i * dims[1] + j];     // pairs with qR_base
-                    const double dqR_right = sim->h_dQRv[(curr_i + 1) * dims[1] + j]; // pairs with qR_curr
-                    if (qR_base > 0.0 && qR_curr > 0.0) {
-                        const double f_base = log(qR_base);
-                        const double f_curr = log(qR_curr);
-                        const double g_left  = dqR_left  / qR_base; // d(log QR) at left node
-                        const double g_right = dqR_right / qR_curr; // d(log QR) at right node
-                        const double coeff1 = 1 - 3 * in3 - 2 * in4;         // f_base
-                        const double coeff2 = 3 * in3 + 2 * in4;             // f_curr
-                        const double coeff3 = (weights[i] + 2 * in3 + in4);  // g_left
-                        const double coeff4 = (in3 + in4) / dtratio[curr_i + 1]; // g_right
-                        const double f_interp = coeff1 * f_base + coeff2 * f_curr - coeff3 * g_left - coeff4 * g_right;
-                        qR_result[j + dims[1] * i] = exp(f_interp);
-                    } else {
-                        // Fallback: linear-domain Hermite
-                        qR_result[j + dims[1] * i] = (1 - 3 * in3 - 2 * in4) * qR_base + (3 * in3 + 2 * in4) * qR_curr - (weights[i] + 2 * in3 + in4) * dqR_left - (in3 + in4) * dqR_right / dtratio[curr_i + 1];
-                    }
-                }
-            }
-        }
-        else
-        {
-            for (size_t j = 0; j < dims[1]; j++)
-            {
-                qK_result[j + dims[1] * i] = (1 - in3) * sim->h_QKv[(inds[i] - 1) * dims[1] + j] - (weights[i] + in3) * sim->h_dQKv[inds[i] * dims[1] + j] + in3 * sim->h_QKv[inds[i] * dims[1] + j];
-        if (!::config.log_response_interp) {
-                    qR_result[j + dims[1] * i] = (1 - in3) * sim->h_QRv[(inds[i] - 1) * dims[1] + j] - (weights[i] + in3) * sim->h_dQRv[inds[i] * dims[1] + j] + in3 * sim->h_QRv[inds[i] * dims[1] + j];
-                } else {
-                    // Boundary segment uses only left derivative (stored at index curr_i)
-                    const size_t base_i = inds[i] - 1;
-                    const size_t curr_i = inds[i];
-                    const double qR_base = sim->h_QRv[base_i * dims[1] + j];
-                    const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
-                    const double dqR_left = sim->h_dQRv[curr_i * dims[1] + j]; // pairs with qR_base
-                    if (qR_base > 0.0 && qR_curr > 0.0) {
-                        const double f_base = log(qR_base);
-                        const double f_curr = log(qR_curr);
-                        const double g_left = dqR_left / qR_base;
-                        const double f_interp = (1 - in3) * f_base + in3 * f_curr - (weights[i] + in3) * g_left;
-                        qR_result[j + dims[1] * i] = exp(f_interp);
-                    } else {
-                        qR_result[j + dims[1] * i] = (1 - in3) * qR_base - (weights[i] + in3) * dqR_left + in3 * qR_curr;
-                    }
+                    qR_result[j + dims[1] * i] = (1.0 - weight) * qR_base + weight * qR_curr;
                 }
             }
         }
@@ -138,19 +105,18 @@ void indexVecN(const size_t length, const std::vector<double>& weights, const st
 void indexVecR2(const std::vector<double>& in1, const std::vector<double>& in2, const std::vector<double>& in3,
                 const std::vector<size_t>& inds, const std::vector<double>& dtratio, std::vector<double>& result)
 {
+    (void)in2;
+    (void)dtratio;
     size_t dims = inds.size();
     size_t t1len = dtratio.size();
 
     #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < dims; i++)
     {
-        if (inds[i] < t1len - 1)
-        {
-            result[i] = (1 - 3 * pow_const<2>(in3[i]) - 2 * pow_const<3>(in3[i])) * in1[inds[i] - 1] + (3 * pow_const<2>(in3[i]) + 2 * pow_const<3>(in3[i])) * in1[inds[i]] - (in3[i] + 2 * pow_const<2>(in3[i]) + pow_const<3>(in3[i])) * in2[inds[i]] - (pow_const<2>(in3[i]) + pow_const<3>(in3[i])) * in2[inds[i] + 1] / dtratio[inds[i] + 1];
-        }
-        else
-        {
-            result[i] = (1 - pow_const<2>(in3[i])) * in1[inds[i] - 1] + pow_const<2>(in3[i]) * in1[inds[i]] - (in3[i] + pow_const<2>(in3[i])) * in2[inds[i]];
-        }
+        (void)t1len;
+        const size_t base_i = inds[i] - 1;
+        const size_t curr_i = inds[i];
+        const double weight = in3[i];
+        result[i] = (1.0 - weight) * in1[base_i] + weight * in1[curr_i];
     }
 }

@@ -10,7 +10,7 @@
 #include "core/device_utils.cuh"
 #include "math/math_sigma.hpp"
 #include <cuda_runtime.h>
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #include <thrust/transform.h>
 #include <thrust/reduce.h>
 #include <thrust/copy.h>
@@ -21,6 +21,7 @@
 #include <iostream>
 #include "core/console.hpp"
 #include <cmath>
+#include <stdexcept>
 
 using namespace std;
 
@@ -84,7 +85,14 @@ void init_RK54GPU() {
     rk->cvec = new double[rk->stages] { 1.0 / 5, 3.0 / 10, 4.0 / 5, 8.0 / 9, 1.0, 1.0};
 
     rk->d_avec.resize(rk->stages * (rk->stages + 1) / 2 + 1);
-    cudaMemcpy(thrust::raw_pointer_cast(rk->d_avec.data()), rk->avec, rk->d_avec.size() * sizeof(double), cudaMemcpyHostToDevice);
+    cudaError_t err = cudaMemcpy(
+        thrust::raw_pointer_cast(rk->d_avec.data()),
+        rk->avec,
+        rk->d_avec.size() * sizeof(double),
+        cudaMemcpyHostToDevice);
+    if (err != cudaSuccess) {
+        throw std::runtime_error(std::string("cudaMemcpy(rk->d_avec) failed: ") + cudaGetErrorString(err));
+    }
 
     rk->gK0.resize(config.len, 0.0);
     rk->gR0.resize(config.len, 0.0);
@@ -352,8 +360,15 @@ double RK54GPU(StreamPool* pool) {
                 if (config.debug) DMFE_CUDA_POSTLAUNCH("RK54GPU::computeMA gRe");
             }
             rk->gt = rk->gt0 + config.delta_t * rk->cvec[n] * rk->ht;
-            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK0.data(), rk->hR0.data(), sim->d_t1grid.back(), config.T0, *pool);
-            appendAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Append Update
+            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len),
+                            thrust::device_pointer_cast(rk->hK0.data()),
+                            thrust::device_pointer_cast(rk->hR0.data()),
+                            sim->d_t1grid.back(), config.T0, *pool);
+            appendAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                             thrust::device_pointer_cast(rk->gR.data()),
+                             thrust::device_pointer_cast(rk->hK0.data()),
+                             thrust::device_pointer_cast(rk->hR0.data()),
+                             rk->ht * dr, rk->gt, config.len, *pool); // Append Update
         } else {
             if(rk->bvec[n] != 0.0) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKfinal.data()), thrust::raw_pointer_cast(rk->hK.data()) + n * config.len, config.delta_t * rk->bvec[n], config.len);
@@ -367,9 +382,17 @@ double RK54GPU(StreamPool* pool) {
                 computeWeightedSum<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK0.data()), thrust::raw_pointer_cast(rk->hK.data()), thrust::raw_pointer_cast(rk->d_avec.data()) + n * (n + 1) / 2, thrust::raw_pointer_cast(rk->gK.data()), config.delta_t, n + 1, config.len);
                 computeWeightedSum<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gR0.data()), thrust::raw_pointer_cast(rk->hR.data()), thrust::raw_pointer_cast(rk->d_avec.data()) + n * (n + 1) / 2, thrust::raw_pointer_cast(rk->gR.data()), config.delta_t, n + 1, config.len);
                 rk->gt = rk->gt0 + config.delta_t * rk->cvec[n] * rk->ht;
-                replaceAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
+                replaceAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                                  thrust::device_pointer_cast(rk->gR.data()),
+                                  thrust::device_pointer_cast(rk->hK0.data()),
+                                  thrust::device_pointer_cast(rk->hR0.data()),
+                                  rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
             } else {
-                replaceAllGPU_ptr(rk->gKfinal.data(), rk->gRfinal.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gtfinal, config.len, *pool); // Replace Update
+                replaceAllGPU_ptr(thrust::device_pointer_cast(rk->gKfinal.data()),
+                                  thrust::device_pointer_cast(rk->gRfinal.data()),
+                                  thrust::device_pointer_cast(rk->hK0.data()),
+                                  thrust::device_pointer_cast(rk->hR0.data()),
+                                  rk->ht * dr, rk->gtfinal, config.len, *pool); // Replace Update
             }
         }
     }
@@ -446,8 +469,15 @@ double SERK2GPU(int q, StreamPool* pool){
                 if (config.debug) DMFE_CUDA_POSTLAUNCH("SERK2GPU::computeMA gRfinal");
             }
             rk->gt = rk->gt0 + config.delta_t * alpha * rk->ht;
-            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK0.data(), rk->hR0.data(), sim->d_t1grid.back(), config.T0, *pool);
-            appendAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Append Update
+            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len),
+                            thrust::device_pointer_cast(rk->hK0.data()),
+                            thrust::device_pointer_cast(rk->hR0.data()),
+                            sim->d_t1grid.back(), config.T0, *pool);
+            appendAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                             thrust::device_pointer_cast(rk->gR.data()),
+                             thrust::device_pointer_cast(rk->hK0.data()),
+                             thrust::device_pointer_cast(rk->hR0.data()),
+                             rk->ht * dr, rk->gt, config.len, *pool); // Append Update
         } else {
             if (n % 2 == 0){
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK.data()), thrust::raw_pointer_cast(rk->hK.data()) + n * config.len, config.delta_t * alpha, config.len);
@@ -465,7 +495,11 @@ double SERK2GPU(int q, StreamPool* pool){
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gKfinal.data()), thrust::raw_pointer_cast(rk->gK.data()), rk->bvec[n + 1], config.len);
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gRfinal.data()), thrust::raw_pointer_cast(rk->gR.data()), rk->bvec[n + 1], config.len);
             }
-            replaceAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
+            replaceAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                              thrust::device_pointer_cast(rk->gR.data()),
+                              thrust::device_pointer_cast(rk->hK0.data()),
+                              thrust::device_pointer_cast(rk->hR0.data()),
+                              rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
         }
     }
  
@@ -555,9 +589,16 @@ double SSPRK104GPU(StreamPool* pool) {
                 if (config.debug) DMFE_CUDA_POSTLAUNCH("SSPRK104GPU::computeMA gRe");
             }
             rk->gt += config.delta_t * rk->avec[n] * rk->ht;
-            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len), rk->hK.data(), rk->hR.data(), t_current, config.T0, *pool);
+            dr = drstep2GPU(get_slice_ptr(sim->d_QKv, t1len - 1, config.len), get_slice_ptr(sim->d_QRv, t1len - 1, config.len),
+                            thrust::device_pointer_cast(rk->hK.data()),
+                            thrust::device_pointer_cast(rk->hR.data()),
+                            t_current, config.T0, *pool);
 
-            appendAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK.data(), rk->hR.data(), rk->ht * dr, rk->gt, config.len, *pool); // Append Update
+            appendAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                             thrust::device_pointer_cast(rk->gR.data()),
+                             thrust::device_pointer_cast(rk->hK.data()),
+                             thrust::device_pointer_cast(rk->hR.data()),
+                             rk->ht * dr, rk->gt, config.len, *pool); // Append Update
         } else {
             if (n != rk->stages - 1) {
                 computeMA<<<blocks, threads>>>(thrust::raw_pointer_cast(rk->gK.data()), thrust::raw_pointer_cast(rk->hK.data()), config.delta_t * rk->avec[n], config.len);
@@ -576,9 +617,17 @@ double SSPRK104GPU(StreamPool* pool) {
                 rk->gt += config.delta_t * rk->avec[n] * rk->ht;
             }
             if (n != rk->stages - 1) {
-                replaceAllGPU_ptr(rk->gK.data(), rk->gR.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
+                replaceAllGPU_ptr(thrust::device_pointer_cast(rk->gK.data()),
+                                  thrust::device_pointer_cast(rk->gR.data()),
+                                  thrust::device_pointer_cast(rk->hK0.data()),
+                                  thrust::device_pointer_cast(rk->hR0.data()),
+                                  rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
             } else {
-                replaceAllGPU_ptr(rk->gKfinal.data(), rk->gRfinal.data(), rk->hK0.data(), rk->hR0.data(), rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
+                replaceAllGPU_ptr(thrust::device_pointer_cast(rk->gKfinal.data()),
+                                  thrust::device_pointer_cast(rk->gRfinal.data()),
+                                  thrust::device_pointer_cast(rk->hK0.data()),
+                                  thrust::device_pointer_cast(rk->hR0.data()),
+                                  rk->ht * dr, rk->gt, config.len, *pool); // Replace Update
             }
         }
     }

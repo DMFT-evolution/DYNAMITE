@@ -1,7 +1,7 @@
 #pragma once
 #include "core/config_build.hpp"
 #if DMFE_WITH_CUDA
-#include <thrust/device_vector.h>
+#include "core/device_vector.hpp"
 #endif
 #include <cstddef>
 #include <vector>
@@ -12,22 +12,22 @@
 struct SimulationData {
 #if DMFE_WITH_CUDA
     // Device data -----------------------------------------------------------
-    thrust::device_vector<double> d_theta, d_phi1, d_phi2, d_posA1y, d_posA2y, d_posB2y, d_weightsA1y, d_weightsA2y, d_weightsB2y, d_posB1xOld, d_posB2xOld, d_integ;
-    thrust::device_vector<size_t> d_indsA1y, d_indsA2y, d_indsB2y;
+    dmfe::device_vector<double> d_theta, d_phi1, d_phi2, d_posA1y, d_posA2y, d_posB2y, d_weightsA1y, d_weightsA2y, d_weightsB2y, d_posB1xOld, d_posB2xOld, d_integ;
+    dmfe::device_vector<size_t> d_indsA1y, d_indsA2y, d_indsB2y;
 
-    thrust::device_vector<double> d_t1grid, d_delta_t_ratio;
+    dmfe::device_vector<double> d_t1grid, d_delta_t_ratio;
 
-    thrust::device_vector<double> d_QKv, d_QRv, d_dQKv, d_dQRv, d_rInt, d_drInt, d_rvec, d_drvec;
+    dmfe::device_vector<double> d_QKv, d_QRv, d_dQKv, d_dQRv, d_rInt, d_drInt, d_rvec, d_drvec;
 
-    thrust::device_vector<double> d_SigmaKA1int, d_SigmaRA1int, d_SigmaKB1int, d_SigmaRB1int, d_SigmaKA2int, d_SigmaRA2int, d_SigmaKB2int, d_SigmaRB2int;
-    thrust::device_vector<double> d_QKA1int, d_QRA1int, d_QKB1int, d_QRB1int, d_QKA2int, d_QRA2int, d_QKB2int, d_QRB2int;
-    thrust::device_vector<double> convA1_1, convA2_1, convA1_2, convA2_2, convR_1, convR_2, convR_3, convR_4;
+    dmfe::device_vector<double> d_SigmaKA1int, d_SigmaRA1int, d_SigmaKB1int, d_SigmaRB1int, d_SigmaKA2int, d_SigmaRA2int, d_SigmaKB2int, d_SigmaRB2int;
+    dmfe::device_vector<double> d_QKA1int, d_QRA1int, d_QKB1int, d_QRB1int, d_QKA2int, d_QRA2int, d_QKB2int, d_QRB2int;
+    dmfe::device_vector<double> convA1_1, convA2_1, convA1_2, convA2_2, convR_1, convR_2, convR_3, convR_4;
 
-    thrust::device_vector<double> temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12;
+    dmfe::device_vector<double> temp0, temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9, temp10, temp11, temp12;
 
-    thrust::device_vector<size_t> Stemp0, Stemp1, Stemp2;
+    dmfe::device_vector<size_t> Stemp0, Stemp1, Stemp2;
 
-    thrust::device_vector<double> error_result;
+    dmfe::device_vector<double> error_result;
 #endif
 
     // Host data (mirrors of device data) -----------------------------------

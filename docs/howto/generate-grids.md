@@ -10,9 +10,9 @@ If you’re looking for the underlying math (paper equations, why the grid is no
 ## TL;DR
 
 ```bash
-# Generate 512-point grids with barycentric Lagrange (degree 9)
+# Generate 512-point grids with index-space barycentric Lagrange (degree 9)
 ./RG-Evo grid --len 512 --Tmax 100000 --dir 512 \
-  --interp-method poly --interp-order 9
+  --interp-method index-poly --interp-order 9
 ```
 
 Outputs (under `Grid_data/512/`):
@@ -27,7 +27,7 @@ Outputs (under `Grid_data/512/`):
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
               [--alpha X] [--delta X] \
               [--spline-order s] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
-# METHODS: poly | rational | bspline
+# METHODS: poly | rational | bspline | index-bspline | index-poly | index-rational | index-hermite
 # Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
 ```
 
@@ -39,6 +39,11 @@ Outputs (under `Grid_data/512/`):
   - `poly`: local barycentric Lagrange (degree n). Minimal n+1 weights per entry.
   - `rational`: Floater–Hormann (rational barycentric). Defaults to a single stencil (m=n+1), or set `--fh-stencil m` to blend across a wider window (m ≥ n+1).
   - `bspline`: B-spline of degree n via global collocation (dense weights).
+  - `index-*`: same idea, but done in the uniform index coordinate (recommended on highly non-uniform θ grids).
+    - `index-poly`: local barycentric Lagrange in index space.
+    - `index-rational`: Floater–Hormann in index space.
+    - `index-hermite`: piecewise cubic Hermite in index space (order controls the slope-estimation stencil).
+    - `index-bspline`: compact B-spline kernel in index space (stable, but not a strict interpolant for degree ≥ 2).
 - `--interp-order n`: interpolation degree/order (default 9).
 - `--fh-stencil m`: (rational only) window size used for FH blending. Default m=n+1. Typical choices on highly irregular grids: m=n+3..n+7.
 - `--validate, -V`: Do not write outputs. Recompute θ/ϕ/int with current code and compare to the saved files under `Grid_data/SUBDIR/`. Exit code 0 on success; nonzero on mismatch or missing files.
@@ -61,7 +66,7 @@ Alpha/Delta (optional):
 
 ## Tips
 
-- Start with `--interp-method poly --interp-order 9` (these are the defaults).
+- Start with `--interp-method index-poly --interp-order 9` (these are the defaults).
 - Keep `--Tmax` consistent across L when comparing convergence.
 - The generated files are read at runtime; ensure `Grid_data/<L>/` is on the target machine.
 
