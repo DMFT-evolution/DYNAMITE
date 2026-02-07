@@ -17,7 +17,7 @@ If you’re looking for the underlying math (paper equations, why the grid is no
 
 Outputs (under `Grid_data/512/`):
 - `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
-- `int.dat` integration weights (N), computed via open‑clamped B‑spline quadrature of degree s (default s=5)
+- `int.dat` integration weights (N), computed via open‑clamped B‑spline quadrature of degree s (default s=5). By default, DMFE computes these via the more stable `--int-method index-spline`.
 - `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (N×N)
 - Interp metadata: `indsA1y.dat`, `weightsA1y.dat`, `indsA2y.dat`, `weightsA2y.dat`, `indsB2y.dat`, `weightsB2y.dat`
 
@@ -26,15 +26,18 @@ Outputs (under `Grid_data/512/`):
 ```bash
 ./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
               [--alpha X] [--delta X] \
-              [--spline-order s] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
+              [--spline-order s] [--int-method METHOD] [--interp-method METHOD] [--interp-order n] [--fh-stencil m] [--validate]
 # METHODS: poly | rational | bspline | index-bspline | index-poly | index-rational | index-hermite
-# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
+# Short aliases: -L, -M, -d, -V, -s, -I, -m, -o, -f
 ```
 
 - `--len L` (required): grid length N. Available sets in repo: 512/1024/2048. Default 512.
 - `--Tmax X`: long-time scale for θ mapping; default 100000.
 - `--dir SUBDIR`: output subdirectory under `Grid_data/`. Defaults to the value of L.
 - `--spline-order s`: B‑spline degree for quadrature (affects `int.dat`). Default 5.
+- `--int-method`: method used to compute `int.dat`.
+  - `index-spline` (default): build the interpolatory spline on the uniform index grid and integrate using the analytic mapping $\theta(u)$ (typically more stable for large s on highly nonuniform $\theta$ grids).
+  - `theta-spline`: build the interpolatory spline directly on the nonuniform $\theta$ grid (legacy behavior).
 - `--interp-method`: interpolation method for metadata.
   - `poly`: local barycentric Lagrange (degree n). Minimal n+1 weights per entry.
   - `rational`: Floater–Hormann (rational barycentric). Defaults to a single stencil (m=n+1), or set `--fh-stencil m` to blend across a wider window (m ≥ n+1).

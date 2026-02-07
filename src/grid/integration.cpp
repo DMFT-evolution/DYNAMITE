@@ -2,10 +2,12 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
 #include "grid/grid_io.hpp"
+#include "grid/theta_grid.hpp"
 
 namespace {
 
@@ -160,6 +162,45 @@ compute_basis_integrals(const std::vector<long double>& knots, int N, int p) {
 // (No mapping needed anymore) Degree p will be taken directly from `order` and
 // clamped into [1, N-1] at call site.
 
+// Fixed Gauss-Legendre rule on [-1,1] (16-point) for stable per-interval quadrature.
+static constexpr int GL16 = 16;
+static const long double gl16_x[GL16] = {
+    -0.989400934991649932596154173450L,
+    -0.944575023073232576077988415535L,
+    -0.865631202387831743880467897712L,
+    -0.755404408355003033895101194847L,
+    -0.617876244402643748446671764049L,
+    -0.458016777657227386342419442984L,
+    -0.281603550779258913230460501460L,
+    -0.095012509837637440185319335425L,
+     0.095012509837637440185319335425L,
+     0.281603550779258913230460501460L,
+     0.458016777657227386342419442984L,
+     0.617876244402643748446671764049L,
+     0.755404408355003033895101194847L,
+     0.865631202387831743880467897712L,
+     0.944575023073232576077988415535L,
+     0.989400934991649932596154173450L
+};
+static const long double gl16_w[GL16] = {
+    0.027152459411754094851780572456L,
+    0.062253523938647892862843836994L,
+    0.095158511682492784809925107602L,
+    0.124628971255533872052476282192L,
+    0.149595988816576732081501730547L,
+    0.169156519395002538189312079030L,
+    0.182603415044923588866763667969L,
+    0.189450610455068496285396723208L,
+    0.189450610455068496285396723208L,
+    0.182603415044923588866763667969L,
+    0.169156519395002538189312079030L,
+    0.149595988816576732081501730547L,
+    0.124628971255533872052476282192L,
+    0.095158511682492784809925107602L,
+    0.062253523938647892862843836994L,
+    0.027152459411754094851780572456L
+};
+
 } // namespace
 
 void compute_integration_weights(const std::vector<long double>& theta,
@@ -192,6 +233,90 @@ void compute_integration_weights(const std::vector<long double>& theta,
     // Output
     w.resize(N);
     for (int i = 0; i < N; ++i) w[i] = wl[i];
+}
+
+void compute_integration_weights_index_spline(std::size_t len,
+                                              double Tmax,
+                                              int order,
+                                              std::vector<long double>& w,
+                                              double alpha,
+                                              double delta) {
+    const int N = static_cast<int>(len);
+    w.clear();
+    if (N <= 0) return;
+
+    int p = order;
+    if (p < 1) p = 1;
+    if (p > N - 1) p = std::max(1, N - 1);
+
+    // Uniform index nodes x_i = i (0..N-1)
+    std::vector<long double> x(static_cast<std::size_t>(N));
+    for (int i = 0; i < N; ++i) x[static_cast<std::size_t>(i)] = static_cast<long double>(i);
+
+    // Build knot vector and collocation matrix on the uniform index grid.
+    auto knots = build_open_knot_vector(x, p);
+    std::vector<long double> A;
+    assemble_collocation(x, p, knots, A);
+    banded_lu(A, N, p);
+
+    // Build RHS moments M_j = \int B_j(u) * theta'(u) du using per-interval Gauss-Legendre.
+    // We evaluate theta'(u) analytically from the known theta mapping.
+    std::vector<long double> M(static_cast<std::size_t>(N), 0.0L);
+    std::vector<long double> Nvals(p + 1);
+
+    // Precompute theta'(u) at all quadrature points to avoid repeating expensive setup.
+    const int Q = GL16;
+    const std::size_t nIntervals = (N >= 2) ? static_cast<std::size_t>(N - 1) : 0;
+    std::vector<double> uq;
+    uq.reserve(nIntervals * static_cast<std::size_t>(Q));
+    for (int k = 0; k < N - 1; ++k) {
+        const long double a = static_cast<long double>(k);
+        const long double mid = a + 0.5L;
+        for (int q = 0; q < Q; ++q) {
+            const long double u = mid + 0.5L * gl16_x[q];
+            uq.push_back(static_cast<double>(u));
+        }
+    }
+    std::vector<long double> dtheta;
+    theta_prime_of_vec(uq, len, Tmax, dtheta, alpha, delta);
+
+    // Accumulate M by sweeping intervals.
+    std::size_t idx = 0;
+    for (int k = 0; k < N - 1; ++k) {
+        const long double mid = static_cast<long double>(k) + 0.5L;
+        for (int q = 0; q < Q; ++q, ++idx) {
+            const long double u = mid + 0.5L * gl16_x[q];
+            const long double wt = 0.5L * gl16_w[q]; // scale from [-1,1] to [k,k+1]
+            const long double dth = (idx < dtheta.size()) ? dtheta[idx] : 0.0L;
+            if (dth == 0.0L) continue;
+
+            const int span = find_span(N, p, u, knots);
+            basis_funs(span, u, p, knots, Nvals);
+            const int first = span - p;
+            for (int j = 0; j <= p; ++j) {
+                const int col = first + j;
+                if (col >= 0 && col < N) {
+                    M[static_cast<std::size_t>(col)] += Nvals[j] * dth * wt;
+                }
+            }
+        }
+    }
+
+    // Solve A^T w = M
+    std::vector<long double> wl;
+    banded_lu_solve_transpose(A, N, p, M, wl);
+
+    w.resize(static_cast<std::size_t>(N));
+    for (int i = 0; i < N; ++i) w[static_cast<std::size_t>(i)] = wl[static_cast<std::size_t>(i)];
+
+    // Optional: enforce constant reproduction in finite precision by renormalizing.
+    // For theta in [0,1], integral of 1 is 1, so sum(w) should be ~1.
+    long double sum = 0.0L;
+    for (int i = 0; i < N; ++i) sum += w[static_cast<std::size_t>(i)];
+    if (sum != 0.0L && std::isfinite(sum)) {
+        const long double invsum = 1.0L / sum;
+        for (int i = 0; i < N; ++i) w[static_cast<std::size_t>(i)] *= invsum;
+    }
 }
 
 // Backward-compatible overload for double theta

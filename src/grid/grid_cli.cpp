@@ -25,11 +25,12 @@ static void print_grid_usage(const char* prog) {
               << "  -d, --dir SUBDIR             Output subdirectory under Grid_data/ (default: <len>)\n"
               << "  -V, --validate               Do not write; validate generated theta/phi/int against saved files in SUBDIR\n"
               << "  -s, --spline-order n         Quadrature spline order for int.dat (default: 5)\n"
+              << "  -I, --int-method METHOD      Integration-weight method for int.dat: theta-spline | index-spline (default: index-spline)\n"
               << "  -m, --interp-method METHOD   Interp method for metadata: poly | rational | bspline | index-bspline | index-poly | index-rational | index-hermite (default: index-poly)\n"
               << "  -o, --interp-order n         Interpolation order/degree n (default: 9)\n"
               << "  -f, --fh-stencil m           FH window size m (rational/index-rational only). Default: n+1; must satisfy m >= n+1\n"
               << "\n"
-              << "Defaults: Tmax=100000, method=index-poly, order=9.\n";
+              << "Defaults: Tmax=100000, int-method=index-spline, interp-method=index-poly, interp-order=9.\n";
 }
 
 bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
@@ -42,6 +43,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     std::string subdir;
     bool validate = false;
     int spline_order = 5;
+    std::string int_method = "index-spline"; // default: stable integration weights via index-spline + analytic theta'(u)
     std::string interp_method = "index-poly"; // default: local barycentric polynomial in uniform index coordinate
     int interp_order = 9;               // default order for interpolation
     int fh_stencil = -1;                // optional FH window size (>= d+1); default: d+1
@@ -67,6 +69,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     else if ((a == "--dir" || a == "-d") && !read_next_str(subdir)) { std::cerr << dmfe::console::ERR() << "Missing value for --dir" << std::endl; exitCode = 1; return true; }
         else if (a == "--validate" || a == "-V") { validate = true; }
     else if ((a == "--spline-order" || a == "-s") && !read_next_int(spline_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --spline-order" << std::endl; exitCode = 1; return true; }
+        else if ((a == "--int-method" || a == "-I") && !read_next_str(int_method)) { std::cerr << dmfe::console::ERR() << "Missing value for --int-method" << std::endl; exitCode = 1; return true; }
     else if ((a == "--interp-method" || a == "-m") && !read_next_str(interp_method)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-method" << std::endl; exitCode = 1; return true; }
     else if ((a == "--interp-order" || a == "-o") && !read_next_int(interp_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-order" << std::endl; exitCode = 1; return true; }
     else if ((a == "--fh-stencil" || a == "-f") && !read_next_int(fh_stencil)) { std::cerr << dmfe::console::ERR() << "Missing value for --fh-stencil" << std::endl; exitCode = 1; return true; }
@@ -84,7 +87,15 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
 
     // Integration weights (keep as long double until export)
     std::vector<long double> wint;
-    compute_integration_weights(theta, spline_order, wint);
+    if (int_method == "theta-spline") {
+        compute_integration_weights(theta, spline_order, wint);
+    } else if (int_method == "index-spline") {
+        compute_integration_weights_index_spline(len, Tmax, spline_order, wint, alpha, delta);
+    } else {
+        std::cerr << dmfe::console::ERR() << "Unknown --int-method: " << int_method << std::endl;
+        exitCode = 1;
+        return true;
+    }
 
     // Position grids (A1y, A2y, B2y) from theta and phi using interpolation-based inverse
     std::vector<double> posA1y, posA2y, posB2y;
@@ -237,7 +248,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
         // Unified writer for all grids
     GridPaths paths = write_all_grids(theta, phi1, phi2, wint, posA1y, posA2y, posB2y, len, subdir);
         // Save generation parameters for provenance
-    write_grid_generation_params(len, Tmax, spline_order, interp_method, n, mFH, subdir, cmdline, alpha, delta);
+    write_grid_generation_params(len, Tmax, spline_order, int_method, interp_method, n, mFH, subdir, cmdline, alpha, delta);
         // Write interpolation metadata for A1 and A2
         auto ip = write_A1_interp_metadata(inds, weights_flat, len, subdir);
         auto ip2 = write_A2_interp_metadata(indsA2, weightsA2_flat, len, subdir);

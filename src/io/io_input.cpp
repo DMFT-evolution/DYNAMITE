@@ -436,6 +436,8 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
                 saved_grid["Tmax"] = val;
             } else if (name == "grid_spline_order") {
                 saved_grid["spline_order"] = val;
+            } else if (name == "grid_int_method") {
+                saved_grid["int_method"] = val;
             } else if (name == "grid_interp_method") {
                 saved_grid["interp_method"] = val;
             } else if (name == "grid_interp_order") {
@@ -586,6 +588,21 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
                 auto a = saved_grid["spline_order"]; auto b = get_gp("spline_order");
                 if (a != b) mismatch("grid_spline_order", a, b);
             }
+        }
+
+        // Require the same integration-weight method to load saved runs.
+        // Backward compatibility: if missing in either file, assume legacy theta-spline.
+        {
+            auto norm = [&](std::string s) {
+                // tolerate minor whitespace; keep case-sensitive semantics otherwise
+                auto trim = [](const std::string& v){ auto a=v.find_first_not_of(" \t\r\n"); if (a==std::string::npos) return std::string(); auto b=v.find_last_not_of(" \t\r\n"); return v.substr(a,b-a+1); };
+                return trim(s);
+            };
+            std::string saved_im = saved_grid.count("int_method") ? norm(saved_grid["int_method"]) : std::string("theta-spline");
+            std::string cur_im = (have_gp && !get_gp("int_method").empty()) ? norm(get_gp("int_method")) : std::string("theta-spline");
+            if (saved_im.empty()) saved_im = "theta-spline";
+            if (cur_im.empty()) cur_im = "theta-spline";
+            if (saved_im != cur_im) mismatch("grid_int_method", saved_im, cur_im);
         }
         if (saved_grid.count("interp_method")) {
             if (have_gp && !get_gp("interp_method").empty()) {

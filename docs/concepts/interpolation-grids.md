@@ -70,7 +70,7 @@ The grid package under `Grid_data/<L>/` is meant to be *complete*: the code does
 - `phi1.dat`, `phi2.dat` — the two contour families used to discretize the memory integrals in the paper (main text Eq. (3)), evaluated from the same base nodes:
 	- $\phi^{(1)}_{ij}=\theta_i\,\theta_j$ (dense near the onset / early times)
 	- $\phi^{(2)}_{ij}=\theta_j+(1-\theta_j)\,\theta_i$ (dense near the diagonal / small relative time)
-- `int.dat` — quadrature weights for integration over the irregular node set (open‑clamped B‑spline; default $s=5$).
+- `int.dat` — quadrature weights (open‑clamped B‑spline; default $s=5$). By default these are generated via an index-space spline (`--int-method index-spline`) for better conditioning on highly nonuniform $\theta$ grids.
 
 > Notation note: here we use $\theta=t'/t$ for the time ratio. In data files, the node list is stored in `theta.dat`. The auxiliary contour coordinates are stored as `phi1.dat` and `phi2.dat`.
 
@@ -169,7 +169,7 @@ DYNAMITE uses the following notation in code and data:
 
 - $\{\theta_i\}$ (stored in `theta.dat`).
 - The two induced contour families (stored in `phi1.dat` and `phi2.dat`).
-- Spline‑consistent quadrature weights for the irregular grid (stored in `int.dat`, B‑spline degree $s$; default $s=5$).
+- Spline‑consistent quadrature weights (stored in `int.dat`, B‑spline degree $s$; default $s=5$). The recommended generator is `--int-method index-spline`.
 
 ## Performance note
 

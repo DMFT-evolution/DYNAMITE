@@ -32,6 +32,60 @@ static inline long double remap_index(long double x1based, std::size_t len, doub
     return out;
 }
 
+// Derivative of remap_index w.r.t. x1based (1-based). Includes alpha blend.
+static inline long double remap_index_prime(long double x1based, std::size_t len, double alpha, double delta) {
+    if (alpha == 0.0) return 1.0L;
+    const long double N = static_cast<long double>(len);
+    const long double c = (N - 1.0L) / 2.0L;
+    const long double denom = (N - 1.0L);
+    if (denom == 0.0L) return 0.0L;
+
+    // s = (2*x - N - 1)/(N-1) clamped to [-1,1]
+    const long double t = 2.0L * x1based - N - 1.0L;
+    long double s = t / denom;
+    if (s > 1.0L) s = 1.0L;
+    if (s < -1.0L) s = -1.0L;
+
+    // When clamped at the ends, treat mapped as constant in x.
+    if (s == 1.0L || s == -1.0L) {
+        return (1.0L - static_cast<long double>(alpha));
+    }
+
+    const long double d = static_cast<long double>(delta);
+    const long double abs_s = std::fabs(s);
+
+    // g(s) = sign(s) * ( (|s|^3 + d^3)^(1/3) - d )
+    // For s != 0: dg/ds = d/d|s| (...) since sign cancels.
+    long double dgds = 0.0L;
+    if (abs_s > 0.0L) {
+        const long double a = abs_s * abs_s * abs_s + d * d * d;
+        // derivative of (a)^(1/3) w.r.t abs_s is abs_s^2 * a^(-2/3)
+        dgds = (abs_s * abs_s) * std::pow(a, -2.0L / 3.0L);
+    }
+
+    const long double g1 = (std::pow(1.0L + d * d * d, 1.0L / 3.0L) - d);
+    if (g1 == 0.0L) {
+        return (1.0L - static_cast<long double>(alpha));
+    }
+
+    // mapped = c * (g/g1 + 1) + 1
+    // dmapped/ds = c/g1 * dg/ds
+    const long double dmappeds = c * (dgds / g1);
+    const long double dsdx = 2.0L / denom;
+    const long double dmappeddx = dmappeds * dsdx;
+
+    // out = alpha*mapped + (1-alpha)*x
+    long double doutdx = static_cast<long double>(alpha) * dmappeddx + (1.0L - static_cast<long double>(alpha));
+
+    // If clamping in remap_index hit (rare unless parameters are extreme), derivative should be ~0.
+    // Recompute out to see if it saturated.
+    long double out = static_cast<long double>(alpha) * (c * (( (s < 0 ? -1.0L : (s > 0 ? 1.0L : 0.0L))
+                    * (std::pow(abs_s * abs_s * abs_s + d * d * d, 1.0L / 3.0L) - d) ) / g1 + 1.0L) + 1.0L)
+                  + (1.0L - static_cast<long double>(alpha)) * x1based;
+    if (out <= 1.0L || out >= N) doutdx = 0.0L;
+    return doutdx;
+}
+
 // Compute exact analytical theta value at fractional index using high-precision arithmetic
 // Now exposed as a public function and accepts real (fractional) indices
 long double theta_of_index(double idx, std::size_t len, double Tmax, double alpha, double delta) {
@@ -64,6 +118,14 @@ long double theta_of_index(double idx, std::size_t len, double Tmax, double alph
     if (out < 0.0) out = 0.0;
     if (out > 1.0) out = 1.0;
     return out;
+}
+
+long double theta_prime_of_index(double idx, std::size_t len, double Tmax, double alpha, double delta) {
+    std::vector<double> indices(1);
+    indices[0] = idx;
+    std::vector<long double> dtheta;
+    theta_prime_of_vec(indices, len, Tmax, dtheta, alpha, delta);
+    return dtheta.empty() ? 0.0L : dtheta[0];
 }
 
 // Vectorized version: compute theta for multiple indices efficiently
@@ -104,6 +166,59 @@ void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tm
         if (out < 0.0) out = 0.0;
         if (out > 1.0) out = 1.0;
         theta_values[k] = out;
+    }
+}
+
+void theta_prime_of_vec(const std::vector<double>& indices, std::size_t len, double Tmax,
+                        std::vector<long double>& dtheta_values,
+                        double alpha, double delta) {
+    const mp pi = dmfe::mp_pi();
+    const mp mp_len = mp(len);
+    const mp mp_Tmax = mp(Tmax);
+
+    // Precompute constants used by theta(idx)
+    const mp argW = -mp(1) / (mp(10) * mp_Tmax);
+    const mp Wm1 = dmfe::lambertWm1_mp(argW);
+    const mp eta_mp = -(mp(2) / mp_len) * Wm1;
+
+    const mp thalf = ((mp_len / mp(2)) - mp(1) / mp(2)) * eta_mp;
+    const mp den_mp = (mp(2) / pi) * atan(exp(thalf)) - (mp(2) / pi) * atan(exp(-thalf));
+
+    const long double eta = static_cast<long double>(eta_mp);
+    const long double den = static_cast<long double>(den_mp);
+    const long double invden = (den != 0.0L) ? (1.0L / den) : 0.0L;
+    const long double two_over_pi = 2.0L / static_cast<long double>(pi);
+
+    const long double N = static_cast<long double>(len);
+    const long double center = (N / 2.0L) + 0.5L;
+
+    dtheta_values.resize(indices.size());
+    for (std::size_t k = 0; k < indices.size(); ++k) {
+        // idx is 0-based fractional index. Convert to 1-based and apply remap.
+        const long double x1 = static_cast<long double>(indices[k]) + 1.0L;
+        const long double x1_map = remap_index(x1, len, alpha, delta);
+        const long double dx1map_dx1 = remap_index_prime(x1, len, alpha, delta);
+
+        // t1 = (x1_map - (len/2+1/2)) * eta
+        const long double t1 = (x1_map - center) * eta;
+
+        // d/dt atan(exp(-t)) = -1/(2*cosh(t))
+        // term1 = (2/pi)*atan(exp(-t1)) => dterm1/dt1 = -(2/pi)*(1/(2*cosh(t1)))
+        // theta = (term_ref - term1)/den => dtheta/dx1 = -(dterm1/dx1)/den
+        // dterm1/dx1 = dterm1/dt1 * dt1/dx1 = [-(2/pi)*(1/(2*cosh(t1)))] * eta
+        // => dtheta/dx1 = (2/pi)*(1/(2*cosh(t1))) * eta / den
+
+        long double inv2cosh = 0.0L;
+        const long double c = std::cosh(t1);
+        if (std::isfinite(c) && c != 0.0L) inv2cosh = 0.5L / c;
+        else inv2cosh = 0.0L;
+
+        long double dtheta_dx1 = two_over_pi * inv2cosh * eta * invden;
+        long double dtheta_didx = dtheta_dx1 * dx1map_dx1; // dx1/didx = 1
+
+        // Theta is monotone; guard against tiny negative due to rounding.
+        if (dtheta_didx < 0.0L) dtheta_didx = 0.0L;
+        dtheta_values[k] = dtheta_didx;
     }
 }
 

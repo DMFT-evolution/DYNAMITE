@@ -320,6 +320,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
             writeIfRaw("len", "grid_len");
             writeIfDouble("Tmax", "grid_Tmax");
             writeIfRaw("spline_order", "grid_spline_order");
+            writeIfRaw("int_method", "grid_int_method");
             writeIfRaw("interp_method", "grid_interp_method");
             writeIfRaw("interp_order", "grid_interp_order");
             writeIfRaw("fh_stencil", "grid_fh_stencil");
@@ -478,6 +479,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
             writeIfRaw("len", "grid_len");
             writeIfDouble("Tmax", "grid_Tmax");
             writeIfRaw("spline_order", "grid_spline_order");
+            writeIfRaw("int_method", "grid_int_method");
             writeIfRaw("interp_method", "grid_interp_method");
             writeIfRaw("interp_order", "grid_interp_order");
             writeIfRaw("fh_stencil", "grid_fh_stencil");

@@ -1,10 +1,11 @@
 # DYNAMITE grid generation parameters
 len=512
 Tmax=1.00000000000000000e+05
-spline_order=7
+spline_order=5
+int_method=index-spline
 interp_method=index-poly
-interp_order=7
+interp_order=9
 alpha=0.00000000000000000e+00
 delta=0.00000000000000000e+00
 subdir=512
-command_line=./RG-Evo grid -L 512 -o 7 -s 7 -m index-poly
+command_line=./RG-Evo grid -L 512

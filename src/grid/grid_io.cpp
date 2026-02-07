@@ -197,6 +197,7 @@ GridPaths write_all_grids(const std::vector<long double>& theta,
 std::string write_grid_generation_params(std::size_t len,
                                          double Tmax,
                                          int spline_order,
+                                         const std::string& int_method,
                                          const std::string& interp_method,
                                          int interp_order,
                                          int fh_stencil,
@@ -217,6 +218,7 @@ std::string write_grid_generation_params(std::size_t len,
     ofs << "Tmax=" << Tmax << "\n";
     ofs.unsetf(std::ios::floatfield);
     ofs << "spline_order=" << spline_order << "\n";
+    ofs << "int_method=" << int_method << "\n";
     ofs << "interp_method=" << interp_method << "\n";
     ofs << "interp_order=" << interp_order << "\n";
     if (fh_stencil > 0) ofs << "fh_stencil=" << fh_stencil << "\n";

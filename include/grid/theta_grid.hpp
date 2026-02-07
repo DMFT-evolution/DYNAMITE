@@ -27,6 +27,13 @@ void generate_theta_grid(std::size_t len, double Tmax, std::vector<long double>&
 long double theta_of_index(double idx, std::size_t len, double Tmax,
                            double alpha = 0.0, double delta = 0.0);
 
+// Analytical derivative d(theta)/d(idx) at a fractional index (0-based).
+// Uses the closed-form derivative of the underlying theta mapping and includes
+// the derivative of the optional (alpha,delta) index remapping.
+// Returns a non-negative value (theta is monotone).
+long double theta_prime_of_index(double idx, std::size_t len, double Tmax,
+                                 double alpha = 0.0, double delta = 0.0);
+
 // Compute exact analytical theta values for a vector of fractional indices (vectorized version).
 // This is more efficient than calling theta_of_index repeatedly because it computes the
 // Lambert W function and other len/Tmax-dependent quantities only once.
@@ -39,6 +46,12 @@ long double theta_of_index(double idx, std::size_t len, double Tmax,
 void theta_of_vec(const std::vector<double>& indices, std::size_t len, double Tmax, 
                   std::vector<long double>& theta_values,
                   double alpha = 0.0, double delta = 0.0);
+
+// Vectorized derivative evaluation: computes d(theta)/d(idx) at the provided indices.
+// More efficient than calling theta_prime_of_index repeatedly (shared precompute).
+void theta_prime_of_vec(const std::vector<double>& indices, std::size_t len, double Tmax,
+                        std::vector<long double>& dtheta_values,
+                        double alpha = 0.0, double delta = 0.0);
 
 // Write the theta grid to Grid_data/<subdir>/theta.dat, creating the directory if needed.
 // Returns the absolute/relative output path written.
