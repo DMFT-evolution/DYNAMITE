@@ -121,7 +121,7 @@ Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowdin
 In addition to the paper‑exact grid above, the implementation supports an **optional** smooth non‑linear remapping of the *fractional index* prior to evaluating the underlying $\Theta(x)$ mapping (i.e. before producing node locations in $\theta\in[0,1]$).
 
 - `alpha` ∈ [0,1]: blends toward the non‑linear map.  
-- `delta \ge 0`: controls the “softness” of the remapping.  
+- `delta` $\ge 0$:  controls the “softness” of the remapping.  
 
 The defaults `alpha=0, delta=0` reproduce the paper grid exactly. Non‑zero `alpha` re‑distributes nodes while preserving monotonicity and endpoints. If used, values are recorded in `Grid_data/<subdir>/grid_params.txt`.
 
