@@ -8,4 +8,4 @@ interp_order=9
 alpha=0.00000000000000000e+00
 delta=0.00000000000000000e+00
 subdir=512
-command_line=./RG-Evo grid -L 512
+command_line=/files/home/part2/jlang/Bookworm/Nextcloud/Spin-glass/Codes/DMFE/RG-Evo grid -L 512

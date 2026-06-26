@@ -1,15 +1,11 @@
 #include "math/math_ops.hpp"
 #include "core/config.hpp"
+#include <cmath>
 
 // Access runtime-configured parameters via global config
 extern SimulationConfig config;
 
 double pow_int(double base, int exp) {
-	if (exp == 0) return 1.0;
-	if (exp == 1) return base;
-	if (exp == 2) return base * base;
-	if (exp == 3) return base * base * base;
-	if (exp == 4) { double sq = base * base; return sq * sq; }
 	double result = 1.0;
 	double current = base;
 	while (exp > 0) {

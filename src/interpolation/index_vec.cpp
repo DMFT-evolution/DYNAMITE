@@ -76,28 +76,54 @@ void indexVecN(const size_t length, const std::vector<double>& weights, const st
     {
         (void)t1len;
         const double weight = weights[i];
+        const double weight2 = weight * weight; 
+        const double weight3 = weight2 * weight;
         const size_t base_i = inds[i] - 1;
         const size_t curr_i = inds[i];
+        const double coeff1 = 1.0 - 3.0 * weight2 - 2.0 * weight3;
+        const double coeff2 = 3.0 * weight2 + 2.0 * weight3;
+        const double coeff3 = weight + 2.0 * weight2 + weight3;
+        const double coeff4 = (weight2 + weight3) / dtratio[curr_i + 1];
         for (size_t j = 0; j < dims[1]; j++)
         {
-            const double qK_base = sim->h_QKv[base_i * dims[1] + j];
-            const double qK_curr = sim->h_QKv[curr_i * dims[1] + j];
-            qK_result[j + dims[1] * i] = (1.0 - weight) * qK_base + weight * qK_curr;
-
-            const double qR_base = sim->h_QRv[base_i * dims[1] + j];
-            const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
-            if (!::config.log_response_interp) {
-                qR_result[j + dims[1] * i] = (1.0 - weight) * qR_base + weight * qR_curr;
-            } else {
-                if (qR_base > 0.0 && qR_curr > 0.0) {
-                    const double f_base = log(qR_base);
-                    const double f_curr = log(qR_curr);
-                    const double f_interp = (1.0 - weight) * f_base + weight * f_curr;
-                    qR_result[j + dims[1] * i] = exp(f_interp);
+            if (curr_i < t1len - 1) {
+                qK_result[j + dims[1] * i] = coeff1 * sim->h_QKv[base_i * dims[1] + j] +
+                                             coeff2 * sim->h_QKv[curr_i * dims[1] + j] -
+                                             coeff3 * sim->h_dQKv[curr_i * dims[1] + j] -
+                                             coeff4 * sim->h_dQKv[(curr_i + 1) * dims[1] + j];
+                if (!::config.log_response_interp) {
+                    qR_result[j + dims[1] * i] = coeff1 * sim->h_QRv[base_i * dims[1] + j] +
+                                                 coeff2 * sim->h_QRv[curr_i * dims[1] + j] -
+                                                 coeff3 * sim->h_dQRv[curr_i * dims[1] + j] -
+                                                 coeff4 * sim->h_dQRv[(curr_i + 1) * dims[1] + j];
                 } else {
-                    qR_result[j + dims[1] * i] = (1.0 - weight) * qR_base + weight * qR_curr;
+                    const double f_base = log(sim->h_QRv[base_i * dims[1] + j]);
+                    const double f_curr = log(sim->h_QRv[curr_i * dims[1] + j]);
+                    const double df_base = log(sim->h_dQRv[base_i * dims[1] + j]);
+                    const double df_curr = log(sim->h_dQRv[curr_i * dims[1] + j]);
+                    const double f_interp = coeff1 * f_base + coeff2 * f_curr - coeff3 * df_curr - coeff4 * df_base;
+                    qR_result[j + dims[1] * i] = exp(f_interp);
+                } 
+            } else {
+                const double qK_base = sim->h_QKv[base_i * dims[1] + j];
+                const double qK_curr = sim->h_QKv[curr_i * dims[1] + j];
+                qK_result[j + dims[1] * i] = (1.0 - weight2) * qK_base + weight2 * qK_curr;
+
+                const double qR_base = sim->h_QRv[base_i * dims[1] + j];
+                const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
+                if (!::config.log_response_interp) {
+                    qR_result[j + dims[1] * i] = (1.0 - weight2) * qR_base + weight2 * qR_curr;
+                } else {
+                    if (qR_base > 0.0 && qR_curr > 0.0) {
+                        const double f_base = log(qR_base);
+                        const double f_curr = log(qR_curr);
+                        const double f_interp = (1.0 - weight2) * f_base - weight2 * f_curr;
+                        qR_result[j + dims[1] * i] = exp(f_interp);
+                    } else {
+                        qR_result[j + dims[1] * i] = (1.0 - weight2) * qR_base - weight2 * qR_curr;
+                    }
                 }
-            }
+            } 
         }
     }
 }
@@ -113,10 +139,25 @@ void indexVecR2(const std::vector<double>& in1, const std::vector<double>& in2, 
     #pragma omp parallel for schedule(static)
     for (size_t i = 0; i < dims; i++)
     {
-        (void)t1len;
-        const size_t base_i = inds[i] - 1;
-        const size_t curr_i = inds[i];
-        const double weight = in3[i];
-        result[i] = (1.0 - weight) * in1[base_i] + weight * in1[curr_i];
+        if(inds[i]<t1len-1)
+        {
+            const size_t base_i = inds[i] - 1;
+            const size_t curr_i = inds[i];
+            const double weight = in3[i];
+            const double weight_sq = weight * weight;
+            const double weight_cub = weight_sq * weight;
+            result[i] = (1.0 - 3.0 * weight_sq - 2.0 * weight_cub) * in1[base_i] +
+                        (3.0 * weight_sq + 2.0 * weight_cub) * in1[curr_i] -
+                        (weight + 2.0 * weight_sq + weight_cub) * in2[curr_i] -
+                        (weight_sq + weight_cub) * in2[curr_i + 1] / dtratio[curr_i + 1];
+        }
+        else
+        { 
+            const size_t base_i = inds[i] - 1;
+            const size_t curr_i = inds[i];
+            const double weight = in3[i];
+            const double weight_sq = weight * weight;
+            result[i] = (1.0 - weight_sq) * in1[base_i] + weight_sq * in1[curr_i] - (weight + weight_sq) * in2[curr_i];
+        } 
     }
 }

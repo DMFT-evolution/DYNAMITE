@@ -73,8 +73,8 @@ __global__ void computeCopy(
 #endif // DMFE_WITH_CUDA
 
 // CPU time-step functions
-std::vector<double> QKstep();
-std::vector<double> QRstep();
+std::vector<double> QKstep(const std::vector<double>& qK, const std::vector<double>& qR);
+std::vector<double> QRstep(const std::vector<double>& qR);
 double rstep();
 double drstep();
 double drstep2(const std::vector<double>& qK, const std::vector<double>& qR, 

@@ -122,11 +122,15 @@ if [[ $ENABLE_CUDA -eq 1 ]] && ! command -v nvc++ >/dev/null 2>&1; then
     module() { eval "$(modulecmd bash "$@")"; }
   fi
   if command -v module >/dev/null 2>&1; then
-    echo "[env] Trying: module load accel/nvhpc/24.9" >&2
-    if module load accel/nvhpc/24.9 >/dev/null 2>&1; then
-      echo "[env] Loaded accel/nvhpc/24.9" >&2
-    else
-      echo "[env] Module accel/nvhpc/24.9 not available or failed to load; continuing without it" >&2
+    for module_name in cuda/12.5 cuda/12.2 accel/nvhpc/24.9; do
+      echo "[env] Trying: module load ${module_name}" >&2
+      if module load "${module_name}" >/dev/null 2>&1; then
+        echo "[env] Loaded ${module_name}" >&2
+        break
+      fi
+    done
+    if ! command -v nvcc >/dev/null 2>&1 && ! command -v nvc++ >/dev/null 2>&1; then
+      echo "[env] No CUDA-capable toolchain found after module load attempts; continuing without it" >&2
     fi
   fi
 fi

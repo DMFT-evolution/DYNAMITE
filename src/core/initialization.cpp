@@ -223,6 +223,8 @@ void init()
 
         sim->h_QKv.resize(config.len, 1.0);
         sim->h_QRv.resize(config.len, 1.0);
+        sim->h_dQKv.resize(config.len, 0.0);
+        sim->h_dQRv.resize(config.len, 0.0);
         sim->h_rvec.resize(1, config.Gamma + Dflambda(1) / config.T0);
         sim->h_drvec.resize(1, rstep());
     } else {

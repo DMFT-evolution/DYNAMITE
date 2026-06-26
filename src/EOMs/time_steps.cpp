@@ -24,23 +24,21 @@ vector<double> getLastLenEntries(const vector<double>& vec, size_t len) {
 }
 
 // CPU time-step functions
-vector<double> QKstep()
+vector<double> QKstep(const vector<double>& qK, const vector<double>& qR)
 {
     vector<double> temp(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
     #pragma omp parallel for
     for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
         temp[i / config.len] = sim->h_QKB1int[i];
     }
-    vector<double> d1qK = (temp* (Dflambda(sim->h_QKv[sim->h_QKv.size() - config.len]) / config.T0)) + (qK * (-sim->h_rInt.back())) +
+    vector<double> d1qK = (temp* (Dflambda(qK[0]) / config.T0)) + (qK * (-sim->h_rInt.back())) +
     ConvR(sim->h_SigmaRA2int, sim->h_QKB2int, sim->h_t1grid.back()) + ConvA(sim->h_SigmaRA1int, sim->h_QKB1int, sim->h_t1grid.back()) +
     ConvA(sim->h_SigmaKA1int, sim->h_QRB1int, sim->h_t1grid.back());
     #pragma omp parallel for
     for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
         temp[i / config.len] = Dflambda(sim->h_QKB1int[i]);
     }
-    vector<double> d2qK = (temp * (sim->h_QKv[sim->h_QKv.size() - config.len] / config.T0)) + (qR * (2 * config.Gamma)) +
+    vector<double> d2qK = (temp * (qK[0] / config.T0)) + (qR * (2 * config.Gamma)) +
     ConvR(sim->h_QRA2int, sim->h_SigmaKB2int, sim->h_t1grid.back()) + ConvA(sim->h_QRA1int, sim->h_SigmaKB1int, sim->h_t1grid.back()) +
     ConvA(sim->h_QKA1int, sim->h_SigmaRB1int, sim->h_t1grid.back()) - (qK * sim->h_rInt);
     return d1qK + (d2qK * sim->h_theta);
@@ -96,9 +94,8 @@ double rstep()
     return config.Gamma + ConvA(sigmaR, qK, t)[0] + ConvA(sigmaK, qR, t)[0] + sigmaK[0] * qK[0] / config.T0;
 }
 
-vector<double> QRstep()
+vector<double> QRstep(const vector<double>& qR)
 {
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
     vector<double> d1qR = (qR * (-sim->h_rInt.back())) + ConvR(sim->h_SigmaRA2int, sim->h_QRB2int, sim->h_t1grid.back());
     vector<double> d2qR = (qR * sim->h_rInt) - ConvR(sim->h_QRA2int, sim->h_SigmaRB2int, sim->h_t1grid.back());
     return d1qR + (d2qR * sim->h_theta);
@@ -109,8 +106,8 @@ double drstep()
     vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0), dsigmaK(config.len, 0.0), dsigmaR(config.len, 0.0);
     vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
     vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    vector<double> dqK = QKstep();
-    vector<double> dqR = QRstep();
+    vector<double> dqK = QKstep(qK, qR);
+    vector<double> dqR = QRstep(qR);
     const double t = sim->h_t1grid.back();
     SigmaK(qK, sigmaK);
     SigmaR(qK, qR, sigmaR);

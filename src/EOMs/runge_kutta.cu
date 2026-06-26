@@ -570,6 +570,7 @@ double SSPRK104GPU(StreamPool* pool) {
         QKRstepGPU(sim->d_QKv, sim->d_QRv, sim->d_QKB1int, sim->d_QKB2int, sim->d_QKA1int, sim->d_QRA1int, sim->d_QRA2int, sim->d_QRB1int, sim->d_QRB2int, sim->d_SigmaRA1int, sim->d_SigmaRA2int, sim->d_SigmaKB1int, sim->d_SigmaKB2int, sim->d_SigmaKA1int, sim->d_SigmaRB1int, sim->d_SigmaRB2int, sim->d_integ, sim->d_theta, sim->d_t1grid, sim->d_rInt, rk->hK, rk->hR, config.T0, config.Gamma, 0, *pool);
         rk->ht = 1.0;
 
+
         // Update g and dr
         if (n == 0) {
             rk->hK0 = rk->hK;

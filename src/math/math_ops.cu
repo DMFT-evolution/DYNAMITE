@@ -4,21 +4,6 @@
 
 // GPU-optimized device function for integer power computation
 __device__ __forceinline__ double fast_pow_int(double base, int exp) {
-	if (exp == 0) return 1.0;
-	if (exp == 1) return base;
-	if (exp == 2) return base * base;
-	if (exp == 3) return base * base * base;
-	if (exp == 4) { double sq = base * base; return sq * sq; }
-	if (exp == 5) { double sq = base * base; return sq * sq * base; }
-	if (exp == 6) { double sq = base * base; return sq * sq * sq; }
-	if (exp == 7) { double sq = base * base; double cu = sq * base; return cu * cu * base; }
-	if (exp == 8) { double sq = base * base; double qu = sq * sq; return qu * qu; }
-	if (exp == 9) { double cu = base * base * base; return cu * cu * cu; }
-	if (exp == 10) { double sq = base * base; double qu = sq * sq; return qu * qu * sq; }
-	if (exp == 11) { double sq = base * base; double qu = sq * sq; return qu * qu * sq * base; }
-	if (exp == 12) { double cu = base * base * base; double si = cu * cu; return si * si; }
-	if (exp == 13) { double cu = base * base * base; double si = cu * cu; return si * si * base; }
-	if (exp == 14) { double sq = base * base; double qu = sq * sq; double oc = qu * qu; return oc * oc * sq; }
 	double result = 1.0;
 	double current = base;
 	while (exp > 0) {

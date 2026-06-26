@@ -5,7 +5,6 @@
 #include "EOMs/time_steps.hpp"
 #include "interpolation/interpolation_core.hpp"
 #include "core/vector_utils.hpp"
-#include <iostream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
@@ -79,8 +78,8 @@ double SSPRK104()
             posB2xvec[2] = sim->h_posB2xOld;
         }
 
-        hKvec[n] = QKstep();
-        hRvec[n] = QRstep();
+        hKvec[n] = QKstep(gKvec[n], gRvec[n]);
+        hRvec[n] = QRstep(gRvec[n]);
         htvec[n] = 1.0;
 
         // Update g and dr
@@ -187,8 +186,8 @@ double RK54()
             );
         }
 
-        hKvec[n] = QKstep();
-        hRvec[n] = QRstep();
+        hKvec[n] = QKstep(gKvec[0], gRvec[0]);
+        hRvec[n] = QRstep(gRvec[0]);
         htvec[n] = 1.0;
 
         // Update g and dr

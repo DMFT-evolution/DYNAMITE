@@ -216,7 +216,6 @@ int runSimulation() {
 #if DMFE_WITH_CUDA
             }
 #endif
-
             if (config.delta < config.delta_max / 2 && config.loop - last_rollback_loop > 1000) {
                 config.delta_t *= 0.5;
                 if (config.gpu) {

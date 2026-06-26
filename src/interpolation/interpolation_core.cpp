@@ -52,7 +52,7 @@ void interpolate(const vector<double>& posB1xIn, const vector<double>& posB2xIn,
         sim->h_QRA2int.assign(config.len * config.len, sim->h_QRv[0]);
     }
     SigmaR(sim->h_QKA2int, sim->h_QRA2int, sim->h_SigmaRA2int);
-
+    
     // Interpolate QKB1int and QRB1int (indexVecN handles log-space if enabled)
     // Compute `floor` vector
     double maxPosB1x = posB1x[0];
@@ -82,7 +82,6 @@ void interpolate(const vector<double>& posB1xIn, const vector<double>& posB2xIn,
     // Compute `diff` vector
     vector<double> diff(posB1x.size());
     diff = vector<double>(Floor.begin(), Floor.end()) - posB1x;
-
     if (sim->h_t1grid.back() > 0) {
         indexVecN(config.len, diff, Floor, sim->h_delta_t_ratio, sim->h_QKB1int, sim->h_QRB1int, config.len);
     }
