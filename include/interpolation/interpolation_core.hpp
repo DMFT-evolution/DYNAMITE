@@ -7,7 +7,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include "core/device_vector.cuh"
+#include "core/device_vector.hpp"
 #endif
 
 // CPU interpolation function

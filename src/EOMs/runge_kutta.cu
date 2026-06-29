@@ -10,11 +10,7 @@
 #include "core/device_utils.cuh"
 #include "math/math_sigma.hpp"
 #include <cuda_runtime.h>
-#if DMFE_WITH_CUDA
-#include "core/device_vector.cuh"
-#else
 #include "core/device_vector.hpp"
-#endif
 #include <thrust/transform.h>
 #include <thrust/reduce.h>
 #include <thrust/copy.h>

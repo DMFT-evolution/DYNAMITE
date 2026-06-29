@@ -1,10 +1,6 @@
 #pragma once
 #include <vector>
-#if DMFE_WITH_CUDA
-#include "core/device_vector.cuh"
-#else
 #include "core/device_vector.hpp"
-#endif
 #include <thrust/device_ptr.h>
 #include <cassert>
 
