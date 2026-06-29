@@ -7,7 +7,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #include <thrust/device_ptr.h>
 
 // Debug-only CUDA error check utilities. Use tiny inline helpers + macros to avoid overhead when not debugging.

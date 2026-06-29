@@ -6,7 +6,7 @@
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #endif
 
 // CPU binary search function

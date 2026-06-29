@@ -1,7 +1,7 @@
 #include "simulation/tail_fit.hpp"
 #include "simulation/simulation_data.hpp"
 #include "core/config.hpp"
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #include <thrust/transform_reduce.h>
 #include <thrust/iterator/counting_iterator.h>
 #include <thrust/execution_policy.h>

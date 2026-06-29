@@ -2,7 +2,11 @@
 #include "simulation/simulation_data.hpp"
 #include "core/device_constants.hpp"
 #include <thrust/copy.h>
+#if DMFE_WITH_CUDA
+#include "core/device_vector.cuh"
+#else
 #include "core/device_vector.hpp"
+#endif
 #include "core/config.hpp"
 #include <iostream>
 #include <stdexcept>

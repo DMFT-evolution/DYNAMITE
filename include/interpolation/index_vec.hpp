@@ -4,7 +4,7 @@
 #include <vector>
 
 #if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #include <thrust/functional.h>
 #include <cuda_runtime.h>
 #endif

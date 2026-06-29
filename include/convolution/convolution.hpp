@@ -3,7 +3,7 @@
 #include <vector>
 
 #if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #include <thrust/device_ptr.h>
 #include <cuda_runtime.h>
 #endif

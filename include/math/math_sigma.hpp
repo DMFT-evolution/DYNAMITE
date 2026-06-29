@@ -4,7 +4,7 @@
 #include <vector>
 
 #if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 
 // GPU kernel and host wrappers for SigmaK/SigmaR evaluations
 __global__ void computeSigmaKandRKernel(const double* __restrict__ qK,

@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include <dirent.h>
 #if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #include <thrust/copy.h>
 #endif
 #include <unistd.h>

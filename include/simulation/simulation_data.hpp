@@ -1,7 +1,7 @@
 #pragma once
 #include "core/config_build.hpp"
 #if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
+#include "core/device_vector.cuh"
 #endif
 #include <cstddef>
 #include <vector>
