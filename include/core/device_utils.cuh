@@ -1,9 +1,6 @@
 #pragma once
-#include "core/config_build.hpp"
-#include <cmath>
-#include <string>
-#include <cstdio>
-#include "core/console.hpp"
+
+#include "core/device_utils.hpp"
 
 #if DMFE_WITH_CUDA
 #include <cuda_runtime.h>
@@ -40,29 +37,10 @@ inline void __dmfe_cuda_post_launch_check(const char* where, const char* file, i
 #define DMFE_CUDA_POSTLAUNCH(where) ((void)0)
 #endif
 
-// Device capability check
-bool isCompatibleGPUInstalled();
-
 #if DMFE_WITH_CUDA
 // Runtime probe: can we create a CUDA stream on the current device?
 bool canCreateCudaStream(std::string* errorMessage = nullptr);
-#endif
 
-// System utility functions
-bool isHDF5Available();
-size_t getCurrentMemoryUsageMB();
-// Total physical system memory in MB (Linux); returns 0 if unavailable
-size_t getTotalSystemMemoryMB();
-size_t getGPUMemoryUsage();
-size_t getAvailableGPUMemory();
-void updatePeakMemory();
-std::string getHostname();
-
-// External global variables for peak memory tracking
-extern size_t peak_memory_mb;
-extern size_t peak_gpu_memory_mb;
-
-#if DMFE_WITH_CUDA
 // Device vector helpers (implemented in device_utils.cu)
 dmfe::device_vector<double> SubtractGPU(const dmfe::device_vector<double>& a, const dmfe::device_vector<double>& b);
 dmfe::device_vector<double> scalarMultiply(const dmfe::device_vector<double>& vec, double scalar);

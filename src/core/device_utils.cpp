@@ -1,4 +1,4 @@
-#include "core/device_utils.cuh"
+#include "core/device_utils.hpp"
 #include "core/config.hpp"
 #include <unistd.h>
 #include <sys/resource.h>

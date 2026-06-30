@@ -1,5 +1,6 @@
 #include "simulation/tail_fit.hpp"
 #include "simulation/simulation_data.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include "core/config.hpp"
 #include "core/device_vector.hpp"
 #include <thrust/transform_reduce.h>
@@ -123,7 +124,7 @@ __global__ void k_blend_qk(double* __restrict__ QK,
 void tailFitBlendGPU() {
 	const size_t len = config.len;
 	if (len < 32) return;
-	const size_t t1len = sim->d_t1grid.size();
+	const size_t t1len = sim->device->t1grid.size();
 	if (t1len == 0) return;
 	const size_t base = (t1len - 1) * len;
 	const size_t start = len / 2;
@@ -135,10 +136,10 @@ void tailFitBlendGPU() {
 	
 	// Compute y values for tail region
 	const size_t N = len - start;
-	sim->temp10.resize(N);
-	double* yptr = thrust::raw_pointer_cast(sim->temp10.data());
-	const double* thptr = thrust::raw_pointer_cast(sim->d_theta.data());
-	double* qkptr = thrust::raw_pointer_cast(sim->d_QKv.data());
+	sim->device->temp10.resize(N);
+	double* yptr = thrust::raw_pointer_cast(sim->device->temp10.data());
+	const double* thptr = thrust::raw_pointer_cast(sim->device->theta.data());
+	double* qkptr = thrust::raw_pointer_cast(sim->device->QKv.data());
 	
 	dim3 block(256);
 	dim3 grid((N + block.x - 1) / block.x);
@@ -172,14 +173,14 @@ void tailFitBlendGPU() {
 	
 	// Upload candidates and allocate results
 	const size_t num_windows = valid_candidates.size();
-	sim->Stemp2.resize(num_windows);
-	sim->temp11.resize(num_windows);
-	sim->temp10.resize(num_windows);
+	sim->device->Stemp2.resize(num_windows);
+	sim->device->temp11.resize(num_windows);
+	sim->device->temp10.resize(num_windows);
 	
-	thrust::copy(valid_candidates.begin(), valid_candidates.end(), sim->Stemp2.begin());
-	const size_t* d_offsets = thrust::raw_pointer_cast(sim->Stemp2.data());
-	double* d_means = thrust::raw_pointer_cast(sim->temp11.data());
-	double* d_sses = thrust::raw_pointer_cast(sim->temp10.data());
+	thrust::copy(valid_candidates.begin(), valid_candidates.end(), sim->device->Stemp2.begin());
+	const size_t* d_offsets = thrust::raw_pointer_cast(sim->device->Stemp2.data());
+	double* d_means = thrust::raw_pointer_cast(sim->device->temp11.data());
+	double* d_sses = thrust::raw_pointer_cast(sim->device->temp10.data());
 	
 	// Compute window statistics on GPU
 	dim3 stat_block(256);
@@ -189,8 +190,8 @@ void tailFitBlendGPU() {
 	
 	// Copy results to host and find best
 	std::vector<double> h_means(num_windows), h_sses(num_windows);
-	thrust::copy(sim->temp11.begin(), sim->temp11.begin() + num_windows, h_means.begin());
-	thrust::copy(sim->temp10.begin(), sim->temp10.begin() + num_windows, h_sses.begin());
+	thrust::copy(sim->device->temp11.begin(), sim->device->temp11.begin() + num_windows, h_means.begin());
+	thrust::copy(sim->device->temp10.begin(), sim->device->temp10.begin() + num_windows, h_sses.begin());
 	
 	size_t best_idx = 0;
 	double best_sse = h_sses[0];
@@ -255,8 +256,8 @@ void tailFitBlendGPU() {
 	
 	// Compute residuals on GPU
 	const size_t tail_len = len - j0;
-	sim->temp12.resize(tail_len);
-	double* d_residuals = thrust::raw_pointer_cast(sim->temp12.data());
+	sim->device->temp12.resize(tail_len);
+	double* d_residuals = thrust::raw_pointer_cast(sim->device->temp12.data());
 	
 	dim3 res_grid((tail_len + block.x - 1) / block.x);
 	k_compute_residuals<<<res_grid, block>>>(thptr, qkptr, d_residuals, len, base, j0, alpha);
@@ -265,7 +266,7 @@ void tailFitBlendGPU() {
 	// Compute residual statistics using Thrust
 	double mean_abs_residual = thrust::transform_reduce(
 		thrust::device,
-		sim->temp12.begin(), sim->temp12.begin() + tail_len,
+		sim->device->temp12.begin(), sim->device->temp12.begin() + tail_len,
 		[] __host__ __device__ (double r) -> double { return fabs(r); },
 		0.0,
 		thrust::plus<double>()
@@ -273,14 +274,14 @@ void tailFitBlendGPU() {
 	
 	double mean_residual = thrust::reduce(
 		thrust::device,
-		sim->temp12.begin(), sim->temp12.begin() + tail_len,
+		sim->device->temp12.begin(), sim->device->temp12.begin() + tail_len,
 		0.0,
 		thrust::plus<double>()
 	) / static_cast<double>(tail_len);
 	
 	double residual_variance = thrust::transform_reduce(
 		thrust::device,
-		sim->temp12.begin(), sim->temp12.begin() + tail_len,
+		sim->device->temp12.begin(), sim->device->temp12.begin() + tail_len,
 		[mean_residual] __host__ __device__ (double r) -> double {
 			double d = r - mean_residual;
 			return d * d;

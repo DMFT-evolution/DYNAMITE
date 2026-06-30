@@ -1,4 +1,4 @@
-#include "interpolation/index_mat.hpp"
+#include "interpolation/index_mat.cuh"
 #include "core/config.hpp"
 #include "simulation/simulation_data.hpp"
 #include <algorithm>

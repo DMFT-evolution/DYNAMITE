@@ -1,5 +1,6 @@
 #include "EOMs/runge_kutta.hpp"
 #include "core/globals.hpp"
+
 #include "core/config.hpp"
 #include "core/config_build.hpp"
 #include "EOMs/time_steps.hpp"
@@ -35,11 +36,11 @@ double SSPRK104()
 
     // Initialize variables
     std::vector<std::vector<double>> gKvec(stages + 1, std::vector<double>(config.len, 0.0));
-    gKvec[0] = getLastLenEntries(sim->h_QKv, config.len);
+    gKvec[0] = getLastLenEntries(sim->host->QKv, config.len);
     std::vector<std::vector<double>> gRvec(stages + 1, std::vector<double>(config.len, 0.0));
-    gRvec[0] = getLastLenEntries(sim->h_QRv, config.len);
+    gRvec[0] = getLastLenEntries(sim->host->QRv, config.len);
     std::vector<double> gtvec(stages + 1, 0.0);
-    gtvec[0] = sim->h_t1grid.back();
+    gtvec[0] = sim->host->t1grid.back();
 
     std::vector<double> gKe(config.len, 0.0);
     std::vector<double> gRe(config.len, 0.0);
@@ -56,26 +57,26 @@ double SSPRK104()
     // Loop over stages
     for (size_t n = 0; n < stages; ++n) {
         // Interpolation
-        if (sim->h_QKv.size() == config.len || n != 0) {
+        if (sim->host->QKv.size() == config.len || n != 0) {
             interpolate(
-                (n == 0 ? std::vector<double>{} : (n == 5 ? posB1xvec[0] : (n == 6 ? posB1xvec[1] : (n == 7 ? posB1xvec[2] : sim->h_posB1xOld)))),
-                (n == 0 ? std::vector<double>{} : (n == 5 ? posB2xvec[0] : (n == 6 ? posB2xvec[1] : (n == 7 ? posB2xvec[2] : sim->h_posB2xOld)))),
+                (n == 0 ? std::vector<double>{} : (n == 5 ? posB1xvec[0] : (n == 6 ? posB1xvec[1] : (n == 7 ? posB1xvec[2] : sim->host->posB1xOld)))),
+                (n == 0 ? std::vector<double>{} : (n == 5 ? posB2xvec[0] : (n == 6 ? posB2xvec[1] : (n == 7 ? posB2xvec[2] : sim->host->posB2xOld)))),
                 (n == 5 || n == 6 || n == 7)
             );
         }
 
         // Update position vectors
         if (n == 2) {
-            posB1xvec[0] = sim->h_posB1xOld;
-            posB2xvec[0] = sim->h_posB2xOld;
+            posB1xvec[0] = sim->host->posB1xOld;
+            posB2xvec[0] = sim->host->posB2xOld;
         }
         else if (n == 3) {
-            posB1xvec[1] = sim->h_posB1xOld;
-            posB2xvec[1] = sim->h_posB2xOld;
+            posB1xvec[1] = sim->host->posB1xOld;
+            posB2xvec[1] = sim->host->posB2xOld;
         }
         else if (n == 4) {
-            posB1xvec[2] = sim->h_posB1xOld;
-            posB2xvec[2] = sim->h_posB2xOld;
+            posB1xvec[2] = sim->host->posB1xOld;
+            posB2xvec[2] = sim->host->posB2xOld;
         }
 
         hKvec[n] = QKstep(gKvec[n], gRvec[n]);
@@ -84,9 +85,9 @@ double SSPRK104()
 
         // Update g and dr
         if (n == 0) {
-            std::vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-            std::vector<double> lastQRv = getLastLenEntries(sim->h_QRv, config.len);
-            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->h_t1grid.back());
+            std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
+            std::vector<double> lastQRv = getLastLenEntries(sim->host->QRv, config.len);
+            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->host->t1grid.back());
             gKvec[n + 1] = gKvec[0] + hKvec[0] * (config.delta_t * amat[1][0]);
             gRvec[n + 1] = gRvec[0] + hRvec[0] * (config.delta_t * amat[1][0]);
             gtvec[n + 1] = gtvec[0] + config.delta_t * amat[1][0] * htvec[0];
@@ -117,7 +118,7 @@ double SSPRK104()
     }
 
     // Final interpolation
-    interpolate(sim->h_posB1xOld, sim->h_posB2xOld);
+    interpolate(sim->host->posB1xOld, sim->host->posB2xOld);
 
     // Compute ge
     gKe = gKvec[0];
@@ -159,11 +160,11 @@ double RK54()
 
     // Initialize variables
     std::vector<std::vector<double>> gKvec(stages + 1, std::vector<double>(config.len, 0.0));
-    gKvec[0] = getLastLenEntries(sim->h_QKv, config.len);
+    gKvec[0] = getLastLenEntries(sim->host->QKv, config.len);
     std::vector<std::vector<double>> gRvec(stages + 1, std::vector<double>(config.len, 0.0));
-    gRvec[0] = getLastLenEntries(sim->h_QRv, config.len);
+    gRvec[0] = getLastLenEntries(sim->host->QRv, config.len);
     std::vector<double> gtvec(stages + 1, 0.0);
-    gtvec[0] = sim->h_t1grid.back();
+    gtvec[0] = sim->host->t1grid.back();
 
     std::vector<double> gKe(config.len, 0.0);
     std::vector<double> gRe(config.len, 0.0);
@@ -178,10 +179,10 @@ double RK54()
     // Loop over stages
     for (size_t n = 0; n < stages; ++n) {
         // Interpolation
-        if (sim->h_QKv.size() == config.len || n != 0) {
+        if (sim->host->QKv.size() == config.len || n != 0) {
             interpolate(
-                (n == 0 ? std::vector<double>{} : sim->h_posB1xOld),
-                (n == 0 ? std::vector<double>{} : sim->h_posB2xOld),
+                (n == 0 ? std::vector<double>{} : sim->host->posB1xOld),
+                (n == 0 ? std::vector<double>{} : sim->host->posB2xOld),
                 false
             );
         }
@@ -192,9 +193,9 @@ double RK54()
 
         // Update g and dr
         if (n == 0) {
-            std::vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-            std::vector<double> lastQRv = getLastLenEntries(sim->h_QRv, config.len);
-            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->h_t1grid.back());
+            std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
+            std::vector<double> lastQRv = getLastLenEntries(sim->host->QRv, config.len);
+            dr = drstep2(lastQKv, lastQRv, hKvec[n], hRvec[n], sim->host->t1grid.back());
             gKvec[n + 1] = gKvec[0] + hKvec[0] * (config.delta_t * amat[1][0]);
             gRvec[n + 1] = gRvec[0] + hRvec[0] * (config.delta_t * amat[1][0]);
             gtvec[n + 1] = gtvec[0] + config.delta_t * amat[1][0] * htvec[0];
@@ -225,7 +226,7 @@ double RK54()
     }
 
     // Final interpolation
-    interpolate(sim->h_posB1xOld, sim->h_posB2xOld, true);
+    interpolate(sim->host->posB1xOld, sim->host->posB2xOld, true);
 
     // Compute ge
     gKe = gKvec[0];
@@ -250,9 +251,9 @@ double RK54()
     return error;
 }
 
-double update() {
-    // Call appropriate RK method based on rk->init
-    if (rk->init == 1) {
+double updateCPU() {
+    // Call appropriate RK method based on rk->host->init
+    if (rk->host->init == 1) {
         return RK54();
     } else {
         return SSPRK104();

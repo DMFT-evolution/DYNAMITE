@@ -1,13 +1,17 @@
 #include "io/io_utils.hpp"
 #include "simulation/simulation_data.hpp"
+#if DMFE_WITH_CUDA
+#include "simulation/device_simulation_data.hpp"
+#endif
 #include "core/gpu_memory_utils.hpp"
 #include "math/math_ops.hpp"
 #include "math/math_sigma.hpp"
 #include "core/config.hpp"
 #include "core/globals.hpp"
+
 #include "convolution/convolution.hpp"
 #include "core/device_utils.cuh"
-#include "EOMs/time_steps.hpp"
+#include "EOMs/time_steps_cuda.cuh"
 #include "version/version_info.hpp"
 #include <fstream>
 #include <iostream>
@@ -86,13 +90,13 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     double energy;
 #if DMFE_WITH_CUDA
     if (config.gpu) {
-        energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
+        energy = energyGPU(*sim->device, config.T0);
     } else {
 #endif
         vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+        vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
+        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
 #if DMFE_WITH_CUDA
     }
 #endif
@@ -101,7 +105,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     const double p_start_params = 0.50;
     const double p_end_params   = 0.65;
     const double p_span_params  = (p_end_params - p_start_params);
-    const double last_t1_params = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1_params = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_params_prog = [&](int step, int total_steps){
         if (total_steps <= 0) return;
         double frac = p_start_params + p_span_params * std::min(std::max(0, step), total_steps) / (double)total_steps;
@@ -228,15 +232,15 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     }
 
     params << "# Current Simulation State" << std::endl;
-    params << "current_time = " << sim->h_t1grid.back() << std::endl;
+    params << "current_time = " << sim->host->t1grid.back() << std::endl;
     params << "current_loop = " << config.loop << std::endl;
     params << "current_delta = " << delta << std::endl;
     params << "current_delta_t = " << delta_t << std::endl;
-    params << "current_method = " << (rk->init == 1 ? "RK54" : rk->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->init - 2)) + ")") << std::endl;
-    params << "current_t1grid_size = " << sim->h_t1grid.size() << std::endl;
-    params << "current_QK0 = " << sim->h_QKv[(sim->h_t1grid.size() - 1) * config.len] << std::endl;
-    params << "current_QR0 = " << sim->h_QRv[(sim->h_t1grid.size() - 1) * config.len] << std::endl;
-    params << "current_r = " << sim->h_rvec.back() << std::endl;
+    params << "current_method = " << (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")") << std::endl;
+    params << "current_t1grid_size = " << sim->host->t1grid.size() << std::endl;
+    params << "current_QK0 = " << sim->host->QKv[(sim->host->t1grid.size() - 1) * config.len] << std::endl;
+    params << "current_QR0 = " << sim->host->QRv[(sim->host->t1grid.size() - 1) * config.len] << std::endl;
+    params << "current_r = " << sim->host->rvec.back() << std::endl;
     params << "current_energy = " << energy << std::endl;
 
     params.close();

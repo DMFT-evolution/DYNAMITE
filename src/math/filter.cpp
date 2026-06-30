@@ -1,5 +1,6 @@
 #include "math/filter.hpp"
 #include "core/globals.hpp"
+
 #include "core/config.hpp"
 #include <vector>
 #include <algorithm>
@@ -69,8 +70,8 @@ void filter_old(double* gK, double* gR, double* hK0, double* hR0, size_t len)
     if (alpha > 1.0) alpha = 1.0;
 
     double dx_avg = 1.0;
-    if (sim->h_theta.size() >= len) {
-        dx_avg = (sim->h_theta[len - 1] - sim->h_theta[0]);
+    if (sim->host->theta.size() >= len) {
+        dx_avg = (sim->host->theta[len - 1] - sim->host->theta[0]);
         if (dx_avg <= 0.0) dx_avg = 1.0;
     }
 
@@ -78,10 +79,10 @@ void filter_old(double* gK, double* gR, double* hK0, double* hR0, size_t len)
     if (taper_len < 2) taper_len = 2;
     if (taper_len > 32) taper_len = 32;
 
-    apply_filter_cpu_old(gK, sim->h_theta, len, alpha, dx_avg, taper_len);
-    apply_filter_cpu_old(gR, sim->h_theta, len, alpha, dx_avg, taper_len);
-    apply_filter_cpu_old(hK0, sim->h_theta, len, alpha, dx_avg, taper_len);
-    apply_filter_cpu_old(hR0, sim->h_theta, len, alpha, dx_avg, taper_len);
+    apply_filter_cpu_old(gK, sim->host->theta, len, alpha, dx_avg, taper_len);
+    apply_filter_cpu_old(gR, sim->host->theta, len, alpha, dx_avg, taper_len);
+    apply_filter_cpu_old(hK0, sim->host->theta, len, alpha, dx_avg, taper_len);
+    apply_filter_cpu_old(hR0, sim->host->theta, len, alpha, dx_avg, taper_len);
 }
 
 void apply_lowpass5_cpu(double* vec,
@@ -131,7 +132,7 @@ double filter_weight_from_hR0(const double* hR0, size_t len)
         double lpfm1 = c0 * (hR0[i - 3] + hR0[i + 1])
                      + c1 * (hR0[i - 2] + hR0[i])
                      + c2 * hR0[i - 1];
-        double dxm = (sim->h_theta.size() >= len) ? (sim->h_theta[i] - sim->h_theta[i - 1]) : 1.0;
+        double dxm = (sim->host->theta.size() >= len) ? (sim->host->theta[i] - sim->host->theta[i - 1]) : 1.0;
         double Di = dxm * (lpf - hR0[i]);
         if (i > 2) {
             double Dm1 = dxm * (lpfm1 - hR0[i - 1]);
@@ -158,10 +159,10 @@ void filter_apply_cpu(double* gK, double* gR, double* hK0, double* hR0, size_t l
     if (w_apply <= 0.0) return;
 
     double scaled = alpha * w_apply;
-    if (gK) apply_lowpass5_cpu(gK, sim->h_theta, len, scaled);
-    if (gR) apply_lowpass5_cpu(gR, sim->h_theta, len, scaled);
-    if (hK0) apply_lowpass5_cpu(hK0, sim->h_theta, len, scaled);
-    if (hR0) apply_lowpass5_cpu(hR0, sim->h_theta, len, scaled);
+    if (gK) apply_lowpass5_cpu(gK, sim->host->theta, len, scaled);
+    if (gR) apply_lowpass5_cpu(gR, sim->host->theta, len, scaled);
+    if (hK0) apply_lowpass5_cpu(hK0, sim->host->theta, len, scaled);
+    if (hR0) apply_lowpass5_cpu(hR0, sim->host->theta, len, scaled);
 }
 } // namespace
 

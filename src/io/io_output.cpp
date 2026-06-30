@@ -5,7 +5,8 @@
 #include "math/math_sigma.hpp"
 #include "core/config.hpp"
 #include "core/globals.hpp"
-#include "convolution/convolution.hpp"
+
+#include "convolution/convolution.cuh"
 #include "core/device_utils.cuh"
 #include "EOMs/time_steps.hpp"
 #include "version/version_info.hpp"
@@ -17,10 +18,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <dirent.h>
-#if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
-#include <thrust/copy.h>
-#endif
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
@@ -195,25 +192,13 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     }
     
     // Calculate energy
-    double energy;
-#if DMFE_WITH_CUDA
-    if (config.gpu) {
-        energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
-    } else {
-#endif
-        vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-        SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
-#if DMFE_WITH_CUDA
-    }
-#endif
+    double Energy =energy();
     
     // Progress mapping for params write: [0.50 .. 0.65]
     const double p_start_params = 0.50;
     const double p_end_params   = 0.65;
     const double p_span_params  = (p_end_params - p_start_params);
-    const double last_t1_params = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1_params = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_params_prog = [&](int step, int total_steps){
         if (total_steps <= 0) return;
         double frac = p_start_params + p_span_params * std::min(std::max(0, step), total_steps) / (double)total_steps;
@@ -337,16 +322,16 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     }
     
     params << "# Current Simulation State" << std::endl;
-    params << "current_time = " << sim->h_t1grid.back() << std::endl;
+    params << "current_time = " << sim->host->t1grid.back() << std::endl;
     params << "current_loop = " << config.loop << std::endl;
     params << "current_delta = " << delta << std::endl;
     params << "current_delta_t = " << delta_t << std::endl;
-    params << "current_method = " << (rk->init == 1 ? "RK54" : rk->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->init - 2)) + ")") << std::endl;
-    params << "current_t1grid_size = " << sim->h_t1grid.size() << std::endl;
-    params << "current_QK0 = " << sim->h_QKv[(sim->h_t1grid.size() - 1) * config.len] << std::endl;
-    params << "current_QR0 = " << sim->h_QRv[(sim->h_t1grid.size() - 1) * config.len] << std::endl;
-    params << "current_r = " << sim->h_rvec.back() << std::endl;
-    params << "current_energy = " << energy << std::endl;
+    params << "current_method = " << (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")") << std::endl;
+    params << "current_t1grid_size = " << sim->host->t1grid.size() << std::endl;
+    params << "current_QK0 = " << sim->host->QKv[(sim->host->t1grid.size() - 1) * config.len] << std::endl;
+    params << "current_QR0 = " << sim->host->QRv[(sim->host->t1grid.size() - 1) * config.len] << std::endl;
+    params << "current_r = " << sim->host->rvec.back() << std::endl;
+    params << "current_energy = " << Energy << std::endl;
     
     params.close();
     if (config.debug) {
@@ -500,7 +485,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "current_loop = " << snapshot.current_loop << std::endl;
     params << "current_delta = " << delta << std::endl;
     params << "current_delta_t = " << delta_t << std::endl;
-    // Note: We can't access rk->init in async context, so we'll use a default
+    // Note: We can't access rk->host->init in async context, so we'll use a default
     params << "current_method = N/A (async)" << std::endl;
     params << "current_t1grid_size = " << snapshot.t1grid.size() << std::endl;
     params << "current_QK0 = " << snapshot.QKv[(snapshot.t1grid.size() - 1) * snapshot.current_len] << std::endl;
@@ -528,19 +513,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
 #endif
 
     // Calculate energy before saving
-    double energy;
-#if DMFE_WITH_CUDA
-    if (config.gpu) {
-        energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
-    } else {
-#endif
-        vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-        SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
-#if DMFE_WITH_CUDA
-    }
-#endif
+    double Energy = energy();
     
     std::ofstream file(filename, std::ios::binary);
     if (!file) {
@@ -552,7 +525,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     const double p_start = 0.10;
     const double p_end   = 0.50;
     const double p_span  = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
 
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
@@ -562,10 +535,10 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     };
 
     // Total elements written for progress accounting (header/params ignored)
-    size_t total_elems = sim->h_t1grid.size()
-                       + sim->h_QKv.size() + sim->h_QRv.size()
-                       + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->t1grid.size()
+                       + sim->host->QKv.size() + sim->host->QRv.size()
+                       + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0;
     update_prog(done_elems, total_elems);
 
@@ -574,7 +547,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     file.write(reinterpret_cast<char*>(&header_version), sizeof(int));
     
     // Write dimensions
-    size_t t1grid_size = sim->h_t1grid.size();
+    size_t t1grid_size = sim->host->t1grid.size();
     size_t vector_len = config.len;
     file.write(reinterpret_cast<char*>(&t1grid_size), sizeof(size_t));
     file.write(reinterpret_cast<char*>(&vector_len), sizeof(size_t));
@@ -591,28 +564,28 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     file.write(reinterpret_cast<const char*>(&energy), sizeof(double));
     
     // Write time grid
-    file.write(reinterpret_cast<const char*>(sim->h_t1grid.data()), sim->h_t1grid.size() * sizeof(double));
-    done_elems += sim->h_t1grid.size();
+    file.write(reinterpret_cast<const char*>(sim->host->t1grid.data()), sim->host->t1grid.size() * sizeof(double));
+    done_elems += sim->host->t1grid.size();
     update_prog(done_elems, total_elems);
     
     // Write vectors
-    file.write(reinterpret_cast<const char*>(sim->h_QKv.data()), sim->h_QKv.size() * sizeof(double));
-    done_elems += sim->h_QKv.size();
+    file.write(reinterpret_cast<const char*>(sim->host->QKv.data()), sim->host->QKv.size() * sizeof(double));
+    done_elems += sim->host->QKv.size();
     update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_QRv.data()), sim->h_QRv.size() * sizeof(double));
-    done_elems += sim->h_QRv.size();
+    file.write(reinterpret_cast<const char*>(sim->host->QRv.data()), sim->host->QRv.size() * sizeof(double));
+    done_elems += sim->host->QRv.size();
     update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_dQKv.data()), sim->h_dQKv.size() * sizeof(double));
-    done_elems += sim->h_dQKv.size();
+    file.write(reinterpret_cast<const char*>(sim->host->dQKv.data()), sim->host->dQKv.size() * sizeof(double));
+    done_elems += sim->host->dQKv.size();
     update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_dQRv.data()), sim->h_dQRv.size() * sizeof(double));
-    done_elems += sim->h_dQRv.size();
+    file.write(reinterpret_cast<const char*>(sim->host->dQRv.data()), sim->host->dQRv.size() * sizeof(double));
+    done_elems += sim->host->dQRv.size();
     update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_rvec.data()), sim->h_rvec.size() * sizeof(double));
-    done_elems += sim->h_rvec.size();
+    file.write(reinterpret_cast<const char*>(sim->host->rvec.data()), sim->host->rvec.size() * sizeof(double));
+    done_elems += sim->host->rvec.size();
     update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_drvec.data()), sim->h_drvec.size() * sizeof(double));
-    done_elems += sim->h_drvec.size();
+    file.write(reinterpret_cast<const char*>(sim->host->drvec.data()), sim->host->drvec.size() * sizeof(double));
+    done_elems += sim->host->drvec.size();
     update_prog(done_elems, total_elems);
     // Ensure data hits disk before marking 50%
     file.flush();
@@ -646,19 +619,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     }
 #endif
     // Calculate energy
-    double energy;
-#if DMFE_WITH_CUDA
-    if (config.gpu) {
-        energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
-    } else {
-#endif
-        vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-        SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
-#if DMFE_WITH_CUDA
-    }
-#endif
+    double Energy = energy();
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
     std::string binFilename = dirPath + "/data.bin";
     if (fileExists(binFilename)) { std::remove(binFilename.c_str()); }
@@ -678,36 +639,36 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     const double p_start = 0.10;
     const double p_end   = 0.50;
     const double p_span  = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
         if (frac > p_end) frac = p_end;
         if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "hdf5");
     };
-    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->QKv.size() + sim->host->QRv.size() + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->t1grid.size() + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0;
     update_prog(done_elems, total_elems);
 
     // Datasets (fail fast if any write fails); update progress after each
-    if (!h5rt::write_dataset_1d_double(file, "QKv", sim->h_QKv.data(), sim->h_QKv.size())) { fail_and_fallback("QKv"); return; }
-    done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "QRv", sim->h_QRv.data(), sim->h_QRv.size())) { fail_and_fallback("QRv"); return; }
-    done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->h_dQKv.data(), sim->h_dQKv.size())) { fail_and_fallback("dQKv"); return; }
-    done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->h_dQRv.data(), sim->h_dQRv.size())) { fail_and_fallback("dQRv"); return; }
-    done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->h_t1grid.data(), sim->h_t1grid.size())) { fail_and_fallback("t1grid"); return; }
-    done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "rvec", sim->h_rvec.data(), sim->h_rvec.size())) { fail_and_fallback("rvec"); return; }
-    done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "drvec", sim->h_drvec.data(), sim->h_drvec.size())) { fail_and_fallback("drvec"); return; }
-    done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "QKv", sim->host->QKv.data(), sim->host->QKv.size())) { fail_and_fallback("QKv"); return; }
+    done_elems += sim->host->QKv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "QRv", sim->host->QRv.data(), sim->host->QRv.size())) { fail_and_fallback("QRv"); return; }
+    done_elems += sim->host->QRv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->host->dQKv.data(), sim->host->dQKv.size())) { fail_and_fallback("dQKv"); return; }
+    done_elems += sim->host->dQKv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->host->dQRv.data(), sim->host->dQRv.size())) { fail_and_fallback("dQRv"); return; }
+    done_elems += sim->host->dQRv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->host->t1grid.data(), sim->host->t1grid.size())) { fail_and_fallback("t1grid"); return; }
+    done_elems += sim->host->t1grid.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "rvec", sim->host->rvec.data(), sim->host->rvec.size())) { fail_and_fallback("rvec"); return; }
+    done_elems += sim->host->rvec.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "drvec", sim->host->drvec.data(), sim->host->drvec.size())) { fail_and_fallback("drvec"); return; }
+    done_elems += sim->host->drvec.size(); update_prog(done_elems, total_elems);
 
     // Attributes
-    double t_current = sim->h_t1grid.back();
+    double t_current = sim->host->t1grid.back();
     int current_len = config.len; int current_loop = config.loop;
     if (!h5rt::write_attr_double(file, "time", t_current)) { fail_and_fallback("attr time"); return; }
     if (!h5rt::write_attr_int(file, "iteration", current_loop)) { fail_and_fallback("attr iteration"); return; }
@@ -744,19 +705,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
 #endif
     
     // Calculate energy before saving
-    double energy;
-#if DMFE_WITH_CUDA
-    if (config.gpu) {
-        energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
-    } else {
-#endif
-        vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
-        SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
-#if DMFE_WITH_CUDA
-    }
-#endif
+    double Energy = energy();
     
     // Get directory path from filename
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -776,15 +725,15 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     const double p_start = 0.10;
     const double p_end   = 0.50;
     const double p_span  = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
         if (frac > p_end) frac = p_end;
         if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "hdf5");
     };
-    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->QKv.size() + sim->host->QRv.size() + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->t1grid.size() + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0;
     update_prog(done_elems, total_elems);
 
@@ -799,107 +748,107 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     
     // Write QKv dataset with appropriate chunking
     {
-        hsize_t qkv_dims[1] = {sim->h_QKv.size()};
+        hsize_t qkv_dims[1] = {sim->host->QKv.size()};
         H5::DataSpace qkv_space(1, qkv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(1048576), sim->h_QKv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->host->QKv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("QKv", H5::PredType::NATIVE_DOUBLE, qkv_space, plist)
-            .write(sim->h_QKv.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->QKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->QKv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write QRv dataset with appropriate chunking
     {
-        hsize_t qrv_dims[1] = {sim->h_QRv.size()};
+        hsize_t qrv_dims[1] = {sim->host->QRv.size()};
         H5::DataSpace qrv_space(1, qrv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(1048576), sim->h_QRv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->host->QRv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("QRv", H5::PredType::NATIVE_DOUBLE, qrv_space, plist)
-            .write(sim->h_QRv.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->QRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->QRv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write dQKv dataset with appropriate chunking
     {
-        hsize_t dqkv_dims[1] = {sim->h_dQKv.size()};
+        hsize_t dqkv_dims[1] = {sim->host->dQKv.size()};
         H5::DataSpace dqkv_space(1, dqkv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(1048576), sim->h_dQKv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->host->dQKv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("dQKv", H5::PredType::NATIVE_DOUBLE, dqkv_space, plist)
-            .write(sim->h_dQKv.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->dQKv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->dQKv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write dQRv dataset with appropriate chunking
     {
-        hsize_t dqrv_dims[1] = {sim->h_dQRv.size()};
+        hsize_t dqrv_dims[1] = {sim->host->dQRv.size()};
         H5::DataSpace dqrv_space(1, dqrv_dims);
         
         // Set chunk size specifically for this dataset
-        size_t chunk_size = std::min(size_t(1048576), sim->h_dQRv.size());
+        size_t chunk_size = std::min(size_t(1048576), sim->host->dQRv.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("dQRv", H5::PredType::NATIVE_DOUBLE, dqrv_space, plist)
-            .write(sim->h_dQRv.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->dQRv.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->dQRv.size(); update_prog(done_elems, total_elems);
     }
     
     // Write t1grid dataset with appropriate chunking
     {
-        hsize_t t1_dims[1] = {sim->h_t1grid.size()};
+        hsize_t t1_dims[1] = {sim->host->t1grid.size()};
         H5::DataSpace t1_space(1, t1_dims);
         
         // Set chunk size specifically for this dataset - important for smaller arrays!
-        size_t chunk_size = std::min(size_t(1024), sim->h_t1grid.size());
+        size_t chunk_size = std::min(size_t(1024), sim->host->t1grid.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("t1grid", H5::PredType::NATIVE_DOUBLE, t1_space, plist)
-            .write(sim->h_t1grid.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->t1grid.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->t1grid.size(); update_prog(done_elems, total_elems);
     }
     
     // Write rvec dataset with appropriate chunking
     {
-        hsize_t r_dims[1] = {sim->h_rvec.size()};
+        hsize_t r_dims[1] = {sim->host->rvec.size()};
         H5::DataSpace r_space(1, r_dims);
         
         // Set chunk size specifically for this dataset - important for smaller arrays!
-        size_t chunk_size = std::min(size_t(1024), sim->h_rvec.size());
+        size_t chunk_size = std::min(size_t(1024), sim->host->rvec.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("rvec", H5::PredType::NATIVE_DOUBLE, r_space, plist)
-            .write(sim->h_rvec.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->rvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->rvec.size(); update_prog(done_elems, total_elems);
     }
     
     // Write drvec dataset with appropriate chunking
     {
-        hsize_t dr_dims[1] = {sim->h_drvec.size()};
+        hsize_t dr_dims[1] = {sim->host->drvec.size()};
         H5::DataSpace dr_space(1, dr_dims);
         
         // Set chunk size specifically for this dataset - important for smaller arrays!
-        size_t chunk_size = std::min(size_t(1024), sim->h_drvec.size());
+        size_t chunk_size = std::min(size_t(1024), sim->host->drvec.size());
         hsize_t chunk_dims[1] = {chunk_size};
         plist.setChunk(1, chunk_dims);
         
         file.createDataSet("drvec", H5::PredType::NATIVE_DOUBLE, dr_space, plist)
-            .write(sim->h_drvec.data(), H5::PredType::NATIVE_DOUBLE);
-        done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
+            .write(sim->host->drvec.data(), H5::PredType::NATIVE_DOUBLE);
+        done_elems += sim->host->drvec.size(); update_prog(done_elems, total_elems);
     }
 
     // Add metadata as attributes
@@ -921,7 +870,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     };
 
     // Simulation parameters
-    double t_current = sim->h_t1grid.back();
+    double t_current = sim->host->t1grid.back();
     int current_len = config.len;
     int current_loop = config.loop;
 
@@ -953,7 +902,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (config.debug) {
         std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename 
                   << " (time=" << t_current 
-                  << ", vectors=" << sim->h_QKv.size() / config.len << "×" << config.len 
+                  << ", vectors=" << sim->host->QKv.size() / config.len << "×" << config.len 
                   << ", energy=" << energy
                   << ")" << std::endl;
     }
@@ -1052,13 +1001,13 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     // This is a bit hacky, but necessary since saveHistory expects the global sim
     // We'll create a temporary SimulationData with the snapshot data
     SimulationData temp_sim;
-    temp_sim.h_QKv = snapshot.QKv;
-    temp_sim.h_QRv = snapshot.QRv;
-    temp_sim.h_dQKv = snapshot.dQKv;
-    temp_sim.h_dQRv = snapshot.dQRv;
-    temp_sim.h_t1grid = snapshot.t1grid;
-    temp_sim.h_rvec = snapshot.rvec;
-    temp_sim.h_drvec = snapshot.drvec;
+    temp_sim->host->QKv = snapshot.QKv;
+    temp_sim->host->QRv = snapshot.QRv;
+    temp_sim->host->dQKv = snapshot.dQKv;
+    temp_sim->host->dQRv = snapshot.dQRv;
+    temp_sim->host->t1grid = snapshot.t1grid;
+    temp_sim->host->rvec = snapshot.rvec;
+    temp_sim->host->drvec = snapshot.drvec;
 
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
 #if DMFE_WITH_CUDA
@@ -1225,13 +1174,13 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
 
     // For async, we need to reconstruct the SimulationData for saveHistory
     SimulationData temp_sim;
-    temp_sim.h_QKv = snapshot.QKv;
-    temp_sim.h_QRv = snapshot.QRv;
-    temp_sim.h_dQKv = snapshot.dQKv;
-    temp_sim.h_dQRv = snapshot.dQRv;
-    temp_sim.h_t1grid = snapshot.t1grid;
-    temp_sim.h_rvec = snapshot.rvec;
-    temp_sim.h_drvec = snapshot.drvec;
+    temp_sim->host->QKv = snapshot.QKv;
+    temp_sim->host->QRv = snapshot.QRv;
+    temp_sim->host->dQKv = snapshot.dQKv;
+    temp_sim->host->dQRv = snapshot.dQRv;
+    temp_sim->host->t1grid = snapshot.t1grid;
+    temp_sim->host->rvec = snapshot.rvec;
+    temp_sim->host->drvec = snapshot.drvec;
     
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
     saveHistoryAsync(filename, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
@@ -1356,14 +1305,14 @@ void saveCompressedData(const std::string& dirPath)
     // Ensure data is on CPU if using GPU
 #if DMFE_WITH_CUDA
     if (config.gpu) {
-        sim->h_QKB1int.resize(sim->d_QKB1int.size());
-        thrust::copy(sim->d_QKB1int.begin(), sim->d_QKB1int.end(), sim->h_QKB1int.begin());
-        sim->h_QRB1int.resize(sim->d_QRB1int.size());
-        thrust::copy(sim->d_QRB1int.begin(), sim->d_QRB1int.end(), sim->h_QRB1int.begin());
-        sim->h_theta.resize(sim->d_theta.size());
-        thrust::copy(sim->d_theta.begin(), sim->d_theta.end(), sim->h_theta.begin());
-        sim->h_t1grid.resize(sim->d_t1grid.size());
-        thrust::copy(sim->d_t1grid.begin(), sim->d_t1grid.end(), sim->h_t1grid.begin());
+        sim->host->QKB1int.resize(sim->device->QKB1int.size());
+        thrust::copy(sim->device->QKB1int.begin(), sim->device->QKB1int.end(), sim->host->QKB1int.begin());
+        sim->host->QRB1int.resize(sim->device->QRB1int.size());
+        thrust::copy(sim->device->QRB1int.begin(), sim->device->QRB1int.end(), sim->host->QRB1int.begin());
+        sim->host->theta.resize(sim->device->theta.size());
+        thrust::copy(sim->device->theta.begin(), sim->device->theta.end(), sim->host->theta.begin());
+        sim->host->t1grid.resize(sim->device->t1grid.size());
+        thrust::copy(sim->device->t1grid.begin(), sim->device->t1grid.end(), sim->host->t1grid.begin());
     }
 #endif
     
@@ -1371,7 +1320,7 @@ void saveCompressedData(const std::string& dirPath)
     const double p_start_cmp = 0.80;
     const double p_end_cmp   = 0.90;
     const double p_span_cmp  = (p_end_cmp - p_start_cmp);
-    const double last_t1_cmp = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1_cmp = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_cmp_prog = [&](size_t done, size_t total){
         double frac = p_start_cmp + (total ? (p_span_cmp * (double)done / (double)total) : 0.0);
         if (frac > p_end_cmp) frac = p_end_cmp;
@@ -1380,9 +1329,9 @@ void saveCompressedData(const std::string& dirPath)
     };
     // Total bytes approximation: headers + binary arrays + theta text
     size_t total_bytes = sizeof(size_t)*4
-                       + sim->h_QKB1int.size()*sizeof(double)
-                       + sim->h_QRB1int.size()*sizeof(double)
-                       + sim->h_theta.size()*24; // approx per-line
+                       + sim->host->QKB1int.size()*sizeof(double)
+                       + sim->host->QRB1int.size()*sizeof(double)
+                       + sim->host->theta.size()*24; // approx per-line
     size_t done_bytes = 0;
     update_cmp_prog(done_bytes, total_bytes);
 
@@ -1402,8 +1351,8 @@ void saveCompressedData(const std::string& dirPath)
     update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
-    qk_file.write(reinterpret_cast<const char*>(sim->h_QKB1int.data()), sim->h_QKB1int.size() * sizeof(double));
-    done_bytes += sim->h_QKB1int.size() * sizeof(double);
+    qk_file.write(reinterpret_cast<const char*>(sim->host->QKB1int.data()), sim->host->QKB1int.size() * sizeof(double));
+    done_bytes += sim->host->QKB1int.size() * sizeof(double);
     update_cmp_prog(done_bytes, total_bytes);
     qk_file.close();
     
@@ -1421,13 +1370,13 @@ void saveCompressedData(const std::string& dirPath)
     update_cmp_prog(done_bytes, total_bytes);
     
     // Write data
-    qr_file.write(reinterpret_cast<const char*>(sim->h_QRB1int.data()), sim->h_QRB1int.size() * sizeof(double));
-    done_bytes += sim->h_QRB1int.size() * sizeof(double);
+    qr_file.write(reinterpret_cast<const char*>(sim->host->QRB1int.data()), sim->host->QRB1int.size() * sizeof(double));
+    done_bytes += sim->host->QRB1int.size() * sizeof(double);
     update_cmp_prog(done_bytes, total_bytes);
     qr_file.close();
     
     // Save (last t1) * theta to t1_compressed.txt
-    double last_t1 = sim->h_t1grid.back();
+    double last_t1 = sim->host->t1grid.back();
     std::string t1_filename = dirPath + "/t1_compressed.txt";
     std::ofstream t1_file(t1_filename);
     if (!t1_file) {
@@ -1436,8 +1385,8 @@ void saveCompressedData(const std::string& dirPath)
     }
     
     t1_file << std::fixed << std::setprecision(16);
-    for (size_t i = 0; i < sim->h_theta.size(); ++i) {
-        t1_file << last_t1 * sim->h_theta[i] << "\n";
+    for (size_t i = 0; i < sim->host->theta.size(); ++i) {
+        t1_file << last_t1 * sim->host->theta[i] << "\n";
         // rough per-line size update to show progress
         done_bytes += 24;
         if ((i & 0x3FF) == 0) update_cmp_prog(done_bytes, total_bytes); // throttle

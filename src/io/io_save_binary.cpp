@@ -5,7 +5,8 @@
 #include "math/math_sigma.hpp"
 #include "core/config.hpp"
 #include "convolution/convolution.hpp"
-#include "core/globals.hpp"           // globals
+#include "core/globals.hpp"
+           // globals
 #include "EOMs/time_steps.hpp"        // getLastLenEntries
 #include "core/console.hpp"
 #include <fstream>
@@ -31,9 +32,9 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     double energy;
     {
         vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+        vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0]
+        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
                  + Dflambda(lastQKv[0]) / config.T0);
     }
 
@@ -47,7 +48,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     const double p_start = 0.10;
     const double p_end   = 0.50;
     const double p_span  = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
 
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
@@ -56,17 +57,17 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
         _setSaveProgress(frac, last_t1, "binary");
     };
 
-    size_t total_elems = sim->h_t1grid.size()
-                       + sim->h_QKv.size() + sim->h_QRv.size()
-                       + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->t1grid.size()
+                       + sim->host->QKv.size() + sim->host->QRv.size()
+                       + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0;
     update_prog(done_elems, total_elems);
 
     int header_version = 1;
     file.write(reinterpret_cast<char*>(&header_version), sizeof(int));
 
-    size_t t1grid_size = sim->h_t1grid.size();
+    size_t t1grid_size = sim->host->t1grid.size();
     size_t vector_len = config.len;
     file.write(reinterpret_cast<char*>(&t1grid_size), sizeof(size_t));
     file.write(reinterpret_cast<char*>(&vector_len), sizeof(size_t));
@@ -83,21 +84,21 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     file.write(reinterpret_cast<const char*>(&energy), sizeof(double));
 
     // Write arrays
-    file.write(reinterpret_cast<const char*>(sim->h_t1grid.data()), sim->h_t1grid.size() * sizeof(double));
-    done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->t1grid.data()), sim->host->t1grid.size() * sizeof(double));
+    done_elems += sim->host->t1grid.size(); update_prog(done_elems, total_elems);
 
-    file.write(reinterpret_cast<const char*>(sim->h_QKv.data()), sim->h_QKv.size() * sizeof(double));
-    done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_QRv.data()), sim->h_QRv.size() * sizeof(double));
-    done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_dQKv.data()), sim->h_dQKv.size() * sizeof(double));
-    done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_dQRv.data()), sim->h_dQRv.size() * sizeof(double));
-    done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_rvec.data()), sim->h_rvec.size() * sizeof(double));
-    done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
-    file.write(reinterpret_cast<const char*>(sim->h_drvec.data()), sim->h_drvec.size() * sizeof(double));
-    done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->QKv.data()), sim->host->QKv.size() * sizeof(double));
+    done_elems += sim->host->QKv.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->QRv.data()), sim->host->QRv.size() * sizeof(double));
+    done_elems += sim->host->QRv.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->dQKv.data()), sim->host->dQKv.size() * sizeof(double));
+    done_elems += sim->host->dQKv.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->dQRv.data()), sim->host->dQRv.size() * sizeof(double));
+    done_elems += sim->host->dQRv.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->rvec.data()), sim->host->rvec.size() * sizeof(double));
+    done_elems += sim->host->rvec.size(); update_prog(done_elems, total_elems);
+    file.write(reinterpret_cast<const char*>(sim->host->drvec.data()), sim->host->drvec.size() * sizeof(double));
+    done_elems += sim->host->drvec.size(); update_prog(done_elems, total_elems);
     file.flush();
     update_prog(total_elems, total_elems);
 

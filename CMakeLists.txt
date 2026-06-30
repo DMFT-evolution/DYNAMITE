@@ -186,6 +186,8 @@ if(DMFE_WITH_CUDA)
         src/core/stream_pool.cu
         src/core/device_constants.cu
         src/core/compute_utils.cu
+        src/core/device_factory.cu
+        src/core/backend_dispatch.cu
     src/io/io_output.cu
     src/core/gpu_memory_utils.cu
         src/interpolation/index_mat.cu
@@ -212,6 +214,7 @@ set(CPU_SOURCES
     src/search/search_utils.cpp
     src/core/host_utils.cpp
     src/core/device_utils.cpp
+    src/core/backend_dispatch.cpp
     src/convolution/convolution.cpp
     src/interpolation/index_vec.cpp
     src/interpolation/index_mat.cpp

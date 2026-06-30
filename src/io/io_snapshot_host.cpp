@@ -2,6 +2,7 @@
 
 #include "io/io_utils.hpp"
 #include "simulation/simulation_data.hpp"
+#include "EOMs/time_steps.hpp"
 #include "core/config.hpp"
 #include "math/math_sigma.hpp"
 #include "math/math_ops.hpp"
@@ -19,23 +20,22 @@ extern std::chrono::high_resolution_clock::time_point program_start_time;
 SimulationDataSnapshot createDataSnapshot() {
     SimulationDataSnapshot snapshot;
 
-    snapshot.QKv = sim->h_QKv;
-    snapshot.QRv = sim->h_QRv;
-    snapshot.dQKv = sim->h_dQKv;
-    snapshot.dQRv = sim->h_dQRv;
-    snapshot.t1grid = sim->h_t1grid;
-    snapshot.rvec = sim->h_rvec;
-    snapshot.drvec = sim->h_drvec;
-    snapshot.QKB1int = sim->h_QKB1int;
-    snapshot.QRB1int = sim->h_QRB1int;
-    snapshot.theta = sim->h_theta;
-    snapshot.t_current = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    snapshot.QKv = sim->host->QKv;
+    snapshot.QRv = sim->host->QRv;
+    snapshot.dQKv = sim->host->dQKv;
+    snapshot.dQRv = sim->host->dQRv;
+    snapshot.t1grid = sim->host->t1grid;
+    snapshot.rvec = sim->host->rvec;
+    snapshot.drvec = sim->host->drvec;
+    snapshot.QKB1int = sim->host->QKB1int;
+    snapshot.QRB1int = sim->host->QRB1int;
+    snapshot.theta = sim->host->theta;
+    snapshot.t_current = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
 
     std::vector<double> temp(config.len, 0.0);
-    std::vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+    std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
     SigmaK(lastQKv, temp);
-    snapshot.energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0]
-                        + Dflambda(lastQKv[0]) / config.T0);
+    snapshot.energy = energyCPU();
 
     snapshot.current_len = config.len;
     snapshot.current_loop = config.loop;
@@ -56,9 +56,9 @@ SimulationDataSnapshot createDataSnapshot() {
     snapshot.peak_gpu_memory_mb_snapshot = peak_gpu_memory_mb;
     snapshot.program_start_time_snapshot = program_start_time;
 
-    snapshot.debug_step_times = sim->h_debug_step_times;
-    snapshot.debug_step_runtimes = sim->h_debug_step_runtimes;
-    snapshot.debug_step_memory = sim->h_debug_step_memory;
+    snapshot.debug_step_times = sim->host->debug_step_times;
+    snapshot.debug_step_runtimes = sim->host->debug_step_runtimes;
+    snapshot.debug_step_memory = sim->host->debug_step_memory;
 
     return snapshot;
 }

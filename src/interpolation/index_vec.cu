@@ -1,5 +1,6 @@
-#include "interpolation/index_vec.hpp"
-#include "core/globals.hpp"         // for sim global pointer
+#include "interpolation/index_vec.cuh"
+#include "core/globals.hpp"
+         // for sim global pointer
 #include "math/math_ops.hpp"        // for pow_const template
 #include <vector>
 #include <numeric>             // for std::inner_product

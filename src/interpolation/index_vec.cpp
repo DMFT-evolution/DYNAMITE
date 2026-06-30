@@ -3,9 +3,9 @@
 #include <math.h>
 #include "interpolation/index_vec.hpp"
 #include "core/globals.hpp"
+
 #include "core/config.hpp"
 #include "math/math_ops.hpp"
-#include <vector>
 #include <omp.h>
 #include <numeric>
 
@@ -15,10 +15,10 @@ extern SimulationConfig config;
 void indexVecLN3(const std::vector<double>& weights, const std::vector<size_t>& inds,
                  std::vector<double>& qk_result, std::vector<double>& qr_result, size_t len) {
     size_t prod = inds.size();
-    size_t length = sim->h_QKv.size() - len;
+    size_t length = sim->host->QKv.size() - len;
     size_t depth = weights.size() / prod;
-    const double* QK_start = &sim->h_QKv[length];
-    const double* QR_start = &sim->h_QRv[length];
+    const double* QK_start = &sim->host->QKv[length];
+    const double* QR_start = &sim->host->QRv[length];
 
     // Optional precompute of log slice for last len entries (only once per call).
     // NOTE: Must NOT be thread_local because OpenMP creates per-thread instances that
@@ -87,30 +87,30 @@ void indexVecN(const size_t length, const std::vector<double>& weights, const st
         for (size_t j = 0; j < dims[1]; j++)
         {
             if (curr_i < t1len - 1) {
-                qK_result[j + dims[1] * i] = coeff1 * sim->h_QKv[base_i * dims[1] + j] +
-                                             coeff2 * sim->h_QKv[curr_i * dims[1] + j] -
-                                             coeff3 * sim->h_dQKv[curr_i * dims[1] + j] -
-                                             coeff4 * sim->h_dQKv[(curr_i + 1) * dims[1] + j];
+                qK_result[j + dims[1] * i] = coeff1 * sim->host->QKv[base_i * dims[1] + j] +
+                                             coeff2 * sim->host->QKv[curr_i * dims[1] + j] -
+                                             coeff3 * sim->host->dQKv[curr_i * dims[1] + j] -
+                                             coeff4 * sim->host->dQKv[(curr_i + 1) * dims[1] + j];
                 if (!::config.log_response_interp) {
-                    qR_result[j + dims[1] * i] = coeff1 * sim->h_QRv[base_i * dims[1] + j] +
-                                                 coeff2 * sim->h_QRv[curr_i * dims[1] + j] -
-                                                 coeff3 * sim->h_dQRv[curr_i * dims[1] + j] -
-                                                 coeff4 * sim->h_dQRv[(curr_i + 1) * dims[1] + j];
+                    qR_result[j + dims[1] * i] = coeff1 * sim->host->QRv[base_i * dims[1] + j] +
+                                                 coeff2 * sim->host->QRv[curr_i * dims[1] + j] -
+                                                 coeff3 * sim->host->dQRv[curr_i * dims[1] + j] -
+                                                 coeff4 * sim->host->dQRv[(curr_i + 1) * dims[1] + j];
                 } else {
-                    const double f_base = log(sim->h_QRv[base_i * dims[1] + j]);
-                    const double f_curr = log(sim->h_QRv[curr_i * dims[1] + j]);
-                    const double df_base = log(sim->h_dQRv[base_i * dims[1] + j]);
-                    const double df_curr = log(sim->h_dQRv[curr_i * dims[1] + j]);
+                    const double f_base = log(sim->host->QRv[base_i * dims[1] + j]);
+                    const double f_curr = log(sim->host->QRv[curr_i * dims[1] + j]);
+                    const double df_base = log(sim->host->dQRv[base_i * dims[1] + j]);
+                    const double df_curr = log(sim->host->dQRv[curr_i * dims[1] + j]);
                     const double f_interp = coeff1 * f_base + coeff2 * f_curr - coeff3 * df_curr - coeff4 * df_base;
                     qR_result[j + dims[1] * i] = exp(f_interp);
                 } 
             } else {
-                const double qK_base = sim->h_QKv[base_i * dims[1] + j];
-                const double qK_curr = sim->h_QKv[curr_i * dims[1] + j];
+                const double qK_base = sim->host->QKv[base_i * dims[1] + j];
+                const double qK_curr = sim->host->QKv[curr_i * dims[1] + j];
                 qK_result[j + dims[1] * i] = (1.0 - weight2) * qK_base + weight2 * qK_curr;
 
-                const double qR_base = sim->h_QRv[base_i * dims[1] + j];
-                const double qR_curr = sim->h_QRv[curr_i * dims[1] + j];
+                const double qR_base = sim->host->QRv[base_i * dims[1] + j];
+                const double qR_curr = sim->host->QRv[curr_i * dims[1] + j];
                 if (!::config.log_response_interp) {
                     qR_result[j + dims[1] * i] = (1.0 - weight2) * qR_base + weight2 * qR_curr;
                 } else {

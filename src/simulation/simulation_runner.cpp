@@ -1,10 +1,17 @@
 #include "simulation/simulation_runner.hpp"
 #include "simulation/simulation_data.hpp"
+#if DMFE_WITH_CUDA
+#include "simulation/device_simulation_data.hpp"
+#include "EOMs/device_rk_data.hpp"
+#endif
 #include "EOMs/rk_data.hpp"
 #include "core/config.hpp"
 #include "core/config_build.hpp"
 #include "core/stream_pool.hpp"
 #include "core/gpu_memory_utils.hpp"
+#include "core/backend_dispatch.hpp"
+#include "core/vector_utils.hpp"
+#include "core/host_utils.hpp"
 #include "core/device_utils.cuh"
 #include "io/io_utils.hpp"
 #include "EOMs/time_steps.hpp"
@@ -13,9 +20,7 @@
 #include "interpolation/interpolation_core.hpp"
 #include "simulation/simulation_control.hpp"
 #include "convolution/convolution.hpp"
-#include "core/vector_utils.hpp"
 #include "math/math_sigma.hpp"
-#include "core/host_utils.hpp"
 #include "math/math_ops.hpp"
 #include <iostream>
 #include "core/console.hpp"
@@ -25,11 +30,10 @@
 #include <chrono>
 #include <algorithm>
 #include <numeric>
-#include "search/search_utils.hpp"
-#include <unistd.h> // isatty
-#include <sys/ioctl.h> // TIOCGWINSZ
+#include <unistd.h>
+#include <sys/ioctl.h>
 #include <termios.h>
-#include <cstdlib>  // getenv
+#include <cstdlib>
 #include <sstream>
 #include <cmath>
 #include <csignal>
@@ -56,6 +60,8 @@ int runSimulation() {
 #if DMFE_WITH_CUDA
     // Only create CUDA streams if we're actually using the GPU
     StreamPool* pool = config.gpu ? new StreamPool(20) : nullptr;
+#else
+    StreamPool* pool = nullptr;
 #endif
 
     dmfe::console::init();
@@ -96,9 +102,9 @@ int runSimulation() {
     std::cout << std::fixed << std::setprecision(14);
 
 #if DMFE_WITH_CUDA
-    double t = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back());
+    double t = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back());
 #else
-    double t = sim->h_t1grid.back();
+    double t = sim->host->t1grid.back();
 #endif
 
     // Baseline: last time from the loaded state. Used to decide whether to save outputs.
@@ -106,9 +112,9 @@ int runSimulation() {
     bool skip_save_notice_emitted = false;
     auto has_progress_beyond_loaded = [&]() -> bool {
 #if DMFE_WITH_CUDA
-        double cur = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back());
+        double cur = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back());
 #else
-        double cur = sim->h_t1grid.back();
+        double cur = sim->host->t1grid.back();
 #endif
         // Require strictly greater than baseline with a small numerical tolerance
         const double atol = 1e-12;
@@ -125,24 +131,21 @@ int runSimulation() {
     while (t < config.tmax && config.loop < config.maxLoop && config.delta_t >= config.delta_t_min - std::numeric_limits<double>::epsilon() * std::max(std::abs(config.delta_t), std::abs(config.delta_t_min))) {
     if (ui.interrupted()) { aborted_by_signal = true; break; }
 #if DMFE_WITH_CUDA
-        t = (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) + config.delta_t;
+        t = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back()) + config.delta_t;
 #else
-        t = sim->h_t1grid.back() + config.delta_t;
+        t = sim->host->t1grid.back() + config.delta_t;
 #endif
         config.delta_old = config.delta;
+        config.delta = update(pool);
+        
+        if (config.tail_fit_enabled) {
 #if DMFE_WITH_CUDA
-    config.delta = (config.gpu ? updateGPU(pool) : update());
     // Optional tail fit/blend near theta->1 (toggle with --tail-fit)
-    if (config.tail_fit_enabled) {
-#if DMFE_WITH_CUDA
         if (config.gpu) { tailFitBlendGPU(); } else { tailFitBlendCPU(); }
 #else
         tailFitBlendCPU();
 #endif
     }
-#else
-        config.delta = update();
-#endif
         config.loop++;
 
 #if DMFE_WITH_CUDA
@@ -162,7 +165,7 @@ int runSimulation() {
 #endif
             
 #if DMFE_WITH_CUDA
-            size_t prev_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+            size_t prev_size = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
             int count = 0;
             // Determine effective sweeps:
             // - If user specified (>=0), use that.
@@ -185,7 +188,7 @@ int runSimulation() {
             }
             int max_sweeps = effective_sweeps;
 #else
-            size_t prev_size = sim->h_t1grid.size();
+            size_t prev_size = sim->host->t1grid.size();
             int count = 0;
             int max_sweeps = 1;
 #endif
@@ -198,9 +201,9 @@ int runSimulation() {
                     sparsifyNscale(config.delta_max);
 #if DMFE_WITH_CUDA
                 }
-                size_t new_size = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+                size_t new_size = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
 #else
-                size_t new_size = sim->h_t1grid.size();
+                size_t new_size = sim->host->t1grid.size();
 #endif
                 if (new_size >= prev_size) break;
                 prev_size = new_size;
@@ -220,14 +223,14 @@ int runSimulation() {
                 config.delta_t *= 0.5;
                 if (config.gpu) {
 #if DMFE_WITH_CUDA
-                    if (rk->init == 1) {
+                    if (rk->device->init == 1) {
                         init_SSPRK104GPU();
                     } else if (config.use_serk2) {
-                        init_SERK2(2 * (rk->init - 1));
+                        init_SERK2(2 * (rk->device->init - 1));
                     }
 #endif
                 } else {
-                    rk->init = 2;
+                    rk->host->init = 2;
                 } 
             }
             if (config.save_output) {
@@ -251,11 +254,11 @@ int runSimulation() {
 #if DMFE_WITH_CUDA
         if (config.delta < config.delta_max && config.loop > 5 &&
             (config.delta < 1.1 * config.delta_old || config.delta_old < config.delta_max/1000) &&
-            config.rmax[rk->init-1] / config.specRad > config.delta_t && (config.gpu ? sim->d_delta_t_ratio.back() : sim->h_delta_t_ratio.back()) == 1.0)
+            config.rmax[rk->device->init-1] / config.specRad > config.delta_t && (config.gpu ? sim->device->delta_t_ratio.back() : sim->host->delta_t_ratio.back()) == 1.0)
 #else
         if (config.delta < config.delta_max && config.loop > 5 &&
             (config.delta < 1.1 * config.delta_old || config.delta_old < config.delta_max/1000) &&
-            config.rmax[rk->init-1] / config.specRad > config.delta_t && sim->h_delta_t_ratio.back() == 1.0)
+            config.rmax[rk->host->init-1] / config.specRad > config.delta_t && sim->host->delta_t_ratio.back() == 1.0)
 #endif
         {
             config.delta_t *= 1.01;
@@ -263,13 +266,13 @@ int runSimulation() {
         else if (config.delta > 2 * config.delta_max && config.delta_t > config.delta_t_min) {
             config.delta_t *= 0.9;
         }
-        if (rk->init == 2 && config.delta > config.delta_max && config.rmax[0] / config.specRad > config.delta_t) {
+        if (rk->host->init == 2 && config.delta > config.delta_max && config.rmax[0] / config.specRad > config.delta_t) {
 #if DMFE_WITH_CUDA
             if (config.gpu) {
                 init_RK54GPU();
             } else {
 #endif
-                rk->init = 1;
+                rk->host->init = 1;
 #if DMFE_WITH_CUDA
             }
 #endif
@@ -278,7 +281,7 @@ int runSimulation() {
 #if DMFE_WITH_CUDA
         if (config.delta > 2 * config.delta_max && config.gpu) {
             // Determine safe rollback window (need at least 2 past points; n < currentSize-1)
-            size_t currentSize = sim->d_t1grid.size();
+            size_t currentSize = sim->device->t1grid.size();
             int max_allowed = static_cast<int>(currentSize) - 2; // as per rollbackState guard
             int n = std::min(10, std::max(0, max_allowed));
             if (n > 0) {
@@ -287,33 +290,33 @@ int runSimulation() {
                     std::cerr << dmfe::console::WARN() << "Rollback of " << n << " iterations failed; reducing step without rollback." << std::endl;
                 } else {
                     last_rollback_loop = config.loop;
-                    t = sim->d_t1grid.back() + config.delta_t;
+                    t = sim->device->t1grid.back() + config.delta_t;
                 }
             } else {
                 std::cerr << dmfe::console::WARN() << "Insufficient history to rollback; reducing step without rollback." << std::endl;
             }
 
             // Reduce step and re-initialize integrator
-            config.delta_t = 0.5 * std::min(std::max(config.delta_t, config.delta_t_min), config.rmax[rk->init-1] / config.specRad);
-            if (rk->init > 3) {
-                init_SERK2(2 * (rk->init - 3));
+            config.delta_t = 0.5 * std::min(std::max(config.delta_t, config.delta_t_min), config.rmax[rk->device->init-1] / config.specRad);
+            if (rk->device->init > 3) {
+                init_SERK2(2 * (rk->device->init - 3));
             } else {
                 init_SSPRK104GPU();
             }
         }
 
-        size_t current_t1len = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+        size_t current_t1len = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
         // When GPU is disabled, avoid reading from device memory to prevent implicit D->H copies
         double qk0 = config.gpu
-            ? sim->d_QKv[(current_t1len - 1) * config.len + 0]
-            : sim->h_QKv[(current_t1len - 1) * config.len + 0];
+            ? sim->device->QKv[(current_t1len - 1) * config.len + 0]
+            : sim->host->QKv[(current_t1len - 1) * config.len + 0];
 #else
-        size_t current_t1len = sim->h_t1grid.size();
-        double qk0 = sim->h_QKv[(current_t1len - 1) * config.len + 0];
+        size_t current_t1len = sim->host->t1grid.size();
+        double qk0 = sim->host->QKv[(current_t1len - 1) * config.len + 0];
 #endif
 
         // Status: continuous multi-line TUI for TTY when debug is off; otherwise line-per-iteration
-        std::string method = (rk->init == 1 ? "RK54" : rk->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->init - 2)) + ")");
+        std::string method = (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")");
         if (continuous_status) {
             ui.update_status(t, config.tmax, config.loop, config.delta_t, method);
         } else if (config.debug) {
@@ -322,38 +325,27 @@ int runSimulation() {
             ui.print_periodic_line(t, config.loop, config.delta_t, config.delta, method, qk0, current_t1len);
         }
 
-    // record QK(t,0) to file (only if progressed beyond loaded baseline)
-    if (config.save_output && (!config.loaded || has_progress_beyond_loaded())) {
-#if DMFE_WITH_CUDA
-            if (config.gpu) {
-                double energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0); 
-                corr << t << "\t" << energy << "\t" << qk0 << "\n";
-            } else {
-#endif
-                std::vector<double> temp(config.len, 0.0);
-                SigmaK(getLastLenEntries(sim->h_QKv, config.len), temp);
-                double energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), t)[0] + Dflambda(qk0)/config.T0); 
-                corr << t << "\t" << energy << "\t" << qk0 << "\n";
-#if DMFE_WITH_CUDA
-            }
-#endif
+        // record QK(t,0) to file (only if progressed beyond loaded baseline)
+        if (config.save_output && (!config.loaded || has_progress_beyond_loaded())) {
+            double Energy = energy();
+            corr << t << "\t" << Energy << "\t" << qk0 << "\n";
         }
 
         // Record debug runtime telemetry (host-side only, gated to avoid perf impact)
         if (config.debug) {
             double sim_time_sample;
 #if DMFE_WITH_CUDA
-            sim_time_sample = config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back();
+            sim_time_sample = config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back();
 #else
-            sim_time_sample = sim->h_t1grid.back();
+            sim_time_sample = sim->host->t1grid.back();
 #endif
             double runtime_sample = getRuntimeSeconds();
             double memory_sample = config.gpu
                 ? static_cast<double>(getGPUMemoryUsage())
                 : static_cast<double>(getCurrentMemoryUsageMB());
-            auto& times = sim->h_debug_step_times;
-            auto& runtimes = sim->h_debug_step_runtimes;
-            auto& memory = sim->h_debug_step_memory;
+            auto& times = sim->host->debug_step_times;
+            auto& runtimes = sim->host->debug_step_runtimes;
+            auto& memory = sim->host->debug_step_memory;
             const double tol = 1e-12;
             if (times.size() > runtimes.size()) {
                 // keep vectors in lockstep even if previous state was inconsistent
@@ -425,11 +417,11 @@ int runSimulation() {
     double output_delta_t = config.delta_t;
     double output_delta = config.delta;
     int output_loop = config.loop;
-    double output_t1grid_last = sim->h_t1grid.back();
-    double output_rvec_last = sim->h_rvec.back();
-    double output_drvec_last = sim->h_drvec.back();
-    double output_QKv_last = sim->h_QKv[(sim->h_t1grid.size() - 1) * config.len];
-    double output_QRv_last = sim->h_QRv[(sim->h_t1grid.size() - 1) * config.len];
+    double output_t1grid_last = sim->host->t1grid.back();
+    double output_rvec_last = sim->host->rvec.back();
+    double output_drvec_last = sim->host->drvec.back();
+    double output_QKv_last = sim->host->QKv[(sim->host->t1grid.size() - 1) * config.len];
+    double output_QRv_last = sim->host->QRv[(sim->host->t1grid.size() - 1) * config.len];
 
     // Use snapshot data for final output if async saving was used
     if (final_snapshot != nullptr) {
@@ -474,6 +466,12 @@ int runSimulation() {
     }
 #endif
 
+    delete sim->host;
+
+    #if DMFE_WITH_CUDA
+    delete sim->device;
+    #endif
+
     delete sim;
     delete rk;
 #if DMFE_WITH_CUDA
@@ -501,7 +499,7 @@ void runPerformanceBenchmark() {
     start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 100; ++i) {
-        updateGPU(pool);
+        update(pool);
     }
 
     end = std::chrono::high_resolution_clock::now();
@@ -531,7 +529,7 @@ void runPerformanceBenchmarkCPU() {
     start = std::chrono::high_resolution_clock::now();
 
     for (int i = 0; i < 100; ++i) {
-        update();
+        updateCPU();
     }
 
     end = std::chrono::high_resolution_clock::now();

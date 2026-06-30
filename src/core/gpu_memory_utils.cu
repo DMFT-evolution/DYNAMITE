@@ -1,5 +1,6 @@
 #include "core/gpu_memory_utils.hpp"
 #include "simulation/simulation_data.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include "core/device_constants.hpp"
 #include <thrust/copy.h>
 #include "core/device_vector.hpp"
@@ -15,82 +16,82 @@ extern SimulationConfig config;
 
 void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	// Scalars / simple lists
-	sim.d_theta       = sim.h_theta;
-	sim.d_phi1        = sim.h_phi1;
-	sim.d_phi2        = sim.h_phi2;
-	sim.d_posA1y      = sim.h_posA1y;
-	sim.d_posA2y      = sim.h_posA2y;
-	sim.d_posB2y      = sim.h_posB2y;
-	sim.d_weightsA1y  = sim.h_weightsA1y;
-	sim.d_weightsA2y  = sim.h_weightsA2y;
-	sim.d_weightsB2y  = sim.h_weightsB2y;
-	sim.d_posB1xOld   = sim.h_posB1xOld;
-	sim.d_posB2xOld   = sim.h_posB2xOld;
-	sim.d_integ       = sim.h_integ;
+	sim.device->theta       = sim.host->theta;
+	sim.device->phi1        = sim.host->phi1;
+	sim.device->phi2        = sim.host->phi2;
+	sim.device->posA1y      = sim.host->posA1y;
+	sim.device->posA2y      = sim.host->posA2y;
+	sim.device->posB2y      = sim.host->posB2y;
+	sim.device->weightsA1y  = sim.host->weightsA1y;
+	sim.device->weightsA2y  = sim.host->weightsA2y;
+	sim.device->weightsB2y  = sim.host->weightsB2y;
+	sim.device->posB1xOld   = sim.host->posB1xOld;
+	sim.device->posB2xOld   = sim.host->posB2xOld;
+	sim.device->integ       = sim.host->integ;
 
-	sim.d_indsA1y     = sim.h_indsA1y;
-	sim.d_indsA2y     = sim.h_indsA2y;
-	sim.d_indsB2y     = sim.h_indsB2y;
+	sim.device->indsA1y     = sim.host->indsA1y;
+	sim.device->indsA2y     = sim.host->indsA2y;
+	sim.device->indsB2y     = sim.host->indsB2y;
 
-	sim.d_t1grid        = sim.h_t1grid;
-	sim.d_delta_t_ratio = sim.h_delta_t_ratio;
+	sim.device->t1grid        = sim.host->t1grid;
+	sim.device->delta_t_ratio = sim.host->delta_t_ratio;
 
-	sim.d_QKv   = sim.h_QKv;
-	sim.d_QRv   = sim.h_QRv;
-	sim.d_dQKv  = sim.h_dQKv;
-	sim.d_dQRv  = sim.h_dQRv;
-	sim.d_rInt  = sim.h_rInt;
-	sim.d_drInt = sim.h_drInt;
-	sim.d_rvec  = sim.h_rvec;
-	sim.d_drvec = sim.h_drvec;
+	sim.device->QKv   = sim.host->QKv;
+	sim.device->QRv   = sim.host->QRv;
+	sim.device->dQKv  = sim.host->dQKv;
+	sim.device->dQRv  = sim.host->dQRv;
+	sim.device->rInt  = sim.host->rInt;
+	sim.device->drInt = sim.host->drInt;
+	sim.device->rvec  = sim.host->rvec;
+	sim.device->drvec = sim.host->drvec;
 
-	sim.d_SigmaKA1int = sim.h_SigmaKA1int;
-	sim.d_SigmaRA1int = sim.h_SigmaRA1int;
-	sim.d_SigmaKB1int = sim.h_SigmaKB1int;
-	sim.d_SigmaRB1int = sim.h_SigmaRB1int;
-	sim.d_SigmaKA2int = sim.h_SigmaKA2int;
-	sim.d_SigmaRA2int = sim.h_SigmaRA2int;
-	sim.d_SigmaKB2int = sim.h_SigmaKB2int;
-	sim.d_SigmaRB2int = sim.h_SigmaRB2int;
+	sim.device->SigmaKA1int = sim.host->SigmaKA1int;
+	sim.device->SigmaRA1int = sim.host->SigmaRA1int;
+	sim.device->SigmaKB1int = sim.host->SigmaKB1int;
+	sim.device->SigmaRB1int = sim.host->SigmaRB1int;
+	sim.device->SigmaKA2int = sim.host->SigmaKA2int;
+	sim.device->SigmaRA2int = sim.host->SigmaRA2int;
+	sim.device->SigmaKB2int = sim.host->SigmaKB2int;
+	sim.device->SigmaRB2int = sim.host->SigmaRB2int;
 
-	sim.d_QKA1int = sim.h_QKA1int;
-	sim.d_QRA1int = sim.h_QRA1int;
-	sim.d_QKB1int = sim.h_QKB1int;
-	sim.d_QRB1int = sim.h_QRB1int;
-	sim.d_QKA2int = sim.h_QKA2int;
-	sim.d_QRA2int = sim.h_QRA2int;
-	sim.d_QKB2int = sim.h_QKB2int;
-	sim.d_QRB2int = sim.h_QRB2int;
+	sim.device->QKA1int = sim.host->QKA1int;
+	sim.device->QRA1int = sim.host->QRA1int;
+	sim.device->QKB1int = sim.host->QKB1int;
+	sim.device->QRB1int = sim.host->QRB1int;
+	sim.device->QKA2int = sim.host->QKA2int;
+	sim.device->QRA2int = sim.host->QRA2int;
+	sim.device->QKB2int = sim.host->QKB2int;
+	sim.device->QRB2int = sim.host->QRB2int;
 
 	// Workspace allocate (no host mirrors needed except optional debug)
-	sim.convA1_1.resize(len);
-	sim.convA2_1.resize(len);
-	sim.convA1_2.resize(len);
-	sim.convA2_2.resize(len);
-	sim.convR_1.resize(len);
-	sim.convR_2.resize(len);
-	sim.convR_3.resize(len);
-	sim.convR_4.resize(len);
+	sim.device->convA1_1.resize(len);
+	sim.device->convA2_1.resize(len);
+	sim.device->convA1_2.resize(len);
+	sim.device->convA2_2.resize(len);
+	sim.device->convR_1.resize(len);
+	sim.device->convR_2.resize(len);
+	sim.device->convR_3.resize(len);
+	sim.device->convR_4.resize(len);
 
-	sim.temp0.resize(len);
-	sim.temp1.resize(len);
-	sim.temp2.resize(len);
-	sim.temp3.resize(len);
-	sim.temp4.resize(len);
-	sim.temp5.resize(len);
-	sim.temp6.resize(len);
-	sim.temp7.resize(len);
-	sim.temp8.resize(len);
-	sim.temp9.resize(len);
-	sim.temp10.resize(len);
-	sim.temp11.resize(len);
-	sim.temp12.resize(len);
+	sim.device->temp0.resize(len);
+	sim.device->temp1.resize(len);
+	sim.device->temp2.resize(len);
+	sim.device->temp3.resize(len);
+	sim.device->temp4.resize(len);
+	sim.device->temp5.resize(len);
+	sim.device->temp6.resize(len);
+	sim.device->temp7.resize(len);
+	sim.device->temp8.resize(len);
+	sim.device->temp9.resize(len);
+	sim.device->temp10.resize(len);
+	sim.device->temp11.resize(len);
+	sim.device->temp12.resize(len);
 
-	sim.Stemp0.resize(len);
-	sim.Stemp1.resize(len);
-	sim.Stemp2.resize(len);
+	sim.device->Stemp0.resize(len);
+	sim.device->Stemp1.resize(len);
+	sim.device->Stemp2.resize(len);
 
-	sim.error_result.resize(1, 0.0);
+	sim.device->error_result.resize(1, 0.0);
 
 	if (config.debug) {
 		cudaError_t err = cudaDeviceSynchronize();
@@ -105,102 +106,102 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 void copyVectorsToCPU(SimulationData& sim) {
 	auto copyBack = [](auto& host, const auto& dev){ host.resize(dev.size()); thrust::copy(dev.begin(), dev.end(), host.begin()); };
 
-	copyBack(sim.h_QKv, sim.d_QKv);
-	copyBack(sim.h_QRv, sim.d_QRv);
-	copyBack(sim.h_dQKv, sim.d_dQKv);
-	copyBack(sim.h_dQRv, sim.d_dQRv);
-	copyBack(sim.h_rvec, sim.d_rvec);
-	copyBack(sim.h_drvec, sim.d_drvec);
-	copyBack(sim.h_rInt, sim.d_rInt);
-	copyBack(sim.h_drInt, sim.d_drInt);
-	copyBack(sim.h_t1grid, sim.d_t1grid);
-	copyBack(sim.h_delta_t_ratio, sim.d_delta_t_ratio);
+	copyBack(sim.host->QKv, sim.device->QKv);
+	copyBack(sim.host->QRv, sim.device->QRv);
+	copyBack(sim.host->dQKv, sim.device->dQKv);
+	copyBack(sim.host->dQRv, sim.device->dQRv);
+	copyBack(sim.host->rvec, sim.device->rvec);
+	copyBack(sim.host->drvec, sim.device->drvec);
+	copyBack(sim.host->rInt, sim.device->rInt);
+	copyBack(sim.host->drInt, sim.device->drInt);
+	copyBack(sim.host->t1grid, sim.device->t1grid);
+	copyBack(sim.host->delta_t_ratio, sim.device->delta_t_ratio);
 
-	copyBack(sim.h_SigmaKA1int, sim.d_SigmaKA1int);
-	copyBack(sim.h_SigmaRA1int, sim.d_SigmaRA1int);
-	copyBack(sim.h_SigmaKB1int, sim.d_SigmaKB1int);
-	copyBack(sim.h_SigmaRB1int, sim.d_SigmaRB1int);
-	copyBack(sim.h_SigmaKA2int, sim.d_SigmaKA2int);
-	copyBack(sim.h_SigmaRA2int, sim.d_SigmaRA2int);
-	copyBack(sim.h_SigmaKB2int, sim.d_SigmaKB2int);
-	copyBack(sim.h_SigmaRB2int, sim.d_SigmaRB2int);
+	copyBack(sim.host->SigmaKA1int, sim.device->SigmaKA1int);
+	copyBack(sim.host->SigmaRA1int, sim.device->SigmaRA1int);
+	copyBack(sim.host->SigmaKB1int, sim.device->SigmaKB1int);
+	copyBack(sim.host->SigmaRB1int, sim.device->SigmaRB1int);
+	copyBack(sim.host->SigmaKA2int, sim.device->SigmaKA2int);
+	copyBack(sim.host->SigmaRA2int, sim.device->SigmaRA2int);
+	copyBack(sim.host->SigmaKB2int, sim.device->SigmaKB2int);
+	copyBack(sim.host->SigmaRB2int, sim.device->SigmaRB2int);
 
-	copyBack(sim.h_QKA1int, sim.d_QKA1int);
-	copyBack(sim.h_QRA1int, sim.d_QRA1int);
-	copyBack(sim.h_QKB1int, sim.d_QKB1int);
-	copyBack(sim.h_QRB1int, sim.d_QRB1int);
-	copyBack(sim.h_QKA2int, sim.d_QKA2int);
-	copyBack(sim.h_QRA2int, sim.d_QRA2int);
-	copyBack(sim.h_QKB2int, sim.d_QKB2int);
-	copyBack(sim.h_QRB2int, sim.d_QRB2int);
+	copyBack(sim.host->QKA1int, sim.device->QKA1int);
+	copyBack(sim.host->QRA1int, sim.device->QRA1int);
+	copyBack(sim.host->QKB1int, sim.device->QKB1int);
+	copyBack(sim.host->QRB1int, sim.device->QRB1int);
+	copyBack(sim.host->QKA2int, sim.device->QKA2int);
+	copyBack(sim.host->QRA2int, sim.device->QRA2int);
+	copyBack(sim.host->QKB2int, sim.device->QKB2int);
+	copyBack(sim.host->QRB2int, sim.device->QRB2int);
 
-	copyBack(sim.h_posA1y, sim.d_posA1y);
-	copyBack(sim.h_posA2y, sim.d_posA2y);
-	copyBack(sim.h_posB2y, sim.d_posB2y);
-	copyBack(sim.h_posB1xOld, sim.d_posB1xOld);
-	copyBack(sim.h_posB2xOld, sim.d_posB2xOld);
+	copyBack(sim.host->posA1y, sim.device->posA1y);
+	copyBack(sim.host->posA2y, sim.device->posA2y);
+	copyBack(sim.host->posB2y, sim.device->posB2y);
+	copyBack(sim.host->posB1xOld, sim.device->posB1xOld);
+	copyBack(sim.host->posB2xOld, sim.device->posB2xOld);
 
 	// Optional: copy theta/phi only if needed
-	copyBack(sim.h_theta, sim.d_theta);
-	copyBack(sim.h_phi1, sim.d_phi1);
-	copyBack(sim.h_phi2, sim.d_phi2);
+	copyBack(sim.host->theta, sim.device->theta);
+	copyBack(sim.host->phi1, sim.device->phi1);
+	copyBack(sim.host->phi2, sim.device->phi2);
 
-	copyBack(sim.h_weightsA1y, sim.d_weightsA1y);
-	copyBack(sim.h_weightsA2y, sim.d_weightsA2y);
-	copyBack(sim.h_weightsB2y, sim.d_weightsB2y);
-	copyBack(sim.h_integ, sim.d_integ);
+	copyBack(sim.host->weightsA1y, sim.device->weightsA1y);
+	copyBack(sim.host->weightsA2y, sim.device->weightsA2y);
+	copyBack(sim.host->weightsB2y, sim.device->weightsB2y);
+	copyBack(sim.host->integ, sim.device->integ);
 
-	copyBack(sim.h_indsA1y, sim.d_indsA1y);
-	copyBack(sim.h_indsA2y, sim.d_indsA2y);
-	copyBack(sim.h_indsB2y, sim.d_indsB2y);
+	copyBack(sim.host->indsA1y, sim.device->indsA1y);
+	copyBack(sim.host->indsA2y, sim.device->indsA2y);
+	copyBack(sim.host->indsB2y, sim.device->indsB2y);
 
 	std::cout << dmfe::console::INFO() << "Device -> Host vector copy complete." << std::endl;
 }
 
 void clearAllDeviceVectors(SimulationData& sim) {
 	auto cl = [](auto& v){ v.clear(); v.shrink_to_fit(); };
-	cl(sim.d_QKv); cl(sim.d_QRv); cl(sim.d_dQKv); cl(sim.d_dQRv);
-	cl(sim.d_rInt); cl(sim.d_drInt); cl(sim.d_rvec); cl(sim.d_drvec);
-	cl(sim.d_SigmaKA1int); cl(sim.d_SigmaRA1int); cl(sim.d_SigmaKB1int); cl(sim.d_SigmaRB1int);
-	cl(sim.d_SigmaKA2int); cl(sim.d_SigmaRA2int); cl(sim.d_SigmaKB2int); cl(sim.d_SigmaRB2int);
-	cl(sim.d_QKA1int); cl(sim.d_QRA1int); cl(sim.d_QKB1int); cl(sim.d_QRB1int);
-	cl(sim.d_QKA2int); cl(sim.d_QRA2int); cl(sim.d_QKB2int); cl(sim.d_QRB2int);
-	cl(sim.d_theta); cl(sim.d_phi1); cl(sim.d_phi2);
-	cl(sim.d_posA1y); cl(sim.d_posA2y); cl(sim.d_posB2y);
-	cl(sim.d_weightsA1y); cl(sim.d_weightsA2y); cl(sim.d_weightsB2y);
-	cl(sim.d_posB1xOld); cl(sim.d_posB2xOld);
-	cl(sim.d_indsA1y); cl(sim.d_indsA2y); cl(sim.d_indsB2y);
-	cl(sim.d_integ); cl(sim.d_t1grid); cl(sim.d_delta_t_ratio);
-	cl(sim.convA1_1); cl(sim.convA2_1); cl(sim.convA1_2); cl(sim.convA2_2);
-	cl(sim.convR_1); cl(sim.convR_2); cl(sim.convR_3); cl(sim.convR_4);
-	cl(sim.temp0); cl(sim.temp1); cl(sim.temp2); cl(sim.temp3); cl(sim.temp4);
-	cl(sim.temp5); cl(sim.temp6); cl(sim.temp7); cl(sim.temp8); cl(sim.temp9);
-	cl(sim.temp10); cl(sim.temp11); cl(sim.temp12);
-	cl(sim.Stemp0); cl(sim.Stemp1); cl(sim.Stemp2);
-	cl(sim.error_result);
+	cl(sim.device->QKv); cl(sim.device->QRv); cl(sim.device->dQKv); cl(sim.device->dQRv);
+	cl(sim.device->rInt); cl(sim.device->drInt); cl(sim.device->rvec); cl(sim.device->drvec);
+	cl(sim.device->SigmaKA1int); cl(sim.device->SigmaRA1int); cl(sim.device->SigmaKB1int); cl(sim.device->SigmaRB1int);
+	cl(sim.device->SigmaKA2int); cl(sim.device->SigmaRA2int); cl(sim.device->SigmaKB2int); cl(sim.device->SigmaRB2int);
+	cl(sim.device->QKA1int); cl(sim.device->QRA1int); cl(sim.device->QKB1int); cl(sim.device->QRB1int);
+	cl(sim.device->QKA2int); cl(sim.device->QRA2int); cl(sim.device->QKB2int); cl(sim.device->QRB2int);
+	cl(sim.device->theta); cl(sim.device->phi1); cl(sim.device->phi2);
+	cl(sim.device->posA1y); cl(sim.device->posA2y); cl(sim.device->posB2y);
+	cl(sim.device->weightsA1y); cl(sim.device->weightsA2y); cl(sim.device->weightsB2y);
+	cl(sim.device->posB1xOld); cl(sim.device->posB2xOld);
+	cl(sim.device->indsA1y); cl(sim.device->indsA2y); cl(sim.device->indsB2y);
+	cl(sim.device->integ); cl(sim.device->t1grid); cl(sim.device->delta_t_ratio);
+	cl(sim.device->convA1_1); cl(sim.device->convA2_1); cl(sim.device->convA1_2); cl(sim.device->convA2_2);
+	cl(sim.device->convR_1); cl(sim.device->convR_2); cl(sim.device->convR_3); cl(sim.device->convR_4);
+	cl(sim.device->temp0); cl(sim.device->temp1); cl(sim.device->temp2); cl(sim.device->temp3); cl(sim.device->temp4);
+	cl(sim.device->temp5); cl(sim.device->temp6); cl(sim.device->temp7); cl(sim.device->temp8); cl(sim.device->temp9);
+	cl(sim.device->temp10); cl(sim.device->temp11); cl(sim.device->temp12);
+	cl(sim.device->Stemp0); cl(sim.device->Stemp1); cl(sim.device->Stemp2);
+	cl(sim.device->error_result);
 	std::cout << dmfe::console::INFO() << "Cleared device vectors." << std::endl;
 }
 
 void clearAllHostVectors(SimulationData& sim) {
 	auto cl = [](auto& v){ v.clear(); v.shrink_to_fit(); };
-	cl(sim.h_theta); cl(sim.h_phi1); cl(sim.h_phi2);
-	cl(sim.h_posA1y); cl(sim.h_posA2y); cl(sim.h_posB2y);
-	cl(sim.h_weightsA1y); cl(sim.h_weightsA2y); cl(sim.h_weightsB2y);
-	cl(sim.h_posB1xOld); cl(sim.h_posB2xOld); cl(sim.h_integ);
-	cl(sim.h_indsA1y); cl(sim.h_indsA2y); cl(sim.h_indsB2y);
-	cl(sim.h_t1grid); cl(sim.h_delta_t_ratio);
-	cl(sim.h_QKv); cl(sim.h_QRv); cl(sim.h_dQKv); cl(sim.h_dQRv);
-	cl(sim.h_rInt); cl(sim.h_drInt); cl(sim.h_rvec); cl(sim.h_drvec);
-	cl(sim.h_SigmaKA1int); cl(sim.h_SigmaRA1int); cl(sim.h_SigmaKB1int); cl(sim.h_SigmaRB1int);
-	cl(sim.h_SigmaKA2int); cl(sim.h_SigmaRA2int); cl(sim.h_SigmaKB2int); cl(sim.h_SigmaRB2int);
-	cl(sim.h_QKA1int); cl(sim.h_QRA1int); cl(sim.h_QKB1int); cl(sim.h_QRB1int);
-	cl(sim.h_QKA2int); cl(sim.h_QRA2int); cl(sim.h_QKB2int); cl(sim.h_QRB2int);
-	cl(sim.h_convA1_1); cl(sim.h_convA2_1); cl(sim.h_convA1_2); cl(sim.h_convA2_2);
-	cl(sim.h_convR_1); cl(sim.h_convR_2); cl(sim.h_convR_3); cl(sim.h_convR_4);
-	cl(sim.h_temp0); cl(sim.h_temp1); cl(sim.h_temp2); cl(sim.h_temp3); cl(sim.h_temp4);
-	cl(sim.h_temp5); cl(sim.h_temp6); cl(sim.h_temp7); cl(sim.h_temp8); cl(sim.h_temp9);
-	cl(sim.h_Stemp0); cl(sim.h_Stemp1);
-	cl(sim.h_error_result);
+	cl(sim.host->theta); cl(sim.host->phi1); cl(sim.host->phi2);
+	cl(sim.host->posA1y); cl(sim.host->posA2y); cl(sim.host->posB2y);
+	cl(sim.host->weightsA1y); cl(sim.host->weightsA2y); cl(sim.host->weightsB2y);
+	cl(sim.host->posB1xOld); cl(sim.host->posB2xOld); cl(sim.host->integ);
+	cl(sim.host->indsA1y); cl(sim.host->indsA2y); cl(sim.host->indsB2y);
+	cl(sim.host->t1grid); cl(sim.host->delta_t_ratio);
+	cl(sim.host->QKv); cl(sim.host->QRv); cl(sim.host->dQKv); cl(sim.host->dQRv);
+	cl(sim.host->rInt); cl(sim.host->drInt); cl(sim.host->rvec); cl(sim.host->drvec);
+	cl(sim.host->SigmaKA1int); cl(sim.host->SigmaRA1int); cl(sim.host->SigmaKB1int); cl(sim.host->SigmaRB1int);
+	cl(sim.host->SigmaKA2int); cl(sim.host->SigmaRA2int); cl(sim.host->SigmaKB2int); cl(sim.host->SigmaRB2int);
+	cl(sim.host->QKA1int); cl(sim.host->QRA1int); cl(sim.host->QKB1int); cl(sim.host->QRB1int);
+	cl(sim.host->QKA2int); cl(sim.host->QRA2int); cl(sim.host->QKB2int); cl(sim.host->QRB2int);
+	cl(sim.host->convA1_1); cl(sim.host->convA2_1); cl(sim.host->convA1_2); cl(sim.host->convA2_2);
+	cl(sim.host->convR_1); cl(sim.host->convR_2); cl(sim.host->convR_3); cl(sim.host->convR_4);
+	cl(sim.host->temp0); cl(sim.host->temp1); cl(sim.host->temp2); cl(sim.host->temp3); cl(sim.host->temp4);
+	cl(sim.host->temp5); cl(sim.host->temp6); cl(sim.host->temp7); cl(sim.host->temp8); cl(sim.host->temp9);
+	cl(sim.host->Stemp0); cl(sim.host->Stemp1);
+	cl(sim.host->error_result);
 	std::cout << dmfe::console::INFO() << "Cleared host vectors." << std::endl;
 }
 

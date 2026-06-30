@@ -1,4 +1,4 @@
-#include "search/search_utils.hpp"
+#include "search/search_utils.cuh"
 #include "core/config.hpp"
 #include <thrust/transform.h>
 #include <thrust/binary_search.h>

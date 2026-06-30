@@ -1,11 +1,12 @@
-#include "EOMs/time_steps.hpp"
+#include "EOMs/time_steps_cuda.cuh"
 #include "core/globals.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include "core/config.hpp"
 #include "math/math_ops.hpp"
-#include "core/vector_utils.hpp"
-#include "convolution/convolution.hpp"
+#include "core/vector_utils.cuh"
+#include "convolution/convolution.cuh"
 #include "core/compute_utils.hpp"
-#include "math/math_sigma.hpp"
+#include "math/math_sigma.cuh"
 #include "io/io_utils.hpp"
 #include "core/device_utils.cuh"
 #include <thrust/transform.h>
@@ -249,7 +250,7 @@ dmfe::device_vector<double> QKstepGPU(
 
     thrust::for_each(thrust::cuda::par.on(pool[6]),
         idx_first, idx_last,
-        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1grid.size() - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->temp0.begin(), temp1 = sim->temp1.begin(), temp4 = sim->temp4.begin(), temp5 = sim->temp5.begin(), temp6 = sim->temp6.begin(), temp7 = sim->temp7.begin(), temp8 = sim->temp8.begin()] __device__ (size_t i) {
+        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1grid.size() - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->device->temp0.begin(), temp1 = sim->device->temp1.begin(), temp4 = sim->device->temp4.begin(), temp5 = sim->device->temp5.begin(), temp6 = sim->device->temp6.begin(), temp7 = sim->device->temp7.begin(), temp8 = sim->device->temp8.begin()] __device__ (size_t i) {
             temp0[i] = ptr[i * len];
             temp1[i] = DflambdaGPU(ptr[i * len]);
             if (i == 0) {
@@ -263,16 +264,16 @@ dmfe::device_vector<double> QKstepGPU(
     );
 
     // Step 1: Run reductions
-    ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->convA1_1, sim->temp8, integ, theta, pool[0]);
+    ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->device->convA1_1, sim->device->temp8, integ, theta, pool[0]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 1");
-    ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->convA2_1, sim->temp8, integ, theta, pool[1]);
+    ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->device->convA2_1, sim->device->temp8, integ, theta, pool[1]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 2");
-    ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->convA1_2, sim->temp8, integ, theta, pool[2]);
+    ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->device->convA1_2, sim->device->temp8, integ, theta, pool[2]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 3");
-    ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->convA2_2, sim->temp8, integ, theta, pool[3]);
+    ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->device->convA2_2, sim->device->temp8, integ, theta, pool[3]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::ConvAGPU_Stream 4");
-    ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->convR_1, sim->temp8, integ, theta, pool[4]);
-    ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->convR_2, sim->temp8, integ, theta, pool[5]);
+    ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->device->convR_1, sim->device->temp8, integ, theta, pool[4]);
+    ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->device->convR_2, sim->device->temp8, integ, theta, pool[5]);
 
     // Synchronization with events
     std::vector<cudaEvent_t> events(7);
@@ -284,20 +285,20 @@ dmfe::device_vector<double> QKstepGPU(
     }
 
     // Step 3: Fuse everything
-    FusedUpdate(thrust::device_pointer_cast(sim->temp0.data()), qK, sim->temp2, thrust::raw_pointer_cast(sim->temp4.data()), thrust::raw_pointer_cast(sim->temp6.data()), nullptr, &sim->convR_1, &sim->convA1_1, &sim->convA2_1, nullptr, pool[7]);
+    FusedUpdate(thrust::device_pointer_cast(sim->device->temp0.data()), qK, sim->device->temp2, thrust::raw_pointer_cast(sim->device->temp4.data()), thrust::raw_pointer_cast(sim->device->temp6.data()), nullptr, &sim->device->convR_1, &sim->device->convA1_1, &sim->device->convA2_1, nullptr, pool[7]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::FusedUpdate K");
 
     // Compute d2qK
-    FusedUpdate(thrust::device_pointer_cast(sim->temp1.data()), qR, sim->temp3, thrust::raw_pointer_cast(sim->temp5.data()), thrust::raw_pointer_cast(sim->temp7.data()), &rInt, &sim->convR_2, &sim->convA1_2, &sim->convA2_2, qK, pool[8]);
+    FusedUpdate(thrust::device_pointer_cast(sim->device->temp1.data()), qR, sim->device->temp3, thrust::raw_pointer_cast(sim->device->temp5.data()), thrust::raw_pointer_cast(sim->device->temp7.data()), &rInt, &sim->device->convR_2, &sim->device->convA1_2, &sim->device->convA2_2, qK, pool[8]);
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::FusedUpdate R");
 
     // Combine d1qK and d2qK
-    computeProduct<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->temp3.data()),thrust::raw_pointer_cast(theta.data()),theta.size());
+    computeProduct<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->device->temp3.data()),thrust::raw_pointer_cast(theta.data()),theta.size());
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::computeProduct");
-    computeSum<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->temp2.data()),thrust::raw_pointer_cast(sim->temp3.data()),theta.size());
+    computeSum<<<blocks, threads, 0, pool[8]>>>(thrust::raw_pointer_cast(sim->device->temp2.data()),thrust::raw_pointer_cast(sim->device->temp3.data()),theta.size());
     if (config.debug) DMFE_CUDA_POSTLAUNCH("energyGPU::computeSum");
 
-    return sim->temp2;
+    return sim->device->temp2;
 }
 
 dmfe::device_vector<double> QRstepGPU(
@@ -313,15 +314,15 @@ dmfe::device_vector<double> QRstepGPU(
     
     size_t len = theta.size();
     size_t t1len = t1grid.size();
-    sim->temp8[0] = t1grid.back();
+    sim->device->temp8[0] = t1grid.back();
     thrust::device_ptr<double> qR = get_slice_ptr(QRv, t1len - 1, len);
 
-    ConvRGPU_Stream(SigmaRA2int, QRB2int, sim->convR_1, sim->temp8, sim->h_integ, theta, pool[0]);
-    ConvRGPU_Stream(QRA2int, SigmaRB2int, sim->convR_2, sim->temp8, sim->h_integ, theta, pool[1]);
+    ConvRGPU_Stream(SigmaRA2int, QRB2int, sim->device->convR_1, sim->device->temp8, sim->host->integ, theta, pool[0]);
+    ConvRGPU_Stream(QRA2int, SigmaRB2int, sim->device->convR_2, sim->device->temp8, sim->host->integ, theta, pool[1]);
 
-    QRstepFused(qR, theta, sim->convR_1, sim->convR_2, rInt, thrust::raw_pointer_cast(sim->temp2.data()));
+    QRstepFused(qR, theta, sim->device->convR_1, sim->device->convR_2, rInt, thrust::raw_pointer_cast(sim->device->temp2.data()));
 
-    return sim->temp2;
+    return sim->device->temp2;
 }
 
 void QKRstepGPU(
@@ -365,7 +366,7 @@ void QKRstepGPU(
 
     thrust::for_each(thrust::cuda::par.on(pool[0]),
         idx_first, idx_last,
-        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1len - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->temp0.begin(), temp1 = sim->temp1.begin(), temp4 = sim->temp4.begin(), temp5 = sim->temp5.begin(), temp6 = sim->temp6.begin(), temp7 = sim->temp7.begin(), temp8 = sim->temp8.begin()] __device__ (size_t i) {
+        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1len - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->device->temp0.begin(), temp1 = sim->device->temp1.begin(), temp4 = sim->device->temp4.begin(), temp5 = sim->device->temp5.begin(), temp6 = sim->device->temp6.begin(), temp7 = sim->device->temp7.begin(), temp8 = sim->device->temp8.begin()] __device__ (size_t i) {
             temp0[i] = ptr[i * len];
             temp1[i] = DflambdaGPU(ptr[i * len]);
             if (i == 0) {
@@ -381,30 +382,30 @@ void QKRstepGPU(
     cudaDeviceSynchronize();
 
     // Step 1: Run reductions
-    ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->convA1_1, sim->temp8, integ, theta, pool[1]);
-    ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->convA2_1, sim->temp8, integ, theta, pool[2]);
-    ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->convA1_2, sim->temp8, integ, theta, pool[3]);
-    ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->convA2_2, sim->temp8, integ, theta, pool[4]);
-    ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->convR_1, sim->temp8, integ, theta, pool[5]);
-    ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->convR_2, sim->temp8, integ, theta, pool[6]);
-    ConvRGPU_Stream(SigmaRA2int, QRB2int, sim->convR_3, sim->temp8, integ, theta, pool[7]);
-    ConvRGPU_Stream(QRA2int, SigmaRB2int, sim->convR_4, sim->temp8, integ, theta, pool[8]);
+    ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->device->convA1_1, sim->device->temp8, integ, theta, pool[1]);
+    ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->device->convA2_1, sim->device->temp8, integ, theta, pool[2]);
+    ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->device->convA1_2, sim->device->temp8, integ, theta, pool[3]);
+    ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->device->convA2_2, sim->device->temp8, integ, theta, pool[4]);
+    ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->device->convR_1, sim->device->temp8, integ, theta, pool[5]);
+    ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->device->convR_2, sim->device->temp8, integ, theta, pool[6]);
+    ConvRGPU_Stream(SigmaRA2int, QRB2int, sim->device->convR_3, sim->device->temp8, integ, theta, pool[7]);
+    ConvRGPU_Stream(QRA2int, SigmaRB2int, sim->device->convR_4, sim->device->temp8, integ, theta, pool[8]);
 
     cudaDeviceSynchronize();
 
     // Step 3: Fuse everything
-    FusedUpdate(thrust::device_pointer_cast(sim->temp0.data()), qK, sim->temp2, thrust::raw_pointer_cast(sim->temp4.data()), thrust::raw_pointer_cast(sim->temp6.data()), nullptr, &sim->convR_1, &sim->convA1_1, &sim->convA2_1, nullptr, pool[9]);
+    FusedUpdate(thrust::device_pointer_cast(sim->device->temp0.data()), qK, sim->device->temp2, thrust::raw_pointer_cast(sim->device->temp4.data()), thrust::raw_pointer_cast(sim->device->temp6.data()), nullptr, &sim->device->convR_1, &sim->device->convA1_1, &sim->device->convA2_1, nullptr, pool[9]);
 
     // Compute d2qK
-    FusedUpdate(thrust::device_pointer_cast(sim->temp1.data()), qR, sim->temp3, thrust::raw_pointer_cast(sim->temp5.data()), thrust::raw_pointer_cast(sim->temp7.data()), &rInt, &sim->convR_2, &sim->convA1_2, &sim->convA2_2, qK, pool[10]);
+    FusedUpdate(thrust::device_pointer_cast(sim->device->temp1.data()), qR, sim->device->temp3, thrust::raw_pointer_cast(sim->device->temp5.data()), thrust::raw_pointer_cast(sim->device->temp7.data()), &rInt, &sim->device->convR_2, &sim->device->convA1_2, &sim->device->convA2_2, qK, pool[10]);
 
     // Combine d1qK and d2qK
-    computeProduct<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->temp3.data()),thrust::raw_pointer_cast(theta.data()),len);
+    computeProduct<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->device->temp3.data()),thrust::raw_pointer_cast(theta.data()),len);
     cudaEventRecord(ready, pool[9]);
     cudaStreamWaitEvent(pool[10], ready, 0);
-    computeSum<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->temp2.data()),thrust::raw_pointer_cast(sim->temp3.data()),thrust::raw_pointer_cast(outK.data()) + n * len, len);
+    computeSum<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->device->temp2.data()),thrust::raw_pointer_cast(sim->device->temp3.data()),thrust::raw_pointer_cast(outK.data()) + n * len, len);
 
-    QRstepFused(qR, theta, sim->convR_3, sim->convR_4, rInt, thrust::raw_pointer_cast(outR.data()) + n * len, pool[11]);
+    QRstepFused(qR, theta, sim->device->convR_3, sim->device->convR_4, rInt, thrust::raw_pointer_cast(outR.data()) + n * len, pool[11]);
 }
 
 double rstepGPU(
@@ -426,29 +427,29 @@ double rstepGPU(
     computeSigmaKandRKernel<<<blocks, threads, 0>>>(
         thrust::raw_pointer_cast(qK),
         thrust::raw_pointer_cast(qR),
-        thrust::raw_pointer_cast(sim->temp0.data()),
-        thrust::raw_pointer_cast(sim->temp1.data()),
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp1.data()),
         len
     );
 
-    ConvAGPU_Stream(sim->temp1, qK, sim->temp2, t, integ, theta, pool[2]);
-    ConvAGPU_Stream(sim->temp0, qR, sim->temp3, t, integ, theta, pool[3]);
+    ConvAGPU_Stream(sim->device->temp1, qK, sim->device->temp2, t, integ, theta, pool[2]);
+    ConvAGPU_Stream(sim->device->temp0, qR, sim->device->temp3, t, integ, theta, pool[3]);
 
     cudaEventRecord(ready, pool[2]);
     cudaStreamWaitEvent(pool[3], ready, 0);
 
     // Fused final computation on GPU
     computeRstepResult<<<1, 1, 0, pool[3]>>>(
-        thrust::raw_pointer_cast(sim->temp0.data()),
-        thrust::raw_pointer_cast(sim->temp2.data()),
-        thrust::raw_pointer_cast(sim->temp3.data()),
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp2.data()),
+        thrust::raw_pointer_cast(sim->device->temp3.data()),
         thrust::raw_pointer_cast(qK),
-        thrust::raw_pointer_cast(sim->temp4.data()),
+        thrust::raw_pointer_cast(sim->device->temp4.data()),
         Gamma,
         T0
     );
 
-    return sim->temp4[0];
+    return sim->device->temp4[0];
 }
 
 double rstepGPU(
@@ -554,11 +555,11 @@ double drstepGPU(
         thrust::raw_pointer_cast(sigmaK.data()),
         thrust::raw_pointer_cast(QKv.data()),
         thrust::raw_pointer_cast(dQKv.data()),
-        thrust::raw_pointer_cast(sim->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
         T0
     );
 
-    return sim->temp0[0];
+    return sim->device->temp0[0];
 }
 
 double drstep2GPU(
@@ -572,17 +573,17 @@ double drstep2GPU(
 
     auto begin = thrust::make_zip_iterator(thrust::make_tuple(
         QKv, QRv, dQKv, dQRv,
-        sim->temp0.begin(),
-        sim->temp1.begin(),
-        sim->temp2.begin(),
-        sim->temp3.begin()
+        sim->device->temp0.begin(),
+        sim->device->temp1.begin(),
+        sim->device->temp2.begin(),
+        sim->device->temp3.begin()
     ));
     auto end = thrust::make_zip_iterator(thrust::make_tuple(
         QKv + config.len, QRv + config.len, dQKv + config.len, dQRv + config.len,
-        sim->temp0.begin() + config.len,
-        sim->temp1.begin() + config.len,
-        sim->temp2.begin() + config.len,
-        sim->temp3.begin() + config.len
+        sim->device->temp0.begin() + config.len,
+        sim->device->temp1.begin() + config.len,
+        sim->device->temp2.begin() + config.len,
+        sim->device->temp3.begin() + config.len
     ));
 
     thrust::for_each(
@@ -610,41 +611,43 @@ double drstep2GPU(
     );
 
     // Compute convolution results
-    ConvAGPU_Stream(sim->temp1, QKv, sim->temp4, 1.0, sim->d_integ, sim->d_theta, pool[1]);
-    ConvAGPU_Stream(sim->temp0, QRv, sim->temp5, 1.0, sim->d_integ, sim->d_theta, pool[2]);
-    ConvAGPU_Stream(sim->temp3, QKv, sim->temp6, t, sim->d_integ, sim->d_theta, pool[3]);
-    ConvAGPU_Stream(sim->temp2, QRv, sim->temp7, t, sim->d_integ, sim->d_theta, pool[4]);
-    ConvAGPU_Stream(sim->temp1, dQKv, sim->temp8, t, sim->d_integ, sim->d_theta, pool[5]);
-    ConvAGPU_Stream(sim->temp0, dQRv, sim->temp9, t, sim->d_integ, sim->d_theta, pool[6]);
+    ConvAGPU_Stream(sim->device->temp1, QKv, sim->device->temp4, 1.0, sim->device->integ, sim->device->theta, pool[1]);
+    ConvAGPU_Stream(sim->device->temp0, QRv, sim->device->temp5, 1.0, sim->device->integ, sim->device->theta, pool[2]);
+    ConvAGPU_Stream(sim->device->temp3, QKv, sim->device->temp6, t, sim->device->integ, sim->device->theta, pool[3]);
+    ConvAGPU_Stream(sim->device->temp2, QRv, sim->device->temp7, t, sim->device->integ, sim->device->theta, pool[4]);
+    ConvAGPU_Stream(sim->device->temp1, dQKv, sim->device->temp8, t, sim->device->integ, sim->device->theta, pool[5]);
+    ConvAGPU_Stream(sim->device->temp0, dQRv, sim->device->temp9, t, sim->device->integ, sim->device->theta, pool[6]);
 
     cudaDeviceSynchronize();
 
     // Compute final result
     computeDrstep2Result<<<1, 1, 0>>>(
-        thrust::raw_pointer_cast(sim->temp0.data()),
-        thrust::raw_pointer_cast(sim->temp2.data()),
-        thrust::raw_pointer_cast(sim->temp4.data()),
-        thrust::raw_pointer_cast(sim->temp5.data()),
-        thrust::raw_pointer_cast(sim->temp6.data()),
-        thrust::raw_pointer_cast(sim->temp7.data()),
-        thrust::raw_pointer_cast(sim->temp8.data()),
-        thrust::raw_pointer_cast(sim->temp9.data()),
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp2.data()),
+        thrust::raw_pointer_cast(sim->device->temp4.data()),
+        thrust::raw_pointer_cast(sim->device->temp5.data()),
+        thrust::raw_pointer_cast(sim->device->temp6.data()),
+        thrust::raw_pointer_cast(sim->device->temp7.data()),
+        thrust::raw_pointer_cast(sim->device->temp8.data()),
+        thrust::raw_pointer_cast(sim->device->temp9.data()),
         thrust::raw_pointer_cast(QKv),
         thrust::raw_pointer_cast(dQKv),
-        thrust::raw_pointer_cast(sim->temp1.data()),
+        thrust::raw_pointer_cast(sim->device->temp1.data()),
         T0
     );
 
-    return sim->temp1[0];
+    return sim->device->temp1[0];
 }
 
 double energyGPU(
-    const dmfe::device_vector<double>& QKv,
-    const dmfe::device_vector<double>& QRv,
-    const dmfe::device_vector<double>& t1grid,
-    const dmfe::device_vector<double>& integ,
-    const dmfe::device_vector<double>& theta,
+    const DeviceSimulationData& dev,
     double T0) {
+
+    const auto& QKv = dev.QKv;
+    const auto& QRv = dev.QRv;
+    const auto& t1grid = dev.t1grid;
+    const auto& integ = dev.integ;
+    const auto& theta = dev.theta;
     
     size_t len = theta.size();
     size_t t1len = t1grid.size();
@@ -659,16 +662,16 @@ double energyGPU(
     computeSigmaKandRKernel<<<blocks, threads>>>(
         thrust::raw_pointer_cast(qK),
         thrust::raw_pointer_cast(qR),
-        thrust::raw_pointer_cast(sim->temp0.data()),
-        thrust::raw_pointer_cast(sim->temp1.data()),
+        thrust::raw_pointer_cast(dev.temp0.data()),
+        thrust::raw_pointer_cast(dev.temp1.data()),
         len
     );
 
     // Compute convolution results
-    ConvAGPU_Stream(sim->temp0, qR, sim->temp2, t, integ, theta);
+    ConvAGPU_Stream(dev.temp0, qR, dev.temp2, t, integ, theta);
 
     // Compute final result
-    double result = - (sim->temp2[0] + sim->temp0[0] / T0);
+    double result = - (dev.temp2[0] + dev.temp0[0] / T0);
 
     return move(result);
 }
@@ -738,29 +741,29 @@ void appendAllGPU(
         throw invalid_argument("All input vectors must have the same size.");
     }
 
-    // 1) update sim->d_t1grid and sim->d_delta_t_ratio
-    sim->d_t1grid.push_back(t);
-    size_t idx = sim->d_t1grid.size() - 1;
-    double tdiff = sim->d_t1grid[idx] - sim->d_t1grid[idx - 1];
+    // 1) update sim->device->t1grid and sim->device->delta_t_ratio
+    sim->device->t1grid.push_back(t);
+    size_t idx = sim->device->t1grid.size() - 1;
+    double tdiff = sim->device->t1grid[idx] - sim->device->t1grid[idx - 1];
     if (idx > 1) {
-        double prev = sim->d_t1grid[idx - 1] - sim->d_t1grid[idx - 2];
-        sim->d_delta_t_ratio.push_back(tdiff / prev);
+        double prev = sim->device->t1grid[idx - 1] - sim->device->t1grid[idx - 2];
+        sim->device->delta_t_ratio.push_back(tdiff / prev);
     }
     else {
-        sim->d_delta_t_ratio.push_back(0.0);
+        sim->device->delta_t_ratio.push_back(0.0);
     }
 
-    appendGPU(sim->d_QKv,qK);
-    appendGPU(sim->d_QRv,qR);
-    appendGPU(sim->d_dQKv, dqK, tdiff);
-    appendGPU(sim->d_dQRv, dqR, tdiff);
+    appendGPU(sim->device->QKv,qK);
+    appendGPU(sim->device->QRv,qR);
+    appendGPU(sim->device->dQKv, dqK, tdiff);
+    appendGPU(sim->device->dQRv, dqR, tdiff);
 
     // 2) finally update drvec and rvec
-    sim->d_drvec.push_back(tdiff * dr);
+    sim->device->drvec.push_back(tdiff * dr);
 
     const thrust::device_ptr<const double> lastQK = thrust::device_pointer_cast(qK.data());
     const thrust::device_ptr<const double> lastQR = thrust::device_pointer_cast(qR.data());
-    sim->d_rvec.push_back(rstepGPU(lastQK, lastQR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool));
+    sim->device->rvec.push_back(rstepGPU(lastQK, lastQR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool));
 }
 
 void appendAllGPU_ptr(
@@ -774,30 +777,30 @@ void appendAllGPU_ptr(
     StreamPool& pool)
 {
     // Current time index before append
-    const size_t idx = sim->d_t1grid.size();
+    const size_t idx = sim->device->t1grid.size();
 
     // Keep existing resize cadence: grow by exactly one time-step when needed
-    if (sim->d_t1grid.capacity() < idx + 1) {
-        sim->d_t1grid.reserve(idx + 1000);
-        sim->d_delta_t_ratio.reserve(idx + 1000);
+    if (sim->device->t1grid.capacity() < idx + 1) {
+        sim->device->t1grid.reserve(idx + 1000);
+        sim->device->delta_t_ratio.reserve(idx + 1000);
     }
 
     // Ensure scalar timelines have space for the new entry
-    sim->d_t1grid.resize(idx + 1);
-    sim->d_delta_t_ratio.resize(idx + 1);
-    sim->d_drvec.resize(idx + 1);
-    sim->d_rvec.resize(idx + 1);
+    sim->device->t1grid.resize(idx + 1);
+    sim->device->delta_t_ratio.resize(idx + 1);
+    sim->device->drvec.resize(idx + 1);
+    sim->device->rvec.resize(idx + 1);
 
     // History buffers: compute offset and resize by +len (no change in frequency)
-    const size_t offset = sim->d_QKv.size();
-    if (sim->d_QKv.capacity() < offset + len) sim->d_QKv.reserve(offset + 1000 * len);
-    if (sim->d_QRv.capacity() < offset + len) sim->d_QRv.reserve(offset + 1000 * len);
-    if (sim->d_dQKv.capacity() < offset + len) sim->d_dQKv.reserve(offset + 1000 * len);
-    if (sim->d_dQRv.capacity() < offset + len) sim->d_dQRv.reserve(offset + 1000 * len);
-    sim->d_QKv.resize(offset + len);
-    sim->d_QRv.resize(offset + len);
-    sim->d_dQKv.resize(offset + len);
-    sim->d_dQRv.resize(offset + len);
+    const size_t offset = sim->device->QKv.size();
+    if (sim->device->QKv.capacity() < offset + len) sim->device->QKv.reserve(offset + 1000 * len);
+    if (sim->device->QRv.capacity() < offset + len) sim->device->QRv.reserve(offset + 1000 * len);
+    if (sim->device->dQKv.capacity() < offset + len) sim->device->dQKv.reserve(offset + 1000 * len);
+    if (sim->device->dQRv.capacity() < offset + len) sim->device->dQRv.reserve(offset + 1000 * len);
+    sim->device->QKv.resize(offset + len);
+    sim->device->QRv.resize(offset + len);
+    sim->device->dQKv.resize(offset + len);
+    sim->device->dQRv.resize(offset + len);
 
     // Launch fused history append (1 kernel instead of 4)
     const int threads = 64;
@@ -807,11 +810,11 @@ void appendAllGPU_ptr(
         thrust::raw_pointer_cast(qR),
         thrust::raw_pointer_cast(dqK),
         thrust::raw_pointer_cast(dqR),
-        thrust::raw_pointer_cast(sim->d_QKv.data()),
-        thrust::raw_pointer_cast(sim->d_QRv.data()),
-        thrust::raw_pointer_cast(sim->d_dQKv.data()),
-        thrust::raw_pointer_cast(sim->d_dQRv.data()),
-        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        thrust::raw_pointer_cast(sim->device->QKv.data()),
+        thrust::raw_pointer_cast(sim->device->QRv.data()),
+        thrust::raw_pointer_cast(sim->device->dQKv.data()),
+        thrust::raw_pointer_cast(sim->device->dQRv.data()),
+        thrust::raw_pointer_cast(sim->device->t1grid.data()),
         idx,
         offset,
         len,
@@ -819,15 +822,15 @@ void appendAllGPU_ptr(
 
     // Update time scalars (t1grid[idx], delta[idx], drvec[idx]) on device
     updateTimeScalarsKernel<<<1, 1, 0, pool[1]>>>(
-        thrust::raw_pointer_cast(sim->d_t1grid.data()),
-        thrust::raw_pointer_cast(sim->d_delta_t_ratio.data()),
-        thrust::raw_pointer_cast(sim->d_drvec.data()),
+        thrust::raw_pointer_cast(sim->device->t1grid.data()),
+        thrust::raw_pointer_cast(sim->device->delta_t_ratio.data()),
+        thrust::raw_pointer_cast(sim->device->drvec.data()),
         idx,
         t,
         dr);
 
     // Compute r(t) and store it in d_rvec[idx]
-    sim->d_rvec[idx] = rstepGPU(qK, qR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+    sim->device->rvec[idx] = rstepGPU(qK, qR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool);
 }
 
 void replaceAllGPU(
@@ -841,33 +844,33 @@ void replaceAllGPU(
 {   
     // Replace the existing values in the vectors with the new values
     size_t replaceLength = qK.size();
-    size_t length = sim->d_QKv.size() - replaceLength;
+    size_t length = sim->device->QKv.size() - replaceLength;
     if (replaceLength != qR.size() || replaceLength != dqK.size() || replaceLength != dqR.size()) {
         throw invalid_argument("All input vectors must have the same size.");
     }
     {
-        sim->d_t1grid.back() = t;
-        double tdiff = (sim->d_t1grid[sim->d_t1grid.size() - 1] - sim->d_t1grid[sim->d_t1grid.size() - 2]);
+        sim->device->t1grid.back() = t;
+        double tdiff = (sim->device->t1grid[sim->device->t1grid.size() - 1] - sim->device->t1grid[sim->device->t1grid.size() - 2]);
 
-        if (sim->d_t1grid.size() > 2) {
-            sim->d_delta_t_ratio.back() = tdiff /
-                (sim->d_t1grid[sim->d_t1grid.size() - 2] - sim->d_t1grid[sim->d_t1grid.size() - 3]);
+        if (sim->device->t1grid.size() > 2) {
+            sim->device->delta_t_ratio.back() = tdiff /
+                (sim->device->t1grid[sim->device->t1grid.size() - 2] - sim->device->t1grid[sim->device->t1grid.size() - 3]);
         }
         else {
-            sim->d_delta_t_ratio.back() = 0.0;
+            sim->device->delta_t_ratio.back() = 0.0;
         }
 
-        thrust::copy(qK.begin(), qK.end(), sim->d_QKv.begin() + length);
-        thrust::copy(qR.begin(), qR.end(), sim->d_QRv.begin() + length);
-        thrust::transform(dqK.begin(), dqK.end(), sim->d_dQKv.begin() + length, [tdiff] __device__ (double x) { return tdiff * x; });
-        thrust::transform(dqR.begin(), dqR.end(), sim->d_dQRv.begin() + length, [tdiff] __device__ (double x) { return tdiff * x; });
+        thrust::copy(qK.begin(), qK.end(), sim->device->QKv.begin() + length);
+        thrust::copy(qR.begin(), qR.end(), sim->device->QRv.begin() + length);
+        thrust::transform(dqK.begin(), dqK.end(), sim->device->dQKv.begin() + length, [tdiff] __device__ (double x) { return tdiff * x; });
+        thrust::transform(dqR.begin(), dqR.end(), sim->device->dQRv.begin() + length, [tdiff] __device__ (double x) { return tdiff * x; });
 
-        sim->d_drvec.back() = tdiff * dr;
+        sim->device->drvec.back() = tdiff * dr;
 
-        const size_t idx = sim->d_t1grid.size() - 1;
+        const size_t idx = sim->device->t1grid.size() - 1;
         const thrust::device_ptr<const double> lastQK = thrust::device_pointer_cast(qK.data());
         const thrust::device_ptr<const double> lastQR = thrust::device_pointer_cast(qR.data());
-        sim->d_rvec.back() = rstepGPU(lastQK, lastQR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+        sim->device->rvec.back() = rstepGPU(lastQK, lastQR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool);
     }
 }
 
@@ -882,9 +885,9 @@ void replaceAllGPU_ptr(
     StreamPool& pool)
 {   
     // Replace the existing values in the vectors with the new values (last slice)
-    const size_t gridSize = sim->d_t1grid.size();
+    const size_t gridSize = sim->device->t1grid.size();
     const size_t idx = gridSize - 1;
-    const size_t offset = sim->d_QKv.size() - len;
+    const size_t offset = sim->device->QKv.size() - len;
 
     const int threads = 64;
     const int blocks  = static_cast<int>((len + threads - 1) / threads);
@@ -895,11 +898,11 @@ void replaceAllGPU_ptr(
         thrust::raw_pointer_cast(qR),
         thrust::raw_pointer_cast(dqK),
         thrust::raw_pointer_cast(dqR),
-        thrust::raw_pointer_cast(sim->d_QKv.data()),
-        thrust::raw_pointer_cast(sim->d_QRv.data()),
-        thrust::raw_pointer_cast(sim->d_dQKv.data()),
-        thrust::raw_pointer_cast(sim->d_dQRv.data()),
-        thrust::raw_pointer_cast(sim->d_t1grid.data()),
+        thrust::raw_pointer_cast(sim->device->QKv.data()),
+        thrust::raw_pointer_cast(sim->device->QRv.data()),
+        thrust::raw_pointer_cast(sim->device->dQKv.data()),
+        thrust::raw_pointer_cast(sim->device->dQRv.data()),
+        thrust::raw_pointer_cast(sim->device->t1grid.data()),
         idx,
         offset,
         len,
@@ -907,13 +910,13 @@ void replaceAllGPU_ptr(
 
     // Update time scalars for the last entry
     updateTimeScalarsKernel<<<1, 1, 0, pool[1]>>>(
-        thrust::raw_pointer_cast(sim->d_t1grid.data()),
-        thrust::raw_pointer_cast(sim->d_delta_t_ratio.data()),
-        thrust::raw_pointer_cast(sim->d_drvec.data()),
+        thrust::raw_pointer_cast(sim->device->t1grid.data()),
+        thrust::raw_pointer_cast(sim->device->delta_t_ratio.data()),
+        thrust::raw_pointer_cast(sim->device->drvec.data()),
         idx,
         t,
         dr);
 
     // Update r(t) at the last position
-    sim->d_rvec.back() = rstepGPU(qK, qR, t, sim->d_integ, sim->d_theta, config.Gamma, config.T0, pool);
+    sim->device->rvec.back() = rstepGPU(qK, qR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool);
 }

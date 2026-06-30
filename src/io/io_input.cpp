@@ -5,8 +5,8 @@
 #include "math/math_sigma.hpp"
 #include "core/config.hpp"
 #include "core/globals.hpp"
+
 #include "convolution/convolution.hpp"
-#include "core/device_utils.cuh"
 #include "EOMs/time_steps.hpp"
 #include "version/version_info.hpp"
 #include <fstream>
@@ -18,10 +18,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <dirent.h>
-#if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
-#include <thrust/copy.h>
-#endif
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
@@ -92,21 +88,21 @@ void import(SimulationData &sim, size_t len_param, int& ord_ref)
     std::ostringstream base;
     base << "Grid_data/" << len_param << "/";
     std::string prefix = base.str();
-    sim.h_theta = importVectorFromFile(prefix + "theta.dat");
-    sim.h_phi1 = importVectorFromFile(prefix + "phi1.dat");
-    sim.h_phi2 = importVectorFromFile(prefix + "phi2.dat");
-    sim.h_posA1y = importVectorFromFile(prefix + "posA1y.dat");
-    sim.h_posA2y = importVectorFromFile(prefix + "posA2y.dat");
-    sim.h_posB2y = importVectorFromFile(prefix + "posB2y.dat");
-    sim.h_indsA1y = importIntVectorFromFile(prefix + "indsA1y.dat");
-    sim.h_indsA2y = importIntVectorFromFile(prefix + "indsA2y.dat");
-    sim.h_indsB2y = importIntVectorFromFile(prefix + "indsB2y.dat");
-    sim.h_weightsA1y = importVectorFromFile(prefix + "weightsA1y.dat");
-    sim.h_weightsA2y = importVectorFromFile(prefix + "weightsA2y.dat");
-    sim.h_weightsB2y = importVectorFromFile(prefix + "weightsB2y.dat");
-    sim.h_integ = importVectorFromFile(prefix + "int.dat");
+    sim.host->theta = importVectorFromFile(prefix + "theta.dat");
+    sim.host->phi1 = importVectorFromFile(prefix + "phi1.dat");
+    sim.host->phi2 = importVectorFromFile(prefix + "phi2.dat");
+    sim.host->posA1y = importVectorFromFile(prefix + "posA1y.dat");
+    sim.host->posA2y = importVectorFromFile(prefix + "posA2y.dat");
+    sim.host->posB2y = importVectorFromFile(prefix + "posB2y.dat");
+    sim.host->indsA1y = importIntVectorFromFile(prefix + "indsA1y.dat");
+    sim.host->indsA2y = importIntVectorFromFile(prefix + "indsA2y.dat");
+    sim.host->indsB2y = importIntVectorFromFile(prefix + "indsB2y.dat");
+    sim.host->weightsA1y = importVectorFromFile(prefix + "weightsA1y.dat");
+    sim.host->weightsA2y = importVectorFromFile(prefix + "weightsA2y.dat");
+    sim.host->weightsB2y = importVectorFromFile(prefix + "weightsB2y.dat");
+    sim.host->integ = importVectorFromFile(prefix + "int.dat");
     if (len_param)
-        ord_ref = sim.h_weightsB2y.empty() ? 0 : static_cast<int>(sim.h_weightsB2y.size() / (len_param * len_param) - 2);
+        ord_ref = sim.host->weightsB2y.empty() ? 0 : static_cast<int>(sim.host->weightsB2y.size() / (len_param * len_param) - 2);
 }
 
 bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
@@ -149,28 +145,28 @@ bool loadSimulationStateBinary(const std::string &filename, SimulationData &sim,
         std::cerr << dmfe::console::WARN() << "File parameters don't match current simulation parameters" << std::endl;
         return false;
     }
-    sim.h_t1grid.resize(t1grid_size);
-    file.read(reinterpret_cast<char *>(sim.h_t1grid.data()), t1grid_size * sizeof(double));
-    sim.h_QKv.resize(t1grid_size * vector_len);
-    file.read(reinterpret_cast<char *>(sim.h_QKv.data()), sim.h_QKv.size() * sizeof(double));
-    sim.h_QRv.resize(t1grid_size * vector_len);
-    file.read(reinterpret_cast<char *>(sim.h_QRv.data()), sim.h_QRv.size() * sizeof(double));
-    sim.h_dQKv.resize(t1grid_size * vector_len);
-    file.read(reinterpret_cast<char *>(sim.h_dQKv.data()), sim.h_dQKv.size() * sizeof(double));
-    sim.h_dQRv.resize(t1grid_size * vector_len);
-    file.read(reinterpret_cast<char *>(sim.h_dQRv.data()), sim.h_dQRv.size() * sizeof(double));
-    sim.h_rvec.resize(t1grid_size);
-    file.read(reinterpret_cast<char *>(sim.h_rvec.data()), sim.h_rvec.size() * sizeof(double));
-    sim.h_drvec.resize(t1grid_size);
-    file.read(reinterpret_cast<char *>(sim.h_drvec.data()), sim.h_drvec.size() * sizeof(double));
+    sim.host->t1grid.resize(t1grid_size);
+    file.read(reinterpret_cast<char *>(sim.host->t1grid.data()), t1grid_size * sizeof(double));
+    sim.host->QKv.resize(t1grid_size * vector_len);
+    file.read(reinterpret_cast<char *>(sim.host->QKv.data()), sim.host->QKv.size() * sizeof(double));
+    sim.host->QRv.resize(t1grid_size * vector_len);
+    file.read(reinterpret_cast<char *>(sim.host->QRv.data()), sim.host->QRv.size() * sizeof(double));
+    sim.host->dQKv.resize(t1grid_size * vector_len);
+    file.read(reinterpret_cast<char *>(sim.host->dQKv.data()), sim.host->dQKv.size() * sizeof(double));
+    sim.host->dQRv.resize(t1grid_size * vector_len);
+    file.read(reinterpret_cast<char *>(sim.host->dQRv.data()), sim.host->dQRv.size() * sizeof(double));
+    sim.host->rvec.resize(t1grid_size);
+    file.read(reinterpret_cast<char *>(sim.host->rvec.data()), sim.host->rvec.size() * sizeof(double));
+    sim.host->drvec.resize(t1grid_size);
+    file.read(reinterpret_cast<char *>(sim.host->drvec.data()), sim.host->drvec.size() * sizeof(double));
     loaded_params.delta = file_delta;
     loaded_params.delta_t = file_delta_t;
     loaded_params.loop = file_loop;
-    sim.h_delta_t_ratio.resize(t1grid_size);
-    sim.h_delta_t_ratio[0] = 0.0;
+    sim.host->delta_t_ratio.resize(t1grid_size);
+    sim.host->delta_t_ratio[0] = 0.0;
     for (size_t i = 2; i < t1grid_size; ++i)
-        sim.h_delta_t_ratio[i] = (sim.h_t1grid[i] - sim.h_t1grid[i - 1]) / (sim.h_t1grid[i - 1] - sim.h_t1grid[i - 2]);
-    std::cout << dmfe::console::INFO() << "Successfully loaded binary simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop << ", Energy: " << file_energy << std::endl;
+        sim.host->delta_t_ratio[i] = (sim.host->t1grid[i] - sim.host->t1grid[i - 1]) / (sim.host->t1grid[i - 1] - sim.host->t1grid[i - 2]);
+    std::cout << dmfe::console::INFO() << "Successfully loaded binary simulation data from " << filename << "\nTime: " << sim.host->t1grid.back() << ", Loop: " << loaded_params.loop << ", Energy: " << file_energy << std::endl;
     return true;
 }
 
@@ -226,28 +222,28 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         h5rt::close_file(file); return false;
     }
     size_t vector_len = qkv_size / t1grid_size;
-    sim.h_t1grid.resize(t1grid_size);
-    sim.h_QKv.resize(t1grid_size * vector_len);
-    sim.h_QRv.resize(t1grid_size * vector_len);
-    sim.h_dQKv.resize(t1grid_size * vector_len);
-    sim.h_dQRv.resize(t1grid_size * vector_len);
-    sim.h_rvec.resize(t1grid_size);
-    sim.h_drvec.resize(t1grid_size);
-    if (!h5rt::read_dataset_1d_double(file, "t1grid", sim.h_t1grid) ||
-        !h5rt::read_dataset_1d_double(file, "QKv", sim.h_QKv) ||
-        !h5rt::read_dataset_1d_double(file, "QRv", sim.h_QRv) ||
-        !h5rt::read_dataset_1d_double(file, "dQKv", sim.h_dQKv) ||
-        !h5rt::read_dataset_1d_double(file, "dQRv", sim.h_dQRv) ||
-        !h5rt::read_dataset_1d_double(file, "rvec", sim.h_rvec)) {
+    sim.host->t1grid.resize(t1grid_size);
+    sim.host->QKv.resize(t1grid_size * vector_len);
+    sim.host->QRv.resize(t1grid_size * vector_len);
+    sim.host->dQKv.resize(t1grid_size * vector_len);
+    sim.host->dQRv.resize(t1grid_size * vector_len);
+    sim.host->rvec.resize(t1grid_size);
+    sim.host->drvec.resize(t1grid_size);
+    if (!h5rt::read_dataset_1d_double(file, "t1grid", sim.host->t1grid) ||
+        !h5rt::read_dataset_1d_double(file, "QKv", sim.host->QKv) ||
+        !h5rt::read_dataset_1d_double(file, "QRv", sim.host->QRv) ||
+        !h5rt::read_dataset_1d_double(file, "dQKv", sim.host->dQKv) ||
+        !h5rt::read_dataset_1d_double(file, "dQRv", sim.host->dQRv) ||
+        !h5rt::read_dataset_1d_double(file, "rvec", sim.host->rvec)) {
         h5rt::close_file(file); return false;
     }
-    (void)h5rt::read_dataset_1d_double(file, "drvec", sim.h_drvec);
+    (void)h5rt::read_dataset_1d_double(file, "drvec", sim.host->drvec);
     loaded_params.delta = file_delta; loaded_params.delta_t = file_delta_t; loaded_params.loop = file_loop;
-    sim.h_delta_t_ratio.resize(t1grid_size);
-    sim.h_delta_t_ratio[0] = 0.0;
+    sim.host->delta_t_ratio.resize(t1grid_size);
+    sim.host->delta_t_ratio[0] = 0.0;
     for (size_t i = 2; i < t1grid_size; ++i)
-        sim.h_delta_t_ratio[i] = (sim.h_t1grid[i] - sim.h_t1grid[i - 1]) / (sim.h_t1grid[i - 1] - sim.h_t1grid[i - 2]);
-    std::cout << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop;
+        sim.host->delta_t_ratio[i] = (sim.host->t1grid[i] - sim.host->t1grid[i - 1]) / (sim.host->t1grid[i - 1] - sim.host->t1grid[i - 2]);
+    std::cout << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.host->t1grid.back() << ", Loop: " << loaded_params.loop;
     if (file_energy != 0.0) std::cout << ", Energy: " << file_energy;
     std::cout << std::endl;
     h5rt::close_file(file);
@@ -298,26 +294,26 @@ bool loadSimulationStateHDF5(const std::string &filename, SimulationData &sim,
         hsize_t qkv_dims[1]; qkv_space.getSimpleExtentDims(qkv_dims, nullptr);
     if (qkv_dims[0] % t1grid_size != 0) { std::cerr << dmfe::console::ERR() << "Inconsistent dimensions in HDF5 file" << std::endl; return false; }
         size_t vector_len = qkv_dims[0] / t1grid_size;
-        sim.h_t1grid.resize(t1grid_size);
-        sim.h_QKv.resize(t1grid_size * vector_len);
-        sim.h_QRv.resize(t1grid_size * vector_len);
-        sim.h_dQKv.resize(t1grid_size * vector_len);
-        sim.h_dQRv.resize(t1grid_size * vector_len);
-        sim.h_rvec.resize(t1grid_size);
-        sim.h_drvec.resize(t1grid_size);
-        t1_dataset.read(sim.h_t1grid.data(), H5::PredType::NATIVE_DOUBLE);
-        qkv_dataset.read(sim.h_QKv.data(), H5::PredType::NATIVE_DOUBLE);
-        file.openDataSet("QRv").read(sim.h_QRv.data(), H5::PredType::NATIVE_DOUBLE);
-        file.openDataSet("dQKv").read(sim.h_dQKv.data(), H5::PredType::NATIVE_DOUBLE);
-        file.openDataSet("dQRv").read(sim.h_dQRv.data(), H5::PredType::NATIVE_DOUBLE);
-        file.openDataSet("rvec").read(sim.h_rvec.data(), H5::PredType::NATIVE_DOUBLE);
-        try { file.openDataSet("drvec").read(sim.h_drvec.data(), H5::PredType::NATIVE_DOUBLE); } catch (...) {}
+        sim.host->t1grid.resize(t1grid_size);
+        sim.host->QKv.resize(t1grid_size * vector_len);
+        sim.host->QRv.resize(t1grid_size * vector_len);
+        sim.host->dQKv.resize(t1grid_size * vector_len);
+        sim.host->dQRv.resize(t1grid_size * vector_len);
+        sim.host->rvec.resize(t1grid_size);
+        sim.host->drvec.resize(t1grid_size);
+        t1_dataset.read(sim.host->t1grid.data(), H5::PredType::NATIVE_DOUBLE);
+        qkv_dataset.read(sim.host->QKv.data(), H5::PredType::NATIVE_DOUBLE);
+        file.openDataSet("QRv").read(sim.host->QRv.data(), H5::PredType::NATIVE_DOUBLE);
+        file.openDataSet("dQKv").read(sim.host->dQKv.data(), H5::PredType::NATIVE_DOUBLE);
+        file.openDataSet("dQRv").read(sim.host->dQRv.data(), H5::PredType::NATIVE_DOUBLE);
+        file.openDataSet("rvec").read(sim.host->rvec.data(), H5::PredType::NATIVE_DOUBLE);
+        try { file.openDataSet("drvec").read(sim.host->drvec.data(), H5::PredType::NATIVE_DOUBLE); } catch (...) {}
         loaded_params.delta = file_delta; loaded_params.delta_t = file_delta_t; loaded_params.loop = file_loop;
-        sim.h_delta_t_ratio.resize(t1grid_size);
-        sim.h_delta_t_ratio[0] = 0.0;
+        sim.host->delta_t_ratio.resize(t1grid_size);
+        sim.host->delta_t_ratio[0] = 0.0;
         for (size_t i = 2; i < t1grid_size; ++i)
-            sim.h_delta_t_ratio[i] = (sim.h_t1grid[i] - sim.h_t1grid[i - 1]) / (sim.h_t1grid[i - 1] - sim.h_t1grid[i - 2]);
-    std::cout << dmfe::console::INFO() << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.h_t1grid.back() << ", Loop: " << loaded_params.loop;
+            sim.host->delta_t_ratio[i] = (sim.host->t1grid[i] - sim.host->t1grid[i - 1]) / (sim.host->t1grid[i - 1] - sim.host->t1grid[i - 2]);
+    std::cout << dmfe::console::INFO() << "Successfully loaded HDF5 simulation data from " << filename << "\nTime: " << sim.host->t1grid.back() << ", Loop: " << loaded_params.loop;
     if (file_energy != 0.0) std::cout << ", Energy: " << file_energy;
     std::cout << std::endl;
         return true;

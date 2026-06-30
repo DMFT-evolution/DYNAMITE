@@ -5,8 +5,8 @@
 #include "math/math_sigma.hpp"
 #include "core/config.hpp"
 #include "core/globals.hpp"
+
 #include "convolution/convolution.hpp"
-#include "core/device_utils.cuh"
 #include "EOMs/time_steps.hpp"
 #include "version/version_info.hpp"
 #include <fstream>
@@ -18,10 +18,6 @@
 #include <cmath>
 #include <cstdlib>
 #include <dirent.h>
-#if DMFE_WITH_CUDA
-#include "core/device_vector.hpp"
-#include <thrust/copy.h>
-#endif
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>

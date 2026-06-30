@@ -47,7 +47,7 @@ void tailFitBlendCPU() {
 	const size_t len = config.len;
 	if (len < 32) return; // not enough points to bother
 	// Operate on last time-slice of QKv
-	const size_t t1len = sim->h_t1grid.size();
+	const size_t t1len = sim->host->t1grid.size();
 	if (t1len == 0) return;
 	const size_t base = (t1len - 1) * len;
 
@@ -58,16 +58,16 @@ void tailFitBlendCPU() {
 	if (len - start < W) return;
 
 	// Reuse/resize temp buffer
-	std::vector<double>& tmp = sim->h_temp0;
+	std::vector<double>& tmp = sim->host->temp0;
 	tmp.resize(len - start);
 
 	// Precompute y (parallelizable)
 #pragma omp parallel for
 	for (size_t j = start; j < len; ++j) {
-		double th = sim->h_theta[j];
+		double th = sim->host->theta[j];
 		double one_m = 1.0 - th;
 		double denom = one_m * one_m;
-		double qk = sim->h_QKv[base + j];
+		double qk = sim->host->QKv[base + j];
 		double y = (1.0 - qk) / (denom > 0 ? denom : 1e-300);
 		tmp[j - start] = y;
 	}
@@ -179,10 +179,10 @@ void tailFitBlendCPU() {
 	std::vector<double> residuals(len - j0);
 #pragma omp parallel for
 	for (size_t j = j0; j < len; ++j) {
-		double th = sim->h_theta[j];
+		double th = sim->host->theta[j];
 		double one_m = 1.0 - th;
 		double qk_fit = 1.0 - alpha * one_m * one_m;
-		double qk_num = sim->h_QKv[base + j];
+		double qk_num = sim->host->QKv[base + j];
 		residuals[j - j0] = qk_fit - qk_num;
 	}
 
@@ -252,13 +252,13 @@ void tailFitBlendCPU() {
 
 	#pragma omp parallel for
 	for (size_t j = j0; j < len; ++j) {
-		double th = sim->h_theta[j];
+		double th = sim->host->theta[j];
 		double one_m = 1.0 - th;
 		double qk_fit = 1.0 - alpha * one_m * one_m;
 		double w = 1.0;
 		if (j < j0 + ramp) w = static_cast<double>(j - j0) / static_cast<double>(ramp);
-		double qk_num = sim->h_QKv[base + j];
-		sim->h_QKv[base + j] = (1.0 - w) * qk_num + w * qk_fit;
+		double qk_num = sim->host->QKv[base + j];
+		sim->host->QKv[base + j] = (1.0 - w) * qk_num + w * qk_fit;
 	}
 
 	// previous alpha already updated for next iteration above

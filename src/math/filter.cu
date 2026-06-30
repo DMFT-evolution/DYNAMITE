@@ -1,5 +1,6 @@
 #include "math/filter.hpp"
 #include "core/globals.hpp"
+
 #include "core/config.hpp"
 #include "core/stream_pool.hpp"
 #include <cuda_runtime.h>
@@ -258,15 +259,15 @@ void filter_old(thrust::device_ptr<double> gK,
     if (len < 3) return;
     if (config.filter_strength <= 0.0) return;
     if (sim == nullptr) return;
-    if (sim->d_theta.size() < len) return;
+    if (sim->device->theta.size() < len) return;
 
     double alpha = config.filter_strength;
     if (alpha < 0.0) return;
     if (alpha > 1.0) alpha = 1.0;
 
     double dx_avg = 1.0;
-    if (sim->h_theta.size() >= len) {
-        dx_avg = (sim->h_theta[len - 1] - sim->h_theta[0]) / static_cast<double>(len - 1);
+    if (sim->host->theta.size() >= len) {
+        dx_avg = (sim->host->theta[len - 1] - sim->host->theta[0]) / static_cast<double>(len - 1);
         if (dx_avg <= 0.0) dx_avg = 1.0;
     }
 
@@ -274,7 +275,7 @@ void filter_old(thrust::device_ptr<double> gK,
     if (taper_len < 2) taper_len = 2;
     if (taper_len > 32) taper_len = 32;
 
-    const double* theta_ptr = thrust::raw_pointer_cast(sim->d_theta.data());
+    const double* theta_ptr = thrust::raw_pointer_cast(sim->device->theta.data());
     cudaStream_t stream = pool[0];
 
     int threads = 256;
@@ -302,13 +303,13 @@ void filter(thrust::device_ptr<double> gK,
     if (len < 5) return;
     if (config.filter_strength <= 0.0) return;
     if (sim == nullptr) return;
-    if (sim->d_theta.size() < len) return;
+    if (sim->device->theta.size() < len) return;
     if (hR0 == nullptr) return;
 
     double alpha = config.filter_strength;
     if (alpha < 0.0) return;
 
-    const double* theta_ptr = thrust::raw_pointer_cast(sim->d_theta.data());
+    const double* theta_ptr = thrust::raw_pointer_cast(sim->device->theta.data());
     cudaStream_t stream = pool[0];
 
     // Early-time guard: compute ratio on hR0 and only apply if weight > 0.

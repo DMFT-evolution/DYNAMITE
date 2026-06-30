@@ -7,7 +7,8 @@
 #include "convolution/convolution.hpp"
 #include "core/console.hpp"
 #include "version/version_info.hpp"
-#include "core/globals.hpp"           // globals if needed
+#include "core/globals.hpp"
+           // globals if needed
 #include "EOMs/time_steps.hpp"        // getLastLenEntries
 #include <fstream>
 #include <iostream>
@@ -39,9 +40,9 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     double energy;
     {
         vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+        vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0]
+        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
                  + Dflambda(lastQKv[0]) / config.T0);
     }
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -59,32 +60,32 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     };
 
     const double p_start = 0.10, p_end = 0.50, p_span = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
         if (frac > p_end) frac = p_end; if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "hdf5");
     };
-    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->QKv.size() + sim->host->QRv.size() + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->t1grid.size() + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0; update_prog(done_elems, total_elems);
 
-    if (!h5rt::write_dataset_1d_double(file, "QKv", sim->h_QKv.data(), sim->h_QKv.size())) { fail_and_fallback("QKv"); return; }
-    done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "QRv", sim->h_QRv.data(), sim->h_QRv.size())) { fail_and_fallback("QRv"); return; }
-    done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->h_dQKv.data(), sim->h_dQKv.size())) { fail_and_fallback("dQKv"); return; }
-    done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->h_dQRv.data(), sim->h_dQRv.size())) { fail_and_fallback("dQRv"); return; }
-    done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->h_t1grid.data(), sim->h_t1grid.size())) { fail_and_fallback("t1grid"); return; }
-    done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "rvec", sim->h_rvec.data(), sim->h_rvec.size())) { fail_and_fallback("rvec"); return; }
-    done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
-    if (!h5rt::write_dataset_1d_double(file, "drvec", sim->h_drvec.data(), sim->h_drvec.size())) { fail_and_fallback("drvec"); return; }
-    done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "QKv", sim->host->QKv.data(), sim->host->QKv.size())) { fail_and_fallback("QKv"); return; }
+    done_elems += sim->host->QKv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "QRv", sim->host->QRv.data(), sim->host->QRv.size())) { fail_and_fallback("QRv"); return; }
+    done_elems += sim->host->QRv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "dQKv", sim->host->dQKv.data(), sim->host->dQKv.size())) { fail_and_fallback("dQKv"); return; }
+    done_elems += sim->host->dQKv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "dQRv", sim->host->dQRv.data(), sim->host->dQRv.size())) { fail_and_fallback("dQRv"); return; }
+    done_elems += sim->host->dQRv.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "t1grid", sim->host->t1grid.data(), sim->host->t1grid.size())) { fail_and_fallback("t1grid"); return; }
+    done_elems += sim->host->t1grid.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "rvec", sim->host->rvec.data(), sim->host->rvec.size())) { fail_and_fallback("rvec"); return; }
+    done_elems += sim->host->rvec.size(); update_prog(done_elems, total_elems);
+    if (!h5rt::write_dataset_1d_double(file, "drvec", sim->host->drvec.data(), sim->host->drvec.size())) { fail_and_fallback("drvec"); return; }
+    done_elems += sim->host->drvec.size(); update_prog(done_elems, total_elems);
 
-    double t_current = sim->h_t1grid.back();
+    double t_current = sim->host->t1grid.back();
     int current_len = config.len; int current_loop = config.loop;
     if (!h5rt::write_attr_double(file, "time", t_current)) { fail_and_fallback("attr time"); return; }
     if (!h5rt::write_attr_int(file, "iteration", current_loop)) { fail_and_fallback("attr iteration"); return; }
@@ -123,9 +124,9 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     double energy;
     {
         vector<double> temp(config.len, 0.0);
-        vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+        vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0]
+        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
                  + Dflambda(lastQKv[0]) / config.T0);
     }
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
@@ -133,64 +134,64 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     if (fileExists(binFilename)) { std::remove(binFilename.c_str()); }
 
     const double p_start = 0.10, p_end = 0.50, p_span = (p_end - p_start);
-    const double last_t1 = sim->h_t1grid.empty() ? 0.0 : sim->h_t1grid.back();
+    const double last_t1 = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
     auto update_prog = [&](size_t done, size_t total){
         double frac = p_start + (p_span * (total ? (double)done / (double)total : 0.0));
         if (frac > p_end) frac = p_end; if (frac < p_start) frac = p_start; _setSaveProgress(frac, last_t1, "hdf5"); };
-    size_t total_elems = sim->h_QKv.size() + sim->h_QRv.size() + sim->h_dQKv.size() + sim->h_dQRv.size()
-                       + sim->h_t1grid.size() + sim->h_rvec.size() + sim->h_drvec.size();
+    size_t total_elems = sim->host->QKv.size() + sim->host->QRv.size() + sim->host->dQKv.size() + sim->host->dQRv.size()
+                       + sim->host->t1grid.size() + sim->host->rvec.size() + sim->host->drvec.size();
     size_t done_elems = 0; update_prog(done_elems, total_elems);
 
     {
         H5::H5File file(filename, H5F_ACC_TRUNC);
         H5::DSetCreatPropList plist; plist.setDeflate(6); plist.setShuffle();
         {
-            hsize_t dims[1] = {sim->h_QKv.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1048576, sim->h_QKv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("QKv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_QKv.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_QKv.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->QKv.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1048576, sim->host->QKv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("QKv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->QKv.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->QKv.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_QRv.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1048576, sim->h_QRv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("QRv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_QRv.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_QRv.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->QRv.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1048576, sim->host->QRv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("QRv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->QRv.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->QRv.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_dQKv.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1048576, sim->h_dQKv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("dQKv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_dQKv.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_dQKv.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->dQKv.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1048576, sim->host->dQKv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("dQKv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->dQKv.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->dQKv.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_dQRv.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1048576, sim->h_dQRv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("dQRv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_dQRv.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_dQRv.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->dQRv.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1048576, sim->host->dQRv.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("dQRv", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->dQRv.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->dQRv.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_t1grid.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1024, sim->h_t1grid.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("t1grid", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_t1grid.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_t1grid.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->t1grid.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1024, sim->host->t1grid.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("t1grid", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->t1grid.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->t1grid.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_rvec.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1024, sim->h_rvec.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("rvec", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_rvec.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_rvec.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->rvec.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1024, sim->host->rvec.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("rvec", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->rvec.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->rvec.size(); update_prog(done_elems, total_elems);
         }
         {
-            hsize_t dims[1] = {sim->h_drvec.size()}; H5::DataSpace sp(1, dims);
-            size_t cs = std::min<size_t>(1024, sim->h_drvec.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
-            file.createDataSet("drvec", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->h_drvec.data(), H5::PredType::NATIVE_DOUBLE);
-            done_elems += sim->h_drvec.size(); update_prog(done_elems, total_elems);
+            hsize_t dims[1] = {sim->host->drvec.size()}; H5::DataSpace sp(1, dims);
+            size_t cs = std::min<size_t>(1024, sim->host->drvec.size()); hsize_t cd[1] = {cs}; plist.setChunk(1, cd);
+            file.createDataSet("drvec", H5::PredType::NATIVE_DOUBLE, sp, plist).write(sim->host->drvec.data(), H5::PredType::NATIVE_DOUBLE);
+            done_elems += sim->host->drvec.size(); update_prog(done_elems, total_elems);
         }
 
         // Attributes
         H5::DataSpace scalar(H5S_SCALAR);
         auto add_attr = [&](const char* name, const H5::PredType& type, const void* value){ file.createAttribute(name, type, scalar).write(type, value); };
-        double t_current = sim->h_t1grid.back(); int current_len = config.len; int current_loop = config.loop;
+        double t_current = sim->host->t1grid.back(); int current_len = config.len; int current_loop = config.loop;
         add_attr("time", H5::PredType::NATIVE_DOUBLE, &t_current);
         add_attr("iteration", H5::PredType::NATIVE_INT, &current_loop);
         add_attr("len", H5::PredType::NATIVE_INT, &current_len);

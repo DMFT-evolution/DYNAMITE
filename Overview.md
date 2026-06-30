@@ -40,11 +40,11 @@ Public headers are under `include/`, sources under `src/`:
 - `include/` — public headers for all modules
   - core APIs: `config.hpp`, `globals.hpp`, `io_utils.hpp`, `gpu_memory_utils.hpp`, `device_utils.cuh`, `host_device_utils.hpp`, `host_utils.hpp`
   - math: `math_ops.hpp`, `math_sigma.hpp`
-  - interpolation: `index_mat.hpp`, `index_vec.hpp`, `interpolation_core.hpp`
+  - interpolation: `index_mat.cuh`, `index_vec.cuh`,`index_mat.hpp`, `index_vec.hpp`, `interpolation_core.hpp`
   - EOMs: `time_steps.hpp`, `runge_kutta.hpp`, `rk_data.hpp`
-  - search: `search_utils.hpp`
+  - search: `search_utils.hpp, search_utils.cuh`
   - simulation: `simulation_control.hpp`, `simulation_runner.hpp`, `simulation_data.hpp`
-  - convolution: `convolution/convolution.hpp`
+  - convolution: `convolution.cuh`, `convolution.hpp`
   - versioning: `version_info.hpp`, `version_compat.hpp`
   - io runtime: `io/h5_runtime.hpp`
 - `src/` — implementations by module

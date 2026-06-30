@@ -1,5 +1,6 @@
 #include "EOMs/time_steps.hpp"
 #include "core/globals.hpp"
+
 #include "core/config.hpp"
 #include "math/math_ops.hpp"
 #include "core/vector_utils.hpp"
@@ -28,20 +29,20 @@ vector<double> QKstep(const vector<double>& qK, const vector<double>& qR)
 {
     vector<double> temp(config.len, 0.0);
     #pragma omp parallel for
-    for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
-        temp[i / config.len] = sim->h_QKB1int[i];
+    for (size_t i = 0; i < sim->host->QKB1int.size(); i += config.len) {
+        temp[i / config.len] = sim->host->QKB1int[i];
     }
-    vector<double> d1qK = (temp* (Dflambda(qK[0]) / config.T0)) + (qK * (-sim->h_rInt.back())) +
-    ConvR(sim->h_SigmaRA2int, sim->h_QKB2int, sim->h_t1grid.back()) + ConvA(sim->h_SigmaRA1int, sim->h_QKB1int, sim->h_t1grid.back()) +
-    ConvA(sim->h_SigmaKA1int, sim->h_QRB1int, sim->h_t1grid.back());
+    vector<double> d1qK = (temp* (Dflambda(qK[0]) / config.T0)) + (qK * (-sim->host->rInt.back())) +
+    ConvR(sim->host->SigmaRA2int, sim->host->QKB2int, sim->host->t1grid.back()) + ConvA(sim->host->SigmaRA1int, sim->host->QKB1int, sim->host->t1grid.back()) +
+    ConvA(sim->host->SigmaKA1int, sim->host->QRB1int, sim->host->t1grid.back());
     #pragma omp parallel for
-    for (size_t i = 0; i < sim->h_QKB1int.size(); i += config.len) {
-        temp[i / config.len] = Dflambda(sim->h_QKB1int[i]);
+    for (size_t i = 0; i < sim->host->QKB1int.size(); i += config.len) {
+        temp[i / config.len] = Dflambda(sim->host->QKB1int[i]);
     }
     vector<double> d2qK = (temp * (qK[0] / config.T0)) + (qR * (2 * config.Gamma)) +
-    ConvR(sim->h_QRA2int, sim->h_SigmaKB2int, sim->h_t1grid.back()) + ConvA(sim->h_QRA1int, sim->h_SigmaKB1int, sim->h_t1grid.back()) +
-    ConvA(sim->h_QKA1int, sim->h_SigmaRB1int, sim->h_t1grid.back()) - (qK * sim->h_rInt);
-    return d1qK + (d2qK * sim->h_theta);
+    ConvR(sim->host->QRA2int, sim->host->SigmaKB2int, sim->host->t1grid.back()) + ConvA(sim->host->QRA1int, sim->host->SigmaKB1int, sim->host->t1grid.back()) +
+    ConvA(sim->host->QKA1int, sim->host->SigmaRB1int, sim->host->t1grid.back()) - (qK * sim->host->rInt);
+    return d1qK + (d2qK * sim->host->theta);
 }
 
 void replaceAll(const vector<double>& qK,
@@ -53,42 +54,42 @@ void replaceAll(const vector<double>& qK,
 {
     // Replace the existing values in the vectors with the new values
     size_t replaceLength = qK.size();
-    size_t length = sim->h_QKv.size() - replaceLength;
+    size_t length = sim->host->QKv.size() - replaceLength;
     if (replaceLength != qR.size() || replaceLength != dqK.size() || replaceLength != dqR.size()) {
         throw invalid_argument("All input vectors must have the same size.");
     }
     {
-        sim->h_t1grid.back() = t;
-        double tdiff = (sim->h_t1grid[sim->h_t1grid.size() - 1] - sim->h_t1grid[sim->h_t1grid.size() - 2]);
+        sim->host->t1grid.back() = t;
+        double tdiff = (sim->host->t1grid[sim->host->t1grid.size() - 1] - sim->host->t1grid[sim->host->t1grid.size() - 2]);
 
-        if (sim->h_t1grid.size() > 2) {
-            sim->h_delta_t_ratio.back() = tdiff /
-                (sim->h_t1grid[sim->h_t1grid.size() - 2] - sim->h_t1grid[sim->h_t1grid.size() - 3]);
+        if (sim->host->t1grid.size() > 2) {
+            sim->host->delta_t_ratio.back() = tdiff /
+                (sim->host->t1grid[sim->host->t1grid.size() - 2] - sim->host->t1grid[sim->host->t1grid.size() - 3]);
         }
         else {
-            sim->h_delta_t_ratio.back() = 0.0;
+            sim->host->delta_t_ratio.back() = 0.0;
         }
 
         #pragma omp parallel for
         for (size_t i = 0; i < replaceLength; i++)
         {
-            sim->h_QKv[length + i] = qK[i];
-            sim->h_QRv[length + i] = qR[i];
-            sim->h_dQKv[length + i] = dqK[i] * tdiff;
-            sim->h_dQRv[length + i] = dqR[i] * tdiff;
+            sim->host->QKv[length + i] = qK[i];
+            sim->host->QRv[length + i] = qR[i];
+            sim->host->dQKv[length + i] = dqK[i] * tdiff;
+            sim->host->dQRv[length + i] = dqR[i] * tdiff;
         }
 
-        sim->h_drvec.back() = tdiff * dr;
-        sim->h_rvec.back() = rstep();
+        sim->host->drvec.back() = tdiff * dr;
+        sim->host->rvec.back() = rstep();
     }
 }
 
 double rstep()
 {
     vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
-    const double t = sim->h_t1grid.back();
+    vector<double> qK = getLastLenEntries(sim->host->QKv, config.len);
+    vector<double> qR = getLastLenEntries(sim->host->QRv, config.len);
+    const double t = sim->host->t1grid.back();
     SigmaK(qK, sigmaK);
     SigmaR(qK, qR, sigmaR);
     return config.Gamma + ConvA(sigmaR, qK, t)[0] + ConvA(sigmaK, qR, t)[0] + sigmaK[0] * qK[0] / config.T0;
@@ -96,19 +97,19 @@ double rstep()
 
 vector<double> QRstep(const vector<double>& qR)
 {
-    vector<double> d1qR = (qR * (-sim->h_rInt.back())) + ConvR(sim->h_SigmaRA2int, sim->h_QRB2int, sim->h_t1grid.back());
-    vector<double> d2qR = (qR * sim->h_rInt) - ConvR(sim->h_QRA2int, sim->h_SigmaRB2int, sim->h_t1grid.back());
-    return d1qR + (d2qR * sim->h_theta);
+    vector<double> d1qR = (qR * (-sim->host->rInt.back())) + ConvR(sim->host->SigmaRA2int, sim->host->QRB2int, sim->host->t1grid.back());
+    vector<double> d2qR = (qR * sim->host->rInt) - ConvR(sim->host->QRA2int, sim->host->SigmaRB2int, sim->host->t1grid.back());
+    return d1qR + (d2qR * sim->host->theta);
 }
 
 double drstep()
 {
     vector<double> sigmaK(config.len, 0.0), sigmaR(config.len, 0.0), dsigmaK(config.len, 0.0), dsigmaR(config.len, 0.0);
-    vector<double> qK = getLastLenEntries(sim->h_QKv, config.len);
-    vector<double> qR = getLastLenEntries(sim->h_QRv, config.len);
+    vector<double> qK = getLastLenEntries(sim->host->QKv, config.len);
+    vector<double> qR = getLastLenEntries(sim->host->QRv, config.len);
     vector<double> dqK = QKstep(qK, qR);
     vector<double> dqR = QRstep(qR);
-    const double t = sim->h_t1grid.back();
+    const double t = sim->host->t1grid.back();
     SigmaK(qK, sigmaK);
     SigmaR(qK, qR, sigmaR);
     dsigmaK = (SigmaK10(qK) * dqK) + (SigmaK01(qK) * dqR);
@@ -139,26 +140,41 @@ void appendAll(const vector<double>& qK,
     }
 
     // 1) update t1grid and delta_t_ratio
-    sim->h_t1grid.push_back(t);
-    size_t idx = sim->h_t1grid.size() - 1;
-    double tdiff = sim->h_t1grid[idx] - sim->h_t1grid[idx - 1];
+    sim->host->t1grid.push_back(t);
+    size_t idx = sim->host->t1grid.size() - 1;
+    double tdiff = sim->host->t1grid[idx] - sim->host->t1grid[idx - 1];
     if (idx > 1) {
-        double prev = sim->h_t1grid[idx - 1] - sim->h_t1grid[idx - 2];
-        sim->h_delta_t_ratio.push_back(tdiff / prev);
+        double prev = sim->host->t1grid[idx - 1] - sim->host->t1grid[idx - 2];
+        sim->host->delta_t_ratio.push_back(tdiff / prev);
     }
     else {
-        sim->h_delta_t_ratio.push_back(0.0);
+        sim->host->delta_t_ratio.push_back(0.0);
     }
 
     for (size_t i = 0; i < length; i++)
     {
-        sim->h_QKv.push_back(qK[i]);
-        sim->h_QRv.push_back(qR[i]);
-        sim->h_dQKv.push_back(dqK[i] * tdiff);
-        sim->h_dQRv.push_back(dqR[i] * tdiff);
+        sim->host->QKv.push_back(qK[i]);
+        sim->host->QRv.push_back(qR[i]);
+        sim->host->dQKv.push_back(dqK[i] * tdiff);
+        sim->host->dQRv.push_back(dqR[i] * tdiff);
     }
 
     // 2) finally update drvec and rvec
-    sim->h_drvec.push_back(tdiff * dr);
-    sim->h_rvec.push_back(rstep());
+    sim->host->drvec.push_back(tdiff * dr);
+    sim->host->rvec.push_back(rstep());
+}
+
+double energyCPU()
+{
+    double qk0 = sim->host->QKv.back();
+    double t = sim->host->t1grid.back();
+
+    std::vector<double> temp(config.len);
+
+    SigmaK(getLastLenEntries(sim->host->QKv, config.len), temp);
+
+    return -(ConvA(temp,
+                   getLastLenEntries(sim->host->QRv, config.len),
+                   t)[0]
+             + Dflambda(qk0)/config.T0);
 }

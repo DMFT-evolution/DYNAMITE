@@ -1,5 +1,8 @@
 #include "simulation/simulation_control.hpp"
 #include "simulation/simulation_data.hpp"
+#if DMFE_WITH_CUDA
+#include "simulation/device_simulation_data.hpp"
+#endif
 #include "core/config.hpp"
 #include "core/config_build.hpp"
 #include "core/console.hpp"
@@ -15,9 +18,9 @@ bool rollbackState(int n) {
 #if DMFE_WITH_CUDA
     // Debug telemetry is not sparsified/downsampled; rollbacks must trim by *n*, not by t1grid size.
     auto trim_debug_timelines_by_n = [&](size_t n_trim) {
-        auto& times = sim->h_debug_step_times;
-        auto& runtimes = sim->h_debug_step_runtimes;
-        auto& memory = sim->h_debug_step_memory;
+        auto& times = sim->host->debug_step_times;
+        auto& runtimes = sim->host->debug_step_runtimes;
+        auto& memory = sim->host->debug_step_memory;
 
         // Bring vectors into a consistent state (best-effort) before trimming.
         const size_t common_before = std::min(times.size(), std::min(runtimes.size(), memory.size()));
@@ -35,7 +38,7 @@ bool rollbackState(int n) {
     };
 
     // Get current state size
-    size_t currentSize = config.gpu ? sim->d_t1grid.size() : sim->h_t1grid.size();
+    size_t currentSize = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
     
     // Check if we have enough history to roll back
     if (n >= currentSize - 1) {
@@ -49,33 +52,33 @@ bool rollbackState(int n) {
     
     if (config.gpu) {
         // Resize GPU vectors to target size
-        sim->d_t1grid.resize(targetSize);
-        sim->d_delta_t_ratio.resize(targetSize);
-        sim->d_QKv.resize(targetSize * config.len);
-        sim->d_QRv.resize(targetSize * config.len);
-        sim->d_dQKv.resize(targetSize * config.len);
-        sim->d_dQRv.resize(targetSize * config.len);
-        sim->d_rvec.resize(targetSize);
-        sim->d_drvec.resize(targetSize);
+        sim->device->t1grid.resize(targetSize);
+        sim->device->delta_t_ratio.resize(targetSize);
+        sim->device->QKv.resize(targetSize * config.len);
+        sim->device->QRv.resize(targetSize * config.len);
+        sim->device->dQKv.resize(targetSize * config.len);
+        sim->device->dQRv.resize(targetSize * config.len);
+        sim->device->rvec.resize(targetSize);
+        sim->device->drvec.resize(targetSize);
         
         // Update simulation state variables
-        config.delta_t = sim->d_t1grid[targetSize-1] - sim->d_t1grid[targetSize-2];
+        config.delta_t = sim->device->t1grid[targetSize-1] - sim->device->t1grid[targetSize-2];
         config.loop -= n;
 
         interpolateGPU();
     } else {
         // Resize host (CPU) vectors to target size via SimulationData
-        sim->h_t1grid.resize(targetSize);
-        sim->h_delta_t_ratio.resize(targetSize);
-        sim->h_QKv.resize(targetSize * config.len);
-        sim->h_QRv.resize(targetSize * config.len);
-        sim->h_dQKv.resize(targetSize * config.len);
-        sim->h_dQRv.resize(targetSize * config.len);
-        sim->h_rvec.resize(targetSize);
-        sim->h_drvec.resize(targetSize);
+        sim->host->t1grid.resize(targetSize);
+        sim->host->delta_t_ratio.resize(targetSize);
+        sim->host->QKv.resize(targetSize * config.len);
+        sim->host->QRv.resize(targetSize * config.len);
+        sim->host->dQKv.resize(targetSize * config.len);
+        sim->host->dQRv.resize(targetSize * config.len);
+        sim->host->rvec.resize(targetSize);
+        sim->host->drvec.resize(targetSize);
 
         // Update simulation state variables
-        config.delta_t = sim->h_t1grid[targetSize-1] - sim->h_t1grid[targetSize-2];
+        config.delta_t = sim->host->t1grid[targetSize-1] - sim->host->t1grid[targetSize-2];
         config.loop -= n;
 
         interpolate();
@@ -84,13 +87,13 @@ bool rollbackState(int n) {
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "
-              << (config.gpu ? sim->d_t1grid.back() : sim->h_t1grid.back()) << std::endl;
+              << (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back()) << std::endl;
 #else
     // Debug telemetry is not sparsified/downsampled; rollbacks must trim by *n*, not by t1grid size.
     auto trim_debug_timelines_by_n = [&](size_t n_trim) {
-        auto& times = sim->h_debug_step_times;
-        auto& runtimes = sim->h_debug_step_runtimes;
-        auto& memory = sim->h_debug_step_memory;
+        auto& times = sim->host->debug_step_times;
+        auto& runtimes = sim->host->debug_step_runtimes;
+        auto& memory = sim->host->debug_step_memory;
 
         const size_t common_before = std::min(times.size(), std::min(runtimes.size(), memory.size()));
         if (times.size() != common_before) times.resize(common_before);
@@ -107,7 +110,7 @@ bool rollbackState(int n) {
     };
 
     // Get current state size
-    size_t currentSize = sim->h_t1grid.size();
+    size_t currentSize = sim->host->t1grid.size();
     
     // Check if we have enough history to roll back
     if (n >= currentSize - 1) {
@@ -120,17 +123,17 @@ bool rollbackState(int n) {
     size_t targetSize = currentSize - n;
     
     // Resize host (CPU) vectors to target size via SimulationData
-    sim->h_t1grid.resize(targetSize);
-    sim->h_delta_t_ratio.resize(targetSize);
-    sim->h_QKv.resize(targetSize * config.len);
-    sim->h_QRv.resize(targetSize * config.len);
-    sim->h_dQKv.resize(targetSize * config.len);
-    sim->h_dQRv.resize(targetSize * config.len);
-    sim->h_rvec.resize(targetSize);
-    sim->h_drvec.resize(targetSize);
+    sim->host->t1grid.resize(targetSize);
+    sim->host->delta_t_ratio.resize(targetSize);
+    sim->host->QKv.resize(targetSize * config.len);
+    sim->host->QRv.resize(targetSize * config.len);
+    sim->host->dQKv.resize(targetSize * config.len);
+    sim->host->dQRv.resize(targetSize * config.len);
+    sim->host->rvec.resize(targetSize);
+    sim->host->drvec.resize(targetSize);
 
     // Update simulation state variables
-    config.delta_t = sim->h_t1grid[targetSize-1] - sim->h_t1grid[targetSize-2];
+    config.delta_t = sim->host->t1grid[targetSize-1] - sim->host->t1grid[targetSize-2];
     config.loop -= n;
 
     interpolate();
@@ -138,7 +141,7 @@ bool rollbackState(int n) {
     
     std::cout << dmfe::console::INFO() << "Successfully rolled back " << n
               << " iterations to time t = "
-              << sim->h_t1grid.back() << std::endl;
+              << sim->host->t1grid.back() << std::endl;
 #endif
     return true;
 }

@@ -1,4 +1,4 @@
- #include "math/math_sigma.hpp"
+ #include "math/math_sigma.cuh"
  #include "core/device_utils.cuh"
  #include "math/math_ops.hpp"
  #include <vector>

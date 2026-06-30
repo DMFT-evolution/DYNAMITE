@@ -122,7 +122,7 @@ if [[ $ENABLE_CUDA -eq 1 ]] && ! command -v nvc++ >/dev/null 2>&1; then
     module() { eval "$(modulecmd bash "$@")"; }
   fi
   if command -v module >/dev/null 2>&1; then
-    for module_name in cuda/12.5 cuda/12.2 accel/nvhpc/24.9; do
+    for module_name in cuda/12.5 accel/cuda/12.5 cuda/12.2 accel/cuda/12.2 accel/nvhpc/24.9; do
       echo "[env] Trying: module load ${module_name}" >&2
       if module load "${module_name}" >/dev/null 2>&1; then
         echo "[env] Loaded ${module_name}" >&2

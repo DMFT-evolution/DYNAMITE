@@ -1,6 +1,7 @@
 #include "sparsify/sparsify_utils.hpp"
 #include "core/config.hpp"
 #include "simulation/simulation_data.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include "core/host_device_utils.hpp"
 #include <algorithm>
 #include <cmath>
@@ -38,27 +39,27 @@ void sparsifyNscale(double threshold) {
     bool erased = false;
     int loop = 0;
     std::vector<size_t> inds = {0};
-    inds.reserve(sim->h_t1grid.size());
+    inds.reserve(sim->host->t1grid.size());
 
-    for (size_t i = 2; i + 1 < sim->h_t1grid.size(); ++i) {
-        double tleft = sim->h_t1grid[i - 2];
-        double tmid  = sim->h_t1grid[i];
-        double tdiff1 = sim->h_t1grid[i - 1] - tleft;
+    for (size_t i = 2; i + 1 < sim->host->t1grid.size(); ++i) {
+        double tleft = sim->host->t1grid[i - 2];
+        double tmid  = sim->host->t1grid[i];
+        double tdiff1 = sim->host->t1grid[i - 1] - tleft;
         double tdiff2 = tmid - tleft;
-        double tdiff3 = sim->h_t1grid[i + 1] - tmid;
+        double tdiff3 = sim->host->t1grid[i + 1] - tmid;
 
         double val = 0.0;
         for (int j = 0; j < config.len; ++j) {
-            double df_term1 = sim->h_dQKv[(i - 1) * config.len + j];
-            double df_term2 = sim->h_dQKv[(i + 1) * config.len + j];
-            double f_term1 = sim->h_QKv[i * config.len + j] - sim->h_QKv[(i - 2) * config.len + j];
+            double df_term1 = sim->host->dQKv[(i - 1) * config.len + j];
+            double df_term2 = sim->host->dQKv[(i + 1) * config.len + j];
+            double f_term1 = sim->host->QKv[i * config.len + j] - sim->host->QKv[(i - 2) * config.len + j];
             val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
         }
 
         for (int j = 0; j < config.len; ++j) {
-            double df_term1 = sim->h_dQRv[(i - 1) * config.len + j];
-            double df_term2 = sim->h_dQRv[(i + 1) * config.len + j];
-            double f_term1 = sim->h_QRv[i * config.len + j] - sim->h_QRv[(i - 2) * config.len + j];
+            double df_term1 = sim->host->dQRv[(i - 1) * config.len + j];
+            double df_term2 = sim->host->dQRv[(i + 1) * config.len + j];
+            double f_term1 = sim->host->QRv[i * config.len + j] - sim->host->QRv[(i - 2) * config.len + j];
             val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
         }
 
@@ -72,8 +73,8 @@ void sparsifyNscale(double threshold) {
         }
     }
 
-    inds.push_back(sim->h_t1grid.size() - 2);
-    inds.push_back(sim->h_t1grid.size() - 1);
+    inds.push_back(sim->host->t1grid.size() - 2);
+    inds.push_back(sim->host->t1grid.size() - 1);
 
     // Calculate rotated and modded indices
     std::vector<size_t> indsD(inds.size());
@@ -86,27 +87,27 @@ void sparsifyNscale(double threshold) {
     std::vector<double> tfac(inds.size());
     tfac[0] = 1.0;
     for (size_t i = 1; i < inds.size(); ++i) {
-        tfac[i] = (sim->h_t1grid[inds[i]] - sim->h_t1grid[inds[i - 1]]) / (sim->h_t1grid[indsD[i]] - sim->h_t1grid[indsD[i] - 1]);
+        tfac[i] = (sim->host->t1grid[inds[i]] - sim->host->t1grid[inds[i - 1]]) / (sim->host->t1grid[indsD[i]] - sim->host->t1grid[indsD[i] - 1]);
     }
 
     // printVectorDifference(gather(rvec, inds, 1),rvec);
 
-    sim->h_QKv   = gather(sim->h_QKv, inds, config.len);
-    sim->h_QRv   = gather(sim->h_QRv, inds, config.len);
-    sim->h_dQKv  = gather(sim->h_dQKv, indsD, config.len, tfac);
-    sim->h_dQRv  = gather(sim->h_dQRv, indsD, config.len, tfac);
-    sim->h_rvec  = gather(sim->h_rvec, inds, 1);
-    sim->h_drvec = gather(sim->h_drvec, indsD, 1, tfac);
-    sim->h_t1grid = gather(sim->h_t1grid, inds, 1);
+    sim->host->QKv   = gather(sim->host->QKv, inds, config.len);
+    sim->host->QRv   = gather(sim->host->QRv, inds, config.len);
+    sim->host->dQKv  = gather(sim->host->dQKv, indsD, config.len, tfac);
+    sim->host->dQRv  = gather(sim->host->dQRv, indsD, config.len, tfac);
+    sim->host->rvec  = gather(sim->host->rvec, inds, 1);
+    sim->host->drvec = gather(sim->host->drvec, indsD, 1, tfac);
+    sim->host->t1grid = gather(sim->host->t1grid, inds, 1);
 
     // Δt ratio
     std::vector<double> dgrid(inds.size());
-    for (size_t i = 1; i < sim->h_t1grid.size(); ++i)
-        dgrid[i] = sim->h_t1grid[i] - sim->h_t1grid[i - 1];
-    for (size_t i = 2; i < sim->h_t1grid.size(); ++i)
-        sim->h_delta_t_ratio[i] = dgrid[i] / dgrid[i - 1];
+    for (size_t i = 1; i < sim->host->t1grid.size(); ++i)
+        dgrid[i] = sim->host->t1grid[i] - sim->host->t1grid[i - 1];
+    for (size_t i = 2; i < sim->host->t1grid.size(); ++i)
+        sim->host->delta_t_ratio[i] = dgrid[i] / dgrid[i - 1];
 
-    sim->h_delta_t_ratio.resize(inds.size());
+    sim->host->delta_t_ratio.resize(inds.size());
 
     // Note: interpolate() should be called by the caller after sparsification
 }
@@ -197,17 +198,17 @@ __global__ void computeSparsifyFlags(const double* __restrict__ t1grid,
 
 void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
 
-    size_t t1len = sim->d_t1grid.size();
+    size_t t1len = sim->device->t1grid.size();
     dmfe::device_vector<unsigned char> flags(t1len, 1, dmfe::cuda_async_allocator<unsigned char>(stream));
 
     size_t threads = 128;
     size_t blocks = (t1len - 2 + threads - 1) / threads;
     computeSparsifyFlags<<<blocks, threads, 0, stream>>>(
-        thrust::raw_pointer_cast(sim->d_t1grid.data()),
-        thrust::raw_pointer_cast(sim->d_QKv.data()),
-        thrust::raw_pointer_cast(sim->d_QRv.data()),
-        thrust::raw_pointer_cast(sim->d_dQKv.data()),
-        thrust::raw_pointer_cast(sim->d_dQRv.data()),
+        thrust::raw_pointer_cast(sim->device->t1grid.data()),
+        thrust::raw_pointer_cast(sim->device->QKv.data()),
+        thrust::raw_pointer_cast(sim->device->QRv.data()),
+        thrust::raw_pointer_cast(sim->device->dQKv.data()),
+        thrust::raw_pointer_cast(sim->device->dQRv.data()),
         thrust::raw_pointer_cast(flags.data()),
         threshold, config.len, t1len,
         config.log_response_interp);
@@ -238,7 +239,7 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
     }
 
     dmfe::device_vector<double> tfac(filtered.size(), 1.0, dmfe::cuda_async_allocator<double>(stream));
-    const double* t1_ptr = thrust::raw_pointer_cast(sim->d_t1grid.data());
+    const double* t1_ptr = thrust::raw_pointer_cast(sim->device->t1grid.data());
 
     if (filtered.size() > 1) {
         thrust::transform(
@@ -264,22 +265,22 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
         );
     }
 
-    sim->d_QKv = gatherGPU(sim->d_QKv, filtered, config.len);
-    sim->d_QRv = gatherGPU(sim->d_QRv, filtered, config.len);
-    sim->d_dQKv = gatherGPU(sim->d_dQKv, indsD, config.len, tfac);
-    sim->d_dQRv = gatherGPU(sim->d_dQRv, indsD, config.len, tfac);
-    sim->d_rvec = gatherGPU(sim->d_rvec, filtered, 1);
-    sim->d_drvec = gatherGPU(sim->d_drvec, indsD, 1, tfac);
-    sim->d_t1grid = gatherGPU(sim->d_t1grid, filtered, 1);
+    sim->device->QKv = gatherGPU(sim->device->QKv, filtered, config.len);
+    sim->device->QRv = gatherGPU(sim->device->QRv, filtered, config.len);
+    sim->device->dQKv = gatherGPU(sim->device->dQKv, indsD, config.len, tfac);
+    sim->device->dQRv = gatherGPU(sim->device->dQRv, indsD, config.len, tfac);
+    sim->device->rvec = gatherGPU(sim->device->rvec, filtered, 1);
+    sim->device->drvec = gatherGPU(sim->device->drvec, indsD, 1, tfac);
+    sim->device->t1grid = gatherGPU(sim->device->t1grid, filtered, 1);
 
-    size_t new_n = sim->d_t1grid.size();
-    sim->d_delta_t_ratio.resize(new_n);
+    size_t new_n = sim->device->t1grid.size();
+    sim->device->delta_t_ratio.resize(new_n);
     dmfe::device_vector<double> dgrid(new_n, 0.0, dmfe::cuda_async_allocator<double>(stream));
     if (new_n >= 2) {
-        thrust::transform(pol, sim->d_t1grid.begin() + 1, sim->d_t1grid.end(), sim->d_t1grid.begin(), dgrid.begin() + 1, thrust::minus<double>());
+        thrust::transform(pol, sim->device->t1grid.begin() + 1, sim->device->t1grid.end(), sim->device->t1grid.begin(), dgrid.begin() + 1, thrust::minus<double>());
     }
     if (new_n >= 3) {
-        thrust::transform(pol, dgrid.begin() + 2, dgrid.end(), dgrid.begin() + 1, sim->d_delta_t_ratio.begin() + 2, thrust::divides<double>());
+        thrust::transform(pol, dgrid.begin() + 2, dgrid.end(), dgrid.begin() + 1, sim->device->delta_t_ratio.begin() + 2, thrust::divides<double>());
     }
 
     // vector<double> gpu_result(tfac.size());

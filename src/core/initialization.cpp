@@ -4,9 +4,10 @@
 #include "simulation/simulation_data.hpp"
 #include "EOMs/rk_data.hpp"
 #if DMFE_WITH_CUDA
-#include "core/device_utils.cuh"
+#include "core/device_factory.hpp"
 #include "core/gpu_memory_utils.hpp"
 #endif
+#include "core/backend_dispatch.hpp"
 #include "io/io_utils.hpp"
 #include "math/math_ops.hpp"
 #include "EOMs/time_steps.hpp"
@@ -156,33 +157,43 @@ void init()
     };
 
     // Handle GPU configuration based on user preference and hardware availability
-#if DMFE_WITH_CUDA
     if (config.gpu) {
-        if (isCompatibleGPUInstalled()) {
-            std::string streamError;
-            if (canCreateCudaStream(&streamError)) {
-                std::cout << dmfe::console::INFO() << "GPU acceleration enabled." << std::endl;
-                config.gpu = true;
-            } else {
-                std::cout << dmfe::console::WARN() << "GPU detected but CUDA stream creation failed (" << streamError
-                          << "). Falling back to CPU." << std::endl;
-                config.gpu = false;
-            }
+        std::string errorMessage;
+
+        if (initializeGPUBackend(errorMessage)) {
+            std::cout << dmfe::console::INFO()
+                    << "GPU acceleration enabled."
+                    << std::endl;
         } else {
-            std::cout << dmfe::console::WARN() << "GPU acceleration requested but no compatible GPU found. Falling back to CPU." << std::endl;
+            std::cout << dmfe::console::WARN()
+                    << "GPU acceleration requested but "
+                    << errorMessage
+                    << ". Falling back to CPU."
+                    << std::endl;
             config.gpu = false;
         }
     } else {
-    std::cout << dmfe::console::INFO() << "GPU acceleration disabled by user. Using CPU." << std::endl;
+        std::cout << dmfe::console::INFO()
+                << "GPU acceleration disabled by user. Using CPU."
+                << std::endl;
         config.gpu = false;
     }
-#else
-    std::cout << dmfe::console::INFO() << "Running in CPU-only mode." << std::endl;
-    config.gpu = false;
-#endif
     
     sim = new SimulationData();
+
+    sim->host = new HostSimulationData();
+
+    #if DMFE_WITH_CUDA
+    sim->device = createDeviceSimulationData();
+    #endif
+    
     rk = new RKData();
+
+    rk->host = new HostRKData();
+
+    #if DMFE_WITH_CUDA
+    rk->device = createDeviceRKData();
+    #endif
 
     setupOutputDirectory();
 
@@ -212,8 +223,8 @@ void init()
         // Start new simulation with default values
     std::cout << dmfe::console::INFO() << "New simulation..." << std::endl;
         
-        sim->h_t1grid.resize(1, 0.0);
-        sim->h_delta_t_ratio.resize(1, 0.0);
+        sim->host->t1grid.resize(1, 0.0);
+        sim->host->delta_t_ratio.resize(1, 0.0);
         config.specRad = 4 * sqrt(DDflambda(1));
 
         config.delta_t = config.delta_t_min;
@@ -221,12 +232,12 @@ void init()
         config.delta = 1;
         config.delta_old = 0;
 
-        sim->h_QKv.resize(config.len, 1.0);
-        sim->h_QRv.resize(config.len, 1.0);
-        sim->h_dQKv.resize(config.len, 0.0);
-        sim->h_dQRv.resize(config.len, 0.0);
-        sim->h_rvec.resize(1, config.Gamma + Dflambda(1) / config.T0);
-        sim->h_drvec.resize(1, rstep());
+        sim->host->QKv.resize(config.len, 1.0);
+        sim->host->QRv.resize(config.len, 1.0);
+        sim->host->dQKv.resize(config.len, 0.0);
+        sim->host->dQRv.resize(config.len, 0.0);
+        sim->host->rvec.resize(1, config.Gamma + Dflambda(1) / config.T0);
+        sim->host->drvec.resize(1, rstep());
     } else {
         // We successfully loaded data, use the loaded parameters
         config.delta = loaded_params.delta;
@@ -238,29 +249,29 @@ void init()
     }
 
     // Initialize intermediate arrays needed for interpolation (always needed)
-    sim->h_posB1xOld.resize(config.len, 1.0);
-    sim->h_posB2xOld.resize(config.len * config.len, 0.0);
+    sim->host->posB1xOld.resize(config.len, 1.0);
+    sim->host->posB2xOld.resize(config.len * config.len, 0.0);
 
-    sim->h_SigmaKA1int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaRA1int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaKB1int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaRB1int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaKA2int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaRA2int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaKB2int.resize(config.len * config.len, 0.0);
-    sim->h_SigmaRB2int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaKA1int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaRA1int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaKB1int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaRB1int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaKA2int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaRA2int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaKB2int.resize(config.len * config.len, 0.0);
+    sim->host->SigmaRB2int.resize(config.len * config.len, 0.0);
 
-    sim->h_QKA1int.resize(config.len * config.len, 0.0);
-    sim->h_QRA1int.resize(config.len * config.len, 0.0);
-    sim->h_QKB1int.resize(config.len * config.len, 0.0);
-    sim->h_QRB1int.resize(config.len * config.len, 0.0);
-    sim->h_QKA2int.resize(config.len * config.len, 0.0);
-    sim->h_QRA2int.resize(config.len * config.len, 0.0);
-    sim->h_QKB2int.resize(config.len * config.len, 0.0);
-    sim->h_QRB2int.resize(config.len * config.len, 0.0);
+    sim->host->QKA1int.resize(config.len * config.len, 0.0);
+    sim->host->QRA1int.resize(config.len * config.len, 0.0);
+    sim->host->QKB1int.resize(config.len * config.len, 0.0);
+    sim->host->QRB1int.resize(config.len * config.len, 0.0);
+    sim->host->QKA2int.resize(config.len * config.len, 0.0);
+    sim->host->QRA2int.resize(config.len * config.len, 0.0);
+    sim->host->QKB2int.resize(config.len * config.len, 0.0);
+    sim->host->QRB2int.resize(config.len * config.len, 0.0);
 
-    sim->h_rInt.resize(config.len, 0.0);
-    sim->h_drInt.resize(config.len, 0.0);
+    sim->host->rInt.resize(config.len, 0.0);
+    sim->host->drInt.resize(config.len, 0.0);
 
     if (config.gpu) {
 #if DMFE_WITH_CUDA
@@ -290,9 +301,9 @@ void init()
     } else {
         // Choose CPU RK method consistent with previous version's behavior
         if (config.delta_t < config.rmax[0] / config.specRad) {
-            rk->init = 1;  // RK54
+            rk->host->init = 1;  // RK54
         } else {
-            rk->init = 2;  // SSPRK104
+            rk->host->init = 2;  // SSPRK104
         }
         interpolate();
     }

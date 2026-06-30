@@ -1,6 +1,6 @@
 // Definitions for global simulation parameters declared in globals.hpp
 #include "core/globals.hpp"
-//#include "core/config.hpp"
+#include "core/config.hpp"
 #include "version/version_info.hpp"
 #include "version/version_compat.hpp"
 #include "io/io_utils.hpp"
@@ -15,7 +15,7 @@ extern SimulationConfig config;
 
 // Pointers are owned/defined in the main executable (main.cpp)
 // extern SimulationData* sim;
-extern RKData* rk;
+// extern RKData* rk;
 
 // Parse command line arguments and update simulation parameters
 bool parseCommandLineArguments(int argc, char **argv) {

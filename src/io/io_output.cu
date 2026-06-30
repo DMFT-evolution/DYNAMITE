@@ -1,11 +1,14 @@
 #include "io/io_utils.hpp"
 #include "simulation/simulation_data.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include "core/gpu_memory_utils.hpp"
+#include "core/backend_dispatch.hpp"
 #include "math/math_ops.hpp"
-#include "math/math_sigma.hpp"
+#include "math/math_sigma.cuh"
 #include "core/config.hpp"
 #include "core/globals.hpp"
-#include "convolution/convolution.hpp"
+
+#include "convolution/convolution.cuh"
 #include "core/device_utils.cuh"
 #include "EOMs/time_steps.hpp"
 #include "version/version_info.hpp"
@@ -133,44 +136,44 @@ SimulationDataSnapshot createDataSnapshot()
             thrust::copy(device_vec.begin(), device_vec.end(), snapshot_vec.begin());
         };
         
-        copyDeviceToSnapshot(snapshot.QKv, sim->d_QKv);
-        copyDeviceToSnapshot(snapshot.QRv, sim->d_QRv);
-        copyDeviceToSnapshot(snapshot.dQKv, sim->d_dQKv);
-        copyDeviceToSnapshot(snapshot.dQRv, sim->d_dQRv);
-        copyDeviceToSnapshot(snapshot.t1grid, sim->d_t1grid);
-        copyDeviceToSnapshot(snapshot.rvec, sim->d_rvec);
-        copyDeviceToSnapshot(snapshot.drvec, sim->d_drvec);
+        copyDeviceToSnapshot(snapshot.QKv, sim->device->QKv);
+        copyDeviceToSnapshot(snapshot.QRv, sim->device->QRv);
+        copyDeviceToSnapshot(snapshot.dQKv, sim->device->dQKv);
+        copyDeviceToSnapshot(snapshot.dQRv, sim->device->dQRv);
+        copyDeviceToSnapshot(snapshot.t1grid, sim->device->t1grid);
+        copyDeviceToSnapshot(snapshot.rvec, sim->device->rvec);
+        copyDeviceToSnapshot(snapshot.drvec, sim->device->drvec);
         
         // Copy compressed data from device
-        copyDeviceToSnapshot(snapshot.QKB1int, sim->d_QKB1int);
-        copyDeviceToSnapshot(snapshot.QRB1int, sim->d_QRB1int);
-        copyDeviceToSnapshot(snapshot.theta, sim->d_theta);
+        copyDeviceToSnapshot(snapshot.QKB1int, sim->device->QKB1int);
+        copyDeviceToSnapshot(snapshot.QRB1int, sim->device->QRB1int);
+        copyDeviceToSnapshot(snapshot.theta, sim->device->theta);
         snapshot.t_current = snapshot.t1grid.back();
     } else {
         // For CPU runs, copy from host vectors as before
-        snapshot.QKv = sim->h_QKv;
-        snapshot.QRv = sim->h_QRv;
-        snapshot.dQKv = sim->h_dQKv;
-        snapshot.dQRv = sim->h_dQRv;
-        snapshot.t1grid = sim->h_t1grid;
-        snapshot.rvec = sim->h_rvec;
-        snapshot.drvec = sim->h_drvec;
+        snapshot.QKv = sim->host->QKv;
+        snapshot.QRv = sim->host->QRv;
+        snapshot.dQKv = sim->host->dQKv;
+        snapshot.dQRv = sim->host->dQRv;
+        snapshot.t1grid = sim->host->t1grid;
+        snapshot.rvec = sim->host->rvec;
+        snapshot.drvec = sim->host->drvec;
         
         // Copy compressed data
-        snapshot.QKB1int = sim->h_QKB1int;
-        snapshot.QRB1int = sim->h_QRB1int;
-        snapshot.theta = sim->h_theta;
-        snapshot.t_current = sim->h_t1grid.back();
+        snapshot.QKB1int = sim->host->QKB1int;
+        snapshot.QRB1int = sim->host->QRB1int;
+        snapshot.theta = sim->host->theta;
+        snapshot.t_current = sim->host->t1grid.back();
     }
     
     // Calculate energy
     if (config.gpu) {
-        snapshot.energy = energyGPU(sim->d_QKv, sim->d_QRv, sim->d_t1grid, sim->d_integ, sim->d_theta, config.T0);
+        snapshot.energy = energy();
     } else {
         std::vector<double> temp(config.len, 0.0);
-        std::vector<double> lastQKv = getLastLenEntries(sim->h_QKv, config.len);
+        std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        snapshot.energy = -(ConvA(temp, getLastLenEntries(sim->h_QRv, config.len), sim->h_t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
+        snapshot.energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
     }
     
     // Copy metadata
@@ -200,9 +203,9 @@ SimulationDataSnapshot createDataSnapshot()
     snapshot.program_start_time_snapshot = program_start_time;
 
     // Capture debug runtime telemetry (host-only data)
-    snapshot.debug_step_times = sim->h_debug_step_times;
-    snapshot.debug_step_runtimes = sim->h_debug_step_runtimes;
-    snapshot.debug_step_memory = sim->h_debug_step_memory;
+    snapshot.debug_step_times = sim->host->debug_step_times;
+    snapshot.debug_step_runtimes = sim->host->debug_step_runtimes;
+    snapshot.debug_step_memory = sim->host->debug_step_memory;
     
     return snapshot;
 }
@@ -215,7 +218,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         copyVectorsToCPU(simulation);
     }
     
-    size_t t1len = simulation.h_t1grid.size();
+    size_t t1len = simulation.host->t1grid.size();
     std::vector<double> energy_history(t1len);
     std::vector<double> qk0_history(t1len);
     
@@ -227,11 +230,11 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         size_t shmem = len_param * sizeof(double) + threads * sizeof(double);
 
         computeEnergyHistoryKernel<<<t1len, threads, shmem>>>(
-            thrust::raw_pointer_cast(simulation.d_QKv.data()),
-            thrust::raw_pointer_cast(simulation.d_QRv.data()),
-            thrust::raw_pointer_cast(simulation.d_integ.data()),
-            thrust::raw_pointer_cast(simulation.d_theta.data()),
-            thrust::raw_pointer_cast(simulation.d_t1grid.data()),
+            thrust::raw_pointer_cast(simulation.device->QKv.data()),
+            thrust::raw_pointer_cast(simulation.device->QRv.data()),
+            thrust::raw_pointer_cast(simulation.device->integ.data()),
+            thrust::raw_pointer_cast(simulation.device->theta.data()),
+            thrust::raw_pointer_cast(simulation.device->t1grid.data()),
             thrust::raw_pointer_cast(d_energy_history.data()),
             T0_param, len_param, t1len
         );
@@ -242,19 +245,19 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         // Extract QK[0] values for each time step (parallelized on CPU side)
         #pragma omp parallel for schedule(static)
         for (long long i = 0; i < (long long)t1len; ++i) {
-            qk0_history[i] = simulation.h_QKv[i * len_param];  // QKv[i * len] is QK[0] at time step i
+            qk0_history[i] = simulation.host->QKv[i * len_param];  // QKv[i * len] is QK[0] at time step i
         }
     } else {
         // CPU computation of energy history
         #pragma omp parallel for schedule(static)
         for (long long i = 0; i < (long long)t1len; ++i) {
             std::vector<double> temp(len_param, 0.0);
-            std::vector<double> QKv_i(simulation.h_QKv.begin() + i * len_param,
-                                      simulation.h_QKv.begin() + (i + 1) * len_param);
-            std::vector<double> QRv_i(simulation.h_QRv.begin() + i * len_param,
-                                      simulation.h_QRv.begin() + (i + 1) * len_param);
+            std::vector<double> QKv_i(simulation.host->QKv.begin() + i * len_param,
+                                      simulation.host->QKv.begin() + (i + 1) * len_param);
+            std::vector<double> QRv_i(simulation.host->QRv.begin() + i * len_param,
+                                      simulation.host->QRv.begin() + (i + 1) * len_param);
             SigmaK(QKv_i, temp);
-            energy_history[i] = -(ConvA(temp, QRv_i, simulation.h_t1grid[i])[0] + Dflambda(QKv_i[0]) / T0_param);
+            energy_history[i] = -(ConvA(temp, QRv_i, simulation.host->t1grid[i])[0] + Dflambda(QKv_i[0]) / T0_param);
             qk0_history[i] = QKv_i[0];  // QK[0] at time step i
         }
     }
@@ -266,20 +269,20 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
     const double p_start = 0.65;
     const double p_end   = 0.80;
     const double p_span  = (p_end - p_start);
-    const double last_t1 = simulation.h_t1grid.empty() ? 0.0 : simulation.h_t1grid.back();
+    const double last_t1 = simulation.host->t1grid.empty() ? 0.0 : simulation.host->t1grid.back();
     auto update_hist_prog = [&](size_t done, size_t total){
         double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
         if (frac > p_end) frac = p_end;
         if (frac < p_start) frac = p_start;
         _setSaveProgress(frac, last_t1, "histories");
     };
-    const bool write_times = config.debug && !simulation.h_debug_step_runtimes.empty();
+    const bool write_times = config.debug && !simulation.host->debug_step_runtimes.empty();
     // IMPORTANT: step_metrics is *not* sparsified/downsampled; we write all recorded debug telemetry.
     // Keep vector usage conservative: only consume indices that exist, and keep time/memory fallbacks.
-    const size_t debug_sample_count = write_times ? simulation.h_debug_step_runtimes.size() : 0;
-    const auto& memory_history = simulation.h_debug_step_memory;
+    const size_t debug_sample_count = write_times ? simulation.host->debug_step_runtimes.size() : 0;
+    const auto& memory_history = simulation.host->debug_step_memory;
     const bool memory_available = !memory_history.empty();
-    size_t total_lines = simulation.h_t1grid.size() * 3 + debug_sample_count; // rvec + energy + qk0 (+times when debug)
+    size_t total_lines = simulation.host->t1grid.size() * 3 + debug_sample_count; // rvec + energy + qk0 (+times when debug)
     size_t done_lines = 0;
     update_hist_prog(done_lines, total_lines);
 
@@ -290,7 +293,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         rvecFile << std::fixed << std::setprecision(16);
         rvecFile << "# Time\trvec\n";
         for (size_t i = 0; i < t1len; ++i) {
-            rvecFile << simulation.h_t1grid[i] << "\t" << simulation.h_rvec[i] << "\n";
+            rvecFile << simulation.host->t1grid[i] << "\t" << simulation.host->rvec[i] << "\n";
             if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         rvecFile.close();
@@ -305,7 +308,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         energyFile << std::fixed << std::setprecision(16);
         energyFile << "# Time\tEnergy\n";
         for (size_t i = 0; i < t1len; ++i) {
-            energyFile << simulation.h_t1grid[i] << "\t" << energy_history[i] << "\n";
+            energyFile << simulation.host->t1grid[i] << "\t" << energy_history[i] << "\n";
             if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         energyFile.close();
@@ -320,7 +323,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
         qk0File << std::fixed << std::setprecision(16);
         qk0File << "# Time\tQK[0]\n";
         for (size_t i = 0; i < t1len; ++i) {
-            qk0File << simulation.h_t1grid[i] << "\t" << qk0_history[i] << "\n";
+            qk0File << simulation.host->t1grid[i] << "\t" << qk0_history[i] << "\n";
             if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
         }
         qk0File.close();
@@ -339,16 +342,16 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             for (size_t i = 0; i < debug_sample_count; ++i) {
                 // Use the debug time vector when present; otherwise fall back to closest t1grid entry.
                 size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
-                double sim_time_value = (i < simulation.h_debug_step_times.size())
-                    ? simulation.h_debug_step_times[i]
-                    : (t1len ? simulation.h_t1grid[safe_idx] : 0.0);
+                double sim_time_value = (i < simulation.host->debug_step_times.size())
+                    ? simulation.host->debug_step_times[i]
+                    : (t1len ? simulation.host->t1grid[safe_idx] : 0.0);
 
                 // Memory telemetry might be absent or shorter; use last-known value when available.
                 double memory_value = (i < memory_history.size())
                     ? memory_history[i]
                     : (memory_available ? memory_history.back() : 0.0);
 
-                timesFile << sim_time_value << "\t" << simulation.h_debug_step_runtimes[i]
+                timesFile << sim_time_value << "\t" << simulation.host->debug_step_runtimes[i]
                           << "\t" << memory_value << "\n";
                 if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
             }
