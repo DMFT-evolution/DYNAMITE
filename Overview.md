@@ -35,18 +35,20 @@ Public headers are under `include/`, sources under `src/`:
   - `CMakeLists.txt` — build configuration (C++/CUDA, targets DFME-core and RG-Evo)
   - `main.cpp` — program entry (version print, CLI parse, init, run)
   - `build/` — CMake build artifacts (generated)
-  - `Grid_data/` — precomputed grid assets (512/, 1024/, 2048/)
+  - `Grid_data/` — precomputed grid assets (512/)
   - `Overview.md`, `README.md`, `build.sh`
 - `include/` — public headers for all modules
-  - core APIs: `config.hpp`, `globals.hpp`, `io_utils.hpp`, `gpu_memory_utils.hpp`, `device_utils.cuh`, `host_device_utils.hpp`, `host_utils.hpp`
-  - math: `math_ops.hpp`, `math_sigma.hpp`
+  - core APIs: `backend_dispatch.hpp`, `compute_utils.hpp`, `config_build.hpp`, `config.hpp`, `console.hpp`, `globals.hpp`, `io_utils.hpp`, `gpu_memory_utils.hpp`, `device_utils.cuh`, `host_device_utils.hpp`, `host_utils.hpp`, `vector_utils.hpp` 
+  - grid: `grid_cli.hpp`, `grid_io.hpp`, `integration.hpp` ,`interpolation_weights.hpp` ,`phi_grid.hpp` ,`pos_grid.hpp` ,`theta_grid.hpp` 
+  - math: `lambert_w.hpp`, `math_ops.hpp`, `math_sigma.hpp`, `mp_type.hpp`
   - interpolation: `index_mat.cuh`, `index_vec.cuh`,`index_mat.hpp`, `index_vec.hpp`, `interpolation_core.hpp`
   - EOMs: `time_steps.hpp`, `runge_kutta.hpp`, `rk_data.hpp`
   - search: `search_utils.hpp, search_utils.cuh`
   - simulation: `simulation_control.hpp`, `simulation_runner.hpp`, `simulation_data.hpp`
   - convolution: `convolution.cuh`, `convolution.hpp`
   - versioning: `version_info.hpp`, `version_compat.hpp`
-  - io runtime: `io/h5_runtime.hpp`
+  - io: `h5_runtime.hpp`, `io_utils.hpp`
+  - sparsify:`sparsify_utils.hpp` 
 - `src/` — implementations by module
   - `core/` — config, initialization, IO, device/host utils, GPU memory
   - `interpolation/` — index_mat, index_vec, dispatchers

@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Install Boost headers
         run: sudo apt-get update && sudo apt-get install -y libboost-all-dev
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Install toolchain
         run: |
           sudo apt-get update
