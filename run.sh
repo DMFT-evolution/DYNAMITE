@@ -18,8 +18,8 @@ module purge
 
 # Load a current GPU toolchain. The cluster module tree moved away from
 # accel/nvhpc/24.9, so try the CUDA modules that are available now.
-if ! module load cuda/12.5 2>/dev/null; then
-  if ! module load cuda/12.2 2>/dev/null; then
+if ! module load accel/cuda/12.5 2>/dev/null; then
+  if ! module load accel/cuda/12.2 2>/dev/null; then
     module load accel/nvhpc/24.9
   fi
 fi

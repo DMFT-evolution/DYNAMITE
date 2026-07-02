@@ -137,7 +137,7 @@ int runSimulation() {
 #endif
         config.delta_old = config.delta;
         config.delta = update(pool);
-        
+
         if (config.tail_fit_enabled) {
 #if DMFE_WITH_CUDA
     // Optional tail fit/blend near theta->1 (toggle with --tail-fit)
@@ -250,11 +250,14 @@ int runSimulation() {
             }
         }
 
-        // primitive time-step adaptation
+        // primitive time-step adaptation        
 #if DMFE_WITH_CUDA
-        if (config.delta < config.delta_max && config.loop > 5 &&
+        if ((config.gpu && (config.delta < config.delta_max && config.loop > 5 &&
             (config.delta < 1.1 * config.delta_old || config.delta_old < config.delta_max/1000) &&
-            config.rmax[rk->device->init-1] / config.specRad > config.delta_t && (config.gpu ? sim->device->delta_t_ratio.back() : sim->host->delta_t_ratio.back()) == 1.0)
+            config.rmax[rk->device->init-1] / config.specRad > config.delta_t && (config.gpu ? sim->device->delta_t_ratio.back() : sim->host->delta_t_ratio.back()) == 1.0)) ||
+            (!config.gpu && (config.delta < config.delta_max && config.loop > 5 &&
+            (config.delta < 1.1 * config.delta_old || config.delta_old < config.delta_max/1000) &&
+            config.rmax[rk->host->init-1] / config.specRad > config.delta_t && sim->host->delta_t_ratio.back() == 1.0)))
 #else
         if (config.delta < config.delta_max && config.loop > 5 &&
             (config.delta < 1.1 * config.delta_old || config.delta_old < config.delta_max/1000) &&
@@ -316,7 +319,7 @@ int runSimulation() {
 #endif
 
         // Status: continuous multi-line TUI for TTY when debug is off; otherwise line-per-iteration
-        std::string method = (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")");
+        std::string method = config.gpu ? (rk->device->init == 1 ? "RK54" : rk->device->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->device->init - 2)) + ")") : (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")");
         if (continuous_status) {
             ui.update_status(t, config.tmax, config.loop, config.delta_t, method);
         } else if (config.debug) {

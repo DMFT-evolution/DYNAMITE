@@ -396,7 +396,7 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     params << "current_loop = " << snapshot.current_loop << std::endl;
     params << "current_delta = " << delta << std::endl;
     params << "current_delta_t = " << delta_t << std::endl;
-    params << "current_method = N/A (async)" << std::endl;
+    params << "current_method = " << (snapshot.method == 1 ? "RK54" : snapshot.method == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (snapshot.method - 2)) + ")") << std::endl;
     params << "current_t1grid_size = " << snapshot.t1grid.size() << std::endl;
     params << "current_QK0 = " << snapshot.QKv[(snapshot.t1grid.size() - 1) * snapshot.current_len] << std::endl;
     params << "current_QR0 = " << snapshot.QRv[(snapshot.t1grid.size() - 1) * snapshot.current_len] << std::endl;

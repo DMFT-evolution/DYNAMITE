@@ -11,6 +11,8 @@
 #include "convolution/convolution.cuh"
 #include "core/device_utils.cuh"
 #include "EOMs/time_steps.hpp"
+#include "EOMs/rk_data.hpp"
+#include "EOMs/device_rk_data.hpp"
 #include "version/version_info.hpp"
 #include <fstream>
 #include <iostream>
@@ -148,7 +150,7 @@ SimulationDataSnapshot createDataSnapshot()
         copyDeviceToSnapshot(snapshot.QKB1int, sim->device->QKB1int);
         copyDeviceToSnapshot(snapshot.QRB1int, sim->device->QRB1int);
         copyDeviceToSnapshot(snapshot.theta, sim->device->theta);
-        snapshot.t_current = snapshot.t1grid.back();
+        cudaMemcpy(&snapshot.method, &rk->device->init, sizeof(int), cudaMemcpyDeviceToHost); // Store the RK method used on GPU
     } else {
         // For CPU runs, copy from host vectors as before
         snapshot.QKv = sim->host->QKv;
@@ -164,6 +166,7 @@ SimulationDataSnapshot createDataSnapshot()
         snapshot.QRB1int = sim->host->QRB1int;
         snapshot.theta = sim->host->theta;
         snapshot.t_current = sim->host->t1grid.back();
+        snapshot.method = rk->host->init;  // Store the RK method used on CPU
     }
     
     // Calculate energy

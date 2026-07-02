@@ -31,6 +31,7 @@ SimulationDataSnapshot createDataSnapshot() {
     snapshot.QRB1int = sim->host->QRB1int;
     snapshot.theta = sim->host->theta;
     snapshot.t_current = sim->host->t1grid.empty() ? 0.0 : sim->host->t1grid.back();
+    snapshot.method = rk->host->init;  // Store the RK method used on CPU
 
     std::vector<double> temp(config.len, 0.0);
     std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);

@@ -16,6 +16,7 @@ struct SimulationDataSnapshot {
     std::vector<double> debug_step_memory;
     double energy;
     double t_current;
+    int method;  // 1=RK54, 2=SSPRK104, 3+=SERK2(2*(method-2))
     int current_len, current_loop;
     SimulationConfig config_snapshot;
     
