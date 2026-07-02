@@ -319,7 +319,11 @@ int runSimulation() {
 #endif
 
         // Status: continuous multi-line TUI for TTY when debug is off; otherwise line-per-iteration
+#if DMFE_WITH_CUDA
         std::string method = config.gpu ? (rk->device->init == 1 ? "RK54" : rk->device->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->device->init - 2)) + ")") : (rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")");
+#else
+        std::string method = rk->host->init == 1 ? "RK54" : rk->host->init == 2 ? "SSPRK104" : "SERK2(" + std::to_string(2 * (rk->host->init - 2)) + ")";
+#endif
         if (continuous_status) {
             ui.update_status(t, config.tmax, config.loop, config.delta_t, method);
         } else if (config.debug) {

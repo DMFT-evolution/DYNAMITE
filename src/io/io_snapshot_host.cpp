@@ -3,6 +3,7 @@
 #include "io/io_utils.hpp"
 #include "simulation/simulation_data.hpp"
 #include "EOMs/time_steps.hpp"
+#include "EOMs/rk_data.hpp"
 #include "core/config.hpp"
 #include "math/math_sigma.hpp"
 #include "math/math_ops.hpp"
@@ -13,6 +14,7 @@
 
 extern SimulationConfig config;
 extern SimulationData* sim;
+extern RKData* rk;
 extern size_t peak_memory_mb;
 extern size_t peak_gpu_memory_mb;
 extern std::chrono::high_resolution_clock::time_point program_start_time;
