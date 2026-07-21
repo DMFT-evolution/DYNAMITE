@@ -671,7 +671,7 @@ double energyGPU(
     ConvAGPU_Stream(dev.temp0, qR, dev.temp2, t, integ, theta);
 
     // Compute final result
-    double result = - (dev.temp2[0] + dev.temp0[0] / T0);
+    double result = - (dev.temp2[0] + flambda(qK[0]) / T0);
 
     return move(result);
 }

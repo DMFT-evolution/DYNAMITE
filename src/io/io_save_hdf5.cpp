@@ -43,7 +43,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
         energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
-                 + Dflambda(lastQKv[0]) / config.T0);
+                 + flambda(lastQKv[0]) / config.T0);
     }
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
     std::string binFilename = dirPath + "/data.bin";
@@ -127,7 +127,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
         energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
-                 + Dflambda(lastQKv[0]) / config.T0);
+                 + flambda(lastQKv[0]) / config.T0);
     }
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
     std::string binFilename = dirPath + "/data.bin";

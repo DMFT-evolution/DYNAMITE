@@ -177,7 +177,7 @@ SimulationDataSnapshot createDataSnapshot()
         std::vector<double> temp(config.len, 0.0);
         std::vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        snapshot.energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
+        snapshot.energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + flambda(lastQKv[0])/config.T0);
     }
     
     // Copy metadata
@@ -261,7 +261,7 @@ void saveHistory(const std::string& filename, double delta, double delta_t,
             std::vector<double> QRv_i(simulation.host->QRv.begin() + i * len_param,
                                       simulation.host->QRv.begin() + (i + 1) * len_param);
             SigmaK(QKv_i, temp);
-            energy_history[i] = -(ConvA(temp, QRv_i, simulation.host->t1grid[i])[0] + Dflambda(QKv_i[0]) / T0_param);
+            energy_history[i] = -(ConvA(temp, QRv_i, simulation.host->t1grid[i])[0] + flambda(QKv_i[0]) / T0_param);
             qk0_history[i] = QKv_i[0];  // QK[0] at time step i
         }
     }
@@ -393,7 +393,7 @@ void saveHistoryAsync(const std::string& filename, double delta, double delta_t,
         std::vector<double> QRv_i(snapshot.QRv.begin() + i * snapshot.current_len,
                                   snapshot.QRv.begin() + (i + 1) * snapshot.current_len);
         SigmaK(QKv_i, temp);
-        energy_history[i] = -(ConvA(temp, QRv_i, snapshot.t1grid[i])[0] + Dflambda(QKv_i[0]) / snapshot.config_snapshot.T0);
+        energy_history[i] = -(ConvA(temp, QRv_i, snapshot.t1grid[i])[0] + flambda(QKv_i[0]) / snapshot.config_snapshot.T0);
     }
     
     // Progress mapping for histories phase: [0.65 .. 0.80]

@@ -35,7 +35,7 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
         vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
         energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0]
-                 + Dflambda(lastQKv[0]) / config.T0);
+                 + flambda(lastQKv[0]) / config.T0);
     }
 
     std::ofstream file(filename, std::ios::binary);

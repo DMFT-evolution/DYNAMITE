@@ -176,5 +176,5 @@ double energyCPU()
     return -(ConvA(temp,
                    getLastLenEntries(sim->host->QRv, config.len),
                    t)[0]
-             + Dflambda(qk0)/config.T0);
+             + flambda(qk0)/config.T0);
 }

@@ -96,7 +96,7 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
         vector<double> temp(config.len, 0.0);
         vector<double> lastQKv = getLastLenEntries(sim->host->QKv, config.len);
         SigmaK(lastQKv, temp);
-        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + Dflambda(lastQKv[0])/config.T0);
+        energy = -(ConvA(temp, getLastLenEntries(sim->host->QRv, config.len), sim->host->t1grid.back())[0] + flambda(lastQKv[0])/config.T0);
 #if DMFE_WITH_CUDA
     }
 #endif
