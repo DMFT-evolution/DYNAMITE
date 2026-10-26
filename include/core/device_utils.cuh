@@ -63,7 +63,10 @@ void FusedUpdate(const thrust::device_ptr<double>& a,
                  const dmfe::device_vector<double>* extra2 = nullptr,
                  const dmfe::device_vector<double>* extra3 = nullptr,
                  const thrust::device_ptr<double>& subtract = nullptr,
-                 cudaStream_t stream = 0);
+                 cudaStream_t stream = 0,
+                 // [PERF] optional final elementwise factor: folds the computeProduct
+                 // launch that used to follow this kernel in QKRstepGPU.
+                 const dmfe::device_vector<double>* scale = nullptr);
 
 #if defined(__CUDA_ARCH__) && (__CUDA_ARCH__ < 600)
 __device__ inline double atomicAdd_double(double* address, double val) {

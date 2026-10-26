@@ -1,28 +1,13 @@
-# Cite DYNAMITE
+# Cite
 
-**Audience:** researchers who want to cite the software and accompanying paper correctly.
+If you use DYNAMITE, please cite the paper that describes the code:
 
-If you use DYNAMITE in your research, please cite the software:
+- J. Lang, V. Citro, L. Leuzzi, F. Ricci-Tersenghi, “DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations,” [arXiv:2604.06309](https://arxiv.org/abs/2604.06309) (under review).
 
-- Software: DYNAMITE — Dynamical Mean-Field Evolution (Apache-2.0)
-- Project page: https://github.com/DMFT-evolution/DYNAMITE
-- Docs: https://dmft-evolution.github.io/DYNAMITE/
-- Citation metadata (CITATION.cff) is provided at the repository root; many tools (GitHub, Zotero) can ingest it directly.
+Where you refer specifically to the original idea of the method, you may in addition cite
 
-Preferred citation
+- J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://doi.org/10.1103/z64g-nqs6), [arXiv:2504.06849](https://arxiv.org/abs/2504.06849).
 
-- Cite a specific tagged release (see [GitHub Releases](https://github.com/DMFT-evolution/DMFE/releases)) and include the DOI if available. Until a DOI is minted, include the version tag and commit hash for reproducibility.
+That paper was written for a much older version of the code; for the algorithm as implemented here, refer to the first one.
 
-Related paper
-
-- J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
-
-Acknowledgment
-
-If DYNAMITE or its documentation helped your work, please acknowledge the project. Bug reports and feature requests are welcome.
-
-## See also
-
-- [`CITATION.cff` (repository root)](https://github.com/DMFT-evolution/DYNAMITE/blob/main/CITATION.cff)
-- [Reference → Bibliography](bibliography.md)
-- [Dev → Release process](../dev/release.md)
+For reproducibility, also state the version of the program you used. `./RG-Evo -v` prints it, and every run records it, together with the Git commit, in its `params.txt`. Machine-readable citation data are in [`CITATION.cff`](https://github.com/DMFT-evolution/DYNAMITE/blob/main/CITATION.cff) in the repository; GitHub and reference managers such as Zotero can read this file.

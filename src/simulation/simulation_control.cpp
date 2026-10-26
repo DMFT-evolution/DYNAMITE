@@ -5,6 +5,7 @@
 #endif
 #include "core/config.hpp"
 #include "core/config_build.hpp"
+#include "core/t1_cache.hpp"
 #include "core/console.hpp"
 #include "interpolation/interpolation_core.hpp"
 #include <iostream>
@@ -53,6 +54,7 @@ bool rollbackState(int n) {
     if (config.gpu) {
         // Resize GPU vectors to target size
         sim->device->t1grid.resize(targetSize);
+        dmfe::t1LastInvalidate();   // [PERF] see core/t1_cache.hpp
         sim->device->delta_t_ratio.resize(targetSize);
         sim->device->QKv.resize(targetSize * config.len);
         sim->device->QRv.resize(targetSize * config.len);

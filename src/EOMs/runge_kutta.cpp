@@ -15,6 +15,41 @@ extern SimulationConfig config;
 extern SimulationData* sim;
 extern RKData* rk;
 
+// [CPC-REV] Error norm used by the adaptive controller (referee 2, point 2).
+//
+// Two changes with respect to the first release:
+//  (a) the norm is now selectable (config.error_norm, CLI --error-norm), because
+//      the historical default -- the *unnormalized* 1-norm of the 2L-component
+//      error vector -- is extensive in L, so a fixed tolerance means a different
+//      pointwise accuracy for L = 512, 1024, 2048.  'sum' reproduces the old
+//      behaviour bit for bit and remains the default;
+//  (b) the term |gt - gte| that used to be added to the error has been removed.
+//      Since sum_j b_j = sum_j b2_j = 1 exactly for both embedded pairs, that
+//      term is analytically zero; on the CPU it was accumulated separately and
+//      therefore contributed pure rounding noise ~ulp(t), which reaches ~2e-8 at
+//      t = 1e7 -- two orders of magnitude above the default tolerance 1e-10, and
+//      would eventually take over the step-size controller at late times.
+static double rk_error_norm(const std::vector<double>& C1, const std::vector<double>& C2,
+                            const std::vector<double>& R1, const std::vector<double>& R2)
+{
+    const size_t n = C1.size();
+    double s1 = 0.0, s2 = 0.0, smax = 0.0;
+    for (size_t i = 0; i < n; ++i) {
+        const double dc = std::abs(C1[i] - C2[i]);
+        const double dr = std::abs(R1[i] - R2[i]);
+        s1 += dc + dr;
+        s2 += dc * dc + dr * dr;
+        smax = std::max(smax, std::max(dc, dr));
+    }
+    const double N = static_cast<double>(2 * n);
+    switch (config.error_norm) {
+        case 1:  return s1 / N;               // mean absolute
+        case 2:  return std::sqrt(s2 / N);    // root mean square
+        case 3:  return smax;                 // maximum
+        default: return s1;                   // extensive 1-norm (legacy default)
+    }
+}
+
 // CPU Runge-Kutta Methods (extracted from runge_kutta.cu)
 double SSPRK104()
 {
@@ -130,17 +165,10 @@ double SSPRK104()
         gte += config.delta_t * b2vec[j] * htvec[j];
     }
 
-    // Compute error estimate
-    double error = 0.0;
-    for (size_t i = 0; i < gKvec[stages].size(); ++i) {
-        error += std::abs(gKvec[stages][i] - gKe[i]);
-    }
-    for (size_t i = 0; i < gRvec[stages].size(); ++i) {
-        error += std::abs(gRvec[stages][i] - gRe[i]);
-    }
-    error += std::abs(gtvec[stages] - gte);
-
-    return error;
+    // [CPC-REV] Eq. (25) of the manuscript, with a selectable norm and without the
+    // identically-zero (but numerically noisy) time component.  See rk_error_norm().
+    (void)gte;   // kept for readability of the embedded-pair assembly above
+    return rk_error_norm(gKvec[stages], gKe, gRvec[stages], gRe);
 }
 
 double RK54()
@@ -187,8 +215,18 @@ double RK54()
             );
         }
 
-        hKvec[n] = QKstep(gKvec[0], gRvec[0]);
-        hRvec[n] = QRstep(gRvec[0]);
+        // [CPC-REV] BUG FIX (referee 2, point 5). The stage derivatives must be
+        // evaluated at the CURRENT stage state, exactly as in SSPRK104() above and
+        // in RK54GPU()/SSPRK104GPU(), which pass sim->device->QKv/QRv to
+        // QKRstepGPU() and there slice the last `len` entries -- i.e. gKvec[n] /
+        // gRvec[n], written by replaceAll() at the end of the previous stage.
+        // With gKvec[0]/gRvec[0] the pointwise part of the right-hand side
+        // (-mu C, -mu R, the beta_0 forcing and the 2T R bath term) was frozen at
+        // stage zero, which reduces the CPU Dormand-Prince integrator from fifth
+        // to FIRST order globally, while the embedded estimator stays blind to it
+        // because sum_n (b_n - b2_n) = 0 exactly.
+        hKvec[n] = QKstep(gKvec[n], gRvec[n]);
+        hRvec[n] = QRstep(gRvec[n]);
         htvec[n] = 1.0;
 
         // Update g and dr
@@ -238,17 +276,10 @@ double RK54()
         gte += config.delta_t * b2vec[j] * htvec[j];
     }
 
-    // Compute error estimate
-    double error = 0.0;
-    for (size_t i = 0; i < gKvec[stages].size(); ++i) {
-        error += std::abs(gKvec[stages][i] - gKe[i]);
-    }
-    for (size_t i = 0; i < gRvec[stages].size(); ++i) {
-        error += std::abs(gRvec[stages][i] - gRe[i]);
-    }
-    error += std::abs(gtvec[stages] - gte);
-
-    return error;
+    // [CPC-REV] Eq. (25) of the manuscript, with a selectable norm and without the
+    // identically-zero (but numerically noisy) time component.  See rk_error_norm().
+    (void)gte;   // kept for readability of the embedded-pair assembly above
+    return rk_error_norm(gKvec[stages], gKe, gRvec[stages], gRe);
 }
 
 double updateCPU() {

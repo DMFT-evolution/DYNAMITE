@@ -1,32 +1,21 @@
 # Bibliography
 
-**Audience:** readers looking for background references on the methods and models.
+## This code
 
-This page collects references related to the methods, models, and numerical techniques implemented in the project.
+- J. Lang, V. Citro, L. Leuzzi, F. Ricci-Tersenghi, “DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations,” [arXiv:2604.06309](https://arxiv.org/abs/2604.06309).
+- J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://doi.org/10.1103/z64g-nqs6). The original proposal of the method.
 
-If you add or update a reference, please keep the list alphabetized by first author surname.
+## Numerical methods
 
-## General background
+- J. R. Dormand, P. J. Prince, “A family of embedded Runge–Kutta formulae,” J. Comput. Appl. Math. **6**, 19 (1980). The Dormand–Prince method.
+- D. I. Ketcheson, “Highly efficient strong stability-preserving Runge–Kutta methods with low-storage implementations,” SIAM J. Sci. Comput. **30**, 2113 (2008). SSPRK(10,4).
+- I. Fekete, S. Conde, J. N. Shadid, “Embedded pairs for optimal explicit strong stability preserving Runge–Kutta methods,” J. Comput. Appl. Math. **412**, 114325 (2022). The embedded error estimate for SSPRK(10,4).
+- J. Martín-Vaquero, B. Janssen, “Second-order stabilized explicit Runge–Kutta methods for stiff problems,” Comput. Phys. Commun. **180**, 1802 (2009). The SERK2 methods.
+- M. S. Floater, K. Hormann, “Barycentric rational interpolation with no poles and high rates of approximation,” Numer. Math. **107**, 315 (2007). The rational interpolation option of the grid generator.
+- B. Kim, A. Latz, “The dynamics of the spherical p-spin model: From microscopic to asymptotic,” Europhys. Lett. **53**, 660 (2001). An earlier scheme with a periodically thinned equidistant grid.
 
+## Dynamics of spherical spin glasses
 
-## Numerical integration and stability
-
-- J. R. Dormand, P. J. Prince, “A family of embedded Runge-Kutta formulae,” J. Comp. Appl. Math. 6, 19–26 (1980)
-- S. Gottlieb, D. Ketcheson, C.-W. Shu, “Strong Stability Preserving Runge–Kutta and Multistep Time Discretizations,” World Scientific (2011)
-
-## Sparse grids and interpolation
-
-
-## Aging and spin glass dynamics
-
-- J.-P. Bouchaud, L. F. Cugliandolo, J. Kurchan, M. Mézard, “Out of equilibrium dynamics in spin-glasses and other glassy systems,” in Spin Glasses and Random Fields (1998)
-
-## Citations to this software
-
-If you use this software, please cite the project and relevant methods. A formal software citation will be provided with releases. For now, please cite the accompanying methodology/preprint where appropriate.
-
-## See also
-
-- [Reference → Cite DYNAMITE](cite.md)
-- [Concepts → Algorithm](../concepts/algorithm.md)
-- [Concepts → Time integration](../concepts/time-integration.md)
+- L. F. Cugliandolo, J. Kurchan, “Analytical solution of the off-equilibrium dynamics of a long-range spin-glass model,” Phys. Rev. Lett. **71**, 173 (1993).
+- G. Folena, S. Franz, F. Ricci-Tersenghi, “Rethinking mean-field glassy dynamics and its relation with the energy landscape: The surprising case of the spherical mixed p-spin model,” Phys. Rev. X **10**, 031045 (2020).
+- V. Citro, F. Ricci-Tersenghi, “Strong ergodicity breaking in dynamical mean-field equations for mixed p-spin glasses,” Phys. Rev. Lett. **135**, 247102 (2025), [doi:10.1103/lvmp-pydk](https://doi.org/10.1103/lvmp-pydk). Long-time integration of the mixed spherical model with a different scheme.

@@ -62,7 +62,9 @@ int main(int argc, char **argv) {
 
     // Parse command line arguments
     if (!parseCommandLineArguments(argc, argv)) {
-        return 1;
+        // [CPC-REV] -h/-v/-c are informational, not errors: exit with status 0 so
+        // that `RG-Evo -v` can be used as a CI smoke test.
+        return config.exit_success_after_parse ? 0 : 1;
     }
 
     // Force GPU mode to false in CPU-only build

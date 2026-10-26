@@ -8,8 +8,14 @@ Results/
 logs/
 build_log.txt
 
-# Ignore build directory
+# CMake build trees and generated files
 build/
+/build-*/
+/cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
 
 # Ignore .git
 .git/
@@ -18,7 +24,13 @@ build/
 Grid_data/1024/
 Grid_data/2048/
 
-# Ignore compiled library files
+# Compiled objects, libraries, and executables
+*.o
+*.obj
+*.a
+/RG-Evo
+/RG-Evo-shared
+/test_interp_weights
 *.so
 *.dylib
 *.dll
@@ -57,3 +69,20 @@ docs/reference/api/
 
 # Math.out
 math.out
+
+# Local AI agent instructions, configuration, and planning notes.
+.agents/
+.codex/
+.claude/
+.cursor/
+.gemini/
+.aider*
+AGENTS.md
+AGENTS.override.md
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+
+# Local test data
+/RegressionRuns/
+/Grid_data/spline_test/

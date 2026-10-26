@@ -111,7 +111,5 @@ void saveSimulationStateBinary(const std::string& filename, double delta, double
     std::string dirPath = filename.substr(0, filename.find_last_of('/'));
     saveParametersToFile(dirPath, delta, delta_t);
 
-#if DMFE_WITH_CUDA
     saveHistory(filename, delta, delta_t, *sim, config.len, config.T0, config.gpu);
-#endif
 }

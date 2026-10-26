@@ -1,18 +1,57 @@
 cff-version: 1.2.0
 message: >-
-  If you use DYNAMITE in your research, please cite this software using the
-  metadata below. You can also cite a specific release DOI once available.
-title: DYNAMITE: Dynamical Mean-Field Evolution
-repository-code: https://github.com/DMFT-evolution/DYNAMITE
-url: https://dmft-evolution.github.io/DYNAMITE/
-version: 0.1.0
-authors:
-  - name: DMFT-evolution Contributors
-    affiliation: DMFT-evolution project
+  If you use DYNAMITE in your research, please cite both the software (this
+  record, which points to the archived release) and the accompanying article.
+title: "DYNAMITE: DYNAmical Mean-fIeld Time Evolution solver"
+abstract: >-
+  High-performance C++/CUDA framework for the long-time numerical solution of
+  two-time dynamical mean-field equations (DMFE), based on a fixed non-uniform
+  grid in the ratio theta = t'/t, high-order interpolation with precomputed
+  stencils, adaptive Runge-Kutta time stepping and controlled sparsification of
+  the stored history.
+type: software
+repository-code: "https://github.com/DMFT-evolution/DYNAMITE"
+url: "https://dmft-evolution.github.io/DYNAMITE/"
+version: 1.4.0.0
+date-released: 2026-10-26
 license: Apache-2.0
-date-released: 2025-10-10
+keywords:
+  - dynamical mean-field equations
+  - spin glasses
+  - aging dynamics
+  - GPU computing
+  - C++
+  - CUDA
+authors:
+  - family-names: Lang
+    given-names: Johannes
+    affiliation: "Institut fuer Theoretische Physik, Universitaet zu Koeln, Germany"
+    orcid: "https://orcid.org/0000-0002-8353-3392"
+  - family-names: Citro
+    given-names: Vincenzo
+    affiliation: "DIIN, Universita di Salerno, Italy; CNR-Nanotec, unita di Roma, Italy"
+    orcid: "https://orcid.org/0000-0003-2923-9157"
+  - family-names: Leuzzi
+    given-names: Luca
+    affiliation: "CNR-Nanotec, unita di Roma, Italy; Dipartimento di Fisica, Sapienza Universita di Roma, Italy"
+    orcid: "https://orcid.org/0000-0002-5971-7191"
+  - family-names: Ricci-Tersenghi
+    given-names: Federico
+    affiliation: "Dipartimento di Fisica, Sapienza Universita di Roma, Italy; CNR-Nanotec; INFN Sezione di Roma I"
+    orcid: "https://orcid.org/0000-0003-4970-7376"
 preferred-citation:
-  type: software
-  title: DYNAMITE: Dynamical Mean-Field Evolution
-  url: https://github.com/DMFT-evolution/DYNAMITE
-  notes: Cite the specific release tag if available; include the commit hash for reproducibility.
+  type: article
+  title: "DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations"
+  authors:
+    - family-names: Lang
+      given-names: Johannes
+    - family-names: Citro
+      given-names: Vincenzo
+    - family-names: Leuzzi
+      given-names: Luca
+    - family-names: Ricci-Tersenghi
+      given-names: Federico
+  journal: "arXiv preprint"
+  year: 2026
+  doi: "10.48550/arXiv.2604.06309"
+  url: "https://arxiv.org/abs/2604.06309"

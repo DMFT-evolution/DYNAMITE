@@ -1,5 +1,7 @@
 #include "core/host_utils.hpp"
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 #include <iostream>
 #include <cmath>
 

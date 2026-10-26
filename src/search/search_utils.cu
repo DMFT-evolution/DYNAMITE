@@ -111,6 +111,93 @@ __global__ __launch_bounds__(64, 1) void bsearch_interp_kernel(
         : (double)m + (El - Lm_1) / denom;
 }
 
+// ============================================================================
+// [PERF] Two searches, one launch.
+//
+// interpolateGPU locates both theta (L elements) and phi2 (L*L elements) in the
+// same t1grid, once per Runge-Kutta stage.  The theta search is only L/64 = 8
+// blocks, so it is almost entirely launch latency.  The two are merged into one
+// launch over the concatenated index space; entry A occupies [0, nA) and entry B
+// [nA, nA+nB).
+//
+// BIT-EXACTNESS: the body below is bsearch_interp_kernel character for character,
+// with the same `list` and the same `list_size`; only which (elem, result) pair a
+// thread works on changes.  Each output element is produced by the same sequence
+// of comparisons and the same final expression.
+// ============================================================================
+__global__ __launch_bounds__(64, 1) void bsearch_interp_pair_kernel(
+    const double* __restrict__ list,
+    const double* __restrict__ elemA,
+    double* __restrict__ resultA,
+    size_t nA,
+    const double* __restrict__ elemB,
+    double* __restrict__ resultB,
+    size_t nB,
+    size_t list_size)
+{
+    size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= nA + nB) return;
+
+    const double* __restrict__ elem;
+    double* __restrict__ result;
+    if (i < nA) { elem = elemA; result = resultA; }
+    else        { elem = elemB; result = resultB; i -= nA; }
+
+    double El = elem[i] * list[list_size - 1]; // Scale element by the last element of the list
+
+    // Binary search (manual lower_bound)
+    size_t left = 0, right = list_size;
+    while (left < right) {
+        size_t mid = (left + right) / 2;
+        if (list[mid] < El)
+            left = mid + 1;
+        else
+            right = mid;
+    }
+
+    size_t m = left;
+
+    // Handle edge cases
+    if (m == 0) {
+        result[i] = 1.0;
+        return;
+    }
+    if (m == list_size) {
+        result[i] = (double)m;
+        return;
+    }
+
+    double Lm_1 = list[m - 1];
+    double Lm = list[m];
+    double denom = Lm - Lm_1;
+
+    result[i] = (denom == 0.0)
+        ? (double)m + 1
+        : (double)m + (El - Lm_1) / denom;
+}
+
+void bsearchPosSortedPairGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elemA,
+    dmfe::device_vector<double>& resultA,
+    const dmfe::device_vector<double>& elemB,
+    dmfe::device_vector<double>& resultB,
+    cudaStream_t stream)
+{
+    const size_t nA = elemA.size();
+    const size_t nB = elemB.size();
+    const int threads = 64;                        // must match bsearch_interp_kernel
+    const int blocks = static_cast<int>((nA + nB + threads - 1) / threads);
+
+    bsearch_interp_pair_kernel<<<blocks, threads, 0, stream>>>(
+        thrust::raw_pointer_cast(list.data()),
+        thrust::raw_pointer_cast(elemA.data()),
+        thrust::raw_pointer_cast(resultA.data()), nA,
+        thrust::raw_pointer_cast(elemB.data()),
+        thrust::raw_pointer_cast(resultB.data()), nB,
+        list.size());
+}
+
 dmfe::device_vector<double> bsearchPosSortedGPU(
     const dmfe::device_vector<double>& list,
     const dmfe::device_vector<double>& elem,

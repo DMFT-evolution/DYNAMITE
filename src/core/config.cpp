@@ -9,6 +9,7 @@
 #include <string>
 #include <unistd.h>
 #include <getopt.h>
+#include <algorithm>   // [CPC-REV] std::max
 
 // External declarations for global config object (defined in main executable)
 extern SimulationConfig config;
@@ -42,6 +43,17 @@ bool parseCommandLineArguments(int argc, char **argv) {
         {"allow-incompatible-versions", required_argument, 0, 'I'},
     {"log-response-interp", required_argument, 0, 'R'},
         {"tail-fit", required_argument, 0, 'F'},
+        // [CPC-REV] new options (referee 2, point 2): selectable Runge-Kutta error
+        // norm and maintenance-pass interval.  Long options only, so that every
+        // existing command line keeps working unchanged.
+        {"error-norm", required_argument, 0, 1001},
+        {"sparsify-interval", required_argument, 0, 1003},
+        // [CPC-REV] explicit, self-documenting aliases for the two temperatures.
+        // '--Gamma'/-G is the BATH temperature T of Eqs. (7) and (13); '--T0'/-T is
+        // the temperature of the equilibrium initial condition, entering only
+        // through beta_0 = 1/T0.  The historical names are kept for compatibility.
+        {"bath-temperature", required_argument, 0, 'G'},
+        {"initial-temperature", required_argument, 0, 'T'},
         {0, 0, 0, 0}
     };
     // Include 'S:' to accept -S true|false
@@ -118,6 +130,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
             }
             case 'v':
                 std::cout << dmfe::console::INFO() << g_version_info.toString() << std::endl;
+                config.exit_success_after_parse = true;   // [CPC-REV] exit code 0
                 return false;  // Exit after showing version
             case 'c':
                 // Check version compatibility of a specific parameter file
@@ -156,6 +169,7 @@ bool parseCommandLineArguments(int argc, char **argv) {
                         std::cout << dmfe::console::ERR() << error << std::endl;
                     }
                     
+                    config.exit_success_after_parse = true;   // [CPC-REV] exit code 0
                     return false;  // Exit after checking
                 }
             case 'I':
@@ -169,14 +183,43 @@ bool parseCommandLineArguments(int argc, char **argv) {
                 // Enable/disable tail-fit blending near theta->1
                 config.tail_fit_enabled = (std::string(optarg) != "false");
                 break;
+            case 1001: {   // [CPC-REV] --error-norm
+                const std::string v(optarg ? optarg : "sum");
+                if      (v == "sum"  || v == "0") config.error_norm = 0;
+                else if (v == "mean" || v == "1") config.error_norm = 1;
+                else if (v == "rms"  || v == "2") config.error_norm = 2;
+                else if (v == "max"  || v == "3") config.error_norm = 3;
+                else {
+                    std::cerr << dmfe::console::WARN() << "Unknown --error-norm '" << v
+                              << "'; falling back to 'sum'." << std::endl;
+                    config.error_norm = 0;
+                }
+                break;
+            }
+            case 1003:     // [CPC-REV] --sparsify-interval
+                try {
+                    config.sparsify_interval = std::max(1, std::stoi(optarg));
+                } catch (...) {
+                    std::cerr << dmfe::console::WARN() << "Invalid --sparsify-interval; using 100000" << std::endl;
+                    config.sparsify_interval = 100000;
+                }
+                break;
             case 'h':
                 std::cout << dmfe::console::INFO() << "Usage: " << argv[0] << " [options]\n"
                           << "Options:\n"
                           << "  -p INT                          Set p parameter (default: " << config.p << ")\n"
                           << "  -q INT                          Set p2 parameter (default: " << config.p2 << ")\n"
                           << "  -l, --lambda F                  Set lambda parameter (default: " << config.lambda << ")\n"
-                          << "  -T, --T0 F                      Set initial temperature T0 (use 'inf' for infinity, default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
-                          << "  -G, --Gamma F                   Set final temperature Gamma (default: " << config.Gamma << ")\n"
+                          << "  -T, --T0, --initial-temperature F\n"
+                          << "                                  Temperature of the equilibrium INITIAL condition;\n"
+                          << "                                  enters the equations only through beta_0 = 1/T0.\n"
+                          << "                                  Use 'inf' for a random (infinite-temperature) start\n"
+                          << "                                  (default: " << (config.T0 >= 1e50 ? "inf" : std::to_string(config.T0)) << ")\n"
+                          << "  -G, --Gamma, --bath-temperature F\n"
+                          << "                                  BATH temperature T after the quench: it sets the\n"
+                          << "                                  noise <xi xi> = 2 T delta(t-t') and the constant term\n"
+                          << "                                  of the Lagrange multiplier mu(t) = T + ...\n"
+                          << "                                  (default: " << config.Gamma << ")\n"
                           << "  -m INT                          Set maximum number of loops (default: " << config.maxLoop << ")\n"
                           << "  -L INT                          Set grid length N (default: " << config.len << ")\n"
                           << "  -t FLOAT                        Set maximum simulation time (default: " << config.tmax << ")\n"
@@ -190,11 +233,16 @@ bool parseCommandLineArguments(int argc, char **argv) {
                           << "  -A, --async-export BOOL        Enable asynchronous data export (default: " << (config.async_export ? "true" : "false") << ")\n"
                           << "  -R, --log-response-interp BOOL Log-space interpolation for response QR (QK interpolated normally) (default: " << (config.log_response_interp ? "true" : "false") << ")\n"
                           << "  -F, --tail-fit BOOL            Enable QK tail-fit near theta->1 (default: " << (config.tail_fit_enabled ? "true" : "false") << ")\n"
+                          << "      --error-norm STR            Norm of the Runge-Kutta error vector:\n"
+                          << "                                  sum (default, extensive 1-norm) | mean | rms | max\n"
+                          << "      --sparsify-interval INT     Accepted steps between maintenance passes\n"
+                          << "                                  (sparsify + re-interpolate + checkpoint; default 100000)\n"
                           << "  -D BOOL                         Set debug mode (default: " << (config.debug ? "true" : "false") << ")\n"
                           << "  -I, --allow-incompatible-versions BOOL  Allow loading data saved with incompatible versions (default: " << (config.allow_incompatible_versions ? "true" : "false") << ")\n"
                           << "  -v                              Display version information and exit\n"
                           << "  -c, --check FILE                Check version compatibility of parameter file and exit\n"
                           << "  -h, --help                      Display this help message and exit\n";
+                config.exit_success_after_parse = true;   // [CPC-REV] exit code 0
                 return false;
             default:
                 std::cerr << dmfe::console::ERR() << "Unknown option: " << static_cast<char>(optopt) << std::endl;
@@ -224,6 +272,8 @@ bool parseCommandLineArguments(int argc, char **argv) {
               << "  allow_incompatible_versions = " << (config.allow_incompatible_versions ? "true" : "false") << "\n"
               << "  log_response_interp = " << (config.log_response_interp ? "true" : "false") << "\n"
               << "  tail_fit_enabled = " << (config.tail_fit_enabled ? "true" : "false") << "\n"
+              << "  error_norm = " << errorNormName(config.error_norm) << "\n"
+              << "  sparsify_interval = " << config.sparsify_interval << "\n"
               << "  out_dir = " << config.resultsDir << "\n";
     return true;
 }

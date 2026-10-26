@@ -12,7 +12,7 @@ set -euo pipefail
 #   ./build.sh build/foo      -> ./build/foo
 #   ./build.sh /tmp/dmfe-bld  -> /tmp/dmfe-bld (absolute path respected)
 
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 RAW_DIR=""
 ROOT_BUILD_DIR="build"
 
@@ -21,21 +21,29 @@ CLEAN=0
 CUDA_MODE="auto"  # auto, on, or off
 # Optional: honor CMAKE_BUILD_TYPE if exported; default to Release
 BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}
+parse_options=1
 for arg in "$@"; do
-  case "$arg" in
-    --clean)
-      CLEAN=1 ;;
-    --cuda=auto|--cuda=on|--cuda=off)
-      CUDA_MODE="${arg#--cuda=}" ;;
-    --)
-      shift; break ;;
-    -*) ;;
-    *)
-      if [[ -z "$RAW_DIR" ]]; then RAW_DIR="$arg"; fi ;;
-  esac
+  if [[ $parse_options -eq 1 ]]; then
+    case "$arg" in
+      --clean)
+        CLEAN=1; continue ;;
+      --cuda=auto|--cuda=on|--cuda=off)
+        CUDA_MODE="${arg#--cuda=}"; continue ;;
+      --)
+        parse_options=0; continue ;;
+      -*)
+        echo "[error] Unknown option: $arg" >&2
+        exit 1 ;;
+    esac
+  fi
+  if [[ -n "$RAW_DIR" ]]; then
+    echo "[error] Only one build directory may be specified" >&2
+    exit 1
+  fi
+  RAW_DIR="$arg"
 done
 
-if [[ -z "${RAW_DIR}" || "${RAW_DIR}" == "build" || "${RAW_DIR}" == "--clean" ]]; then
+if [[ -z "${RAW_DIR}" || "${RAW_DIR}" == "build" ]]; then
   BDIR="${ROOT_BUILD_DIR}"
 elif [[ "${RAW_DIR}" == /* ]]; then
   BDIR="${RAW_DIR}"
@@ -43,6 +51,34 @@ elif [[ "${RAW_DIR}" == build/* ]]; then
   BDIR="${RAW_DIR}"
 else
   BDIR="${ROOT_BUILD_DIR}/${RAW_DIR}"
+fi
+
+# Resolve directory aliases using portable shell builtins (also works on macOS).
+if [[ "$BDIR" != /* ]]; then
+  BDIR="${SCRIPT_DIR}/${BDIR}"
+fi
+mkdir -p -- "$BDIR"
+BDIR=$(cd -- "$BDIR" && pwd -P)
+# Never let --clean or cache recovery remove the source tree or an ancestor.
+if [[ "$BDIR" == / || "$SCRIPT_DIR" == "$BDIR" || "$SCRIPT_DIR" == "$BDIR/"* ]]; then
+  echo "[error] Build directory must not contain the source directory: $BDIR" >&2
+  exit 1
+fi
+
+same_directory() {
+  [[ -d "$1" && -d "$2" ]] && [[ "$1" -ef "$2" ]]
+}
+
+# Both source and build locations are recorded in the cache. Compare directory
+# identities so symlink aliases do not discard a valid cache and its settings.
+if [[ $CLEAN -eq 0 && -f "$BDIR/CMakeCache.txt" ]]; then
+  cached_source=$(sed -n 's/^CMAKE_HOME_DIRECTORY:INTERNAL=//p' "$BDIR/CMakeCache.txt")
+  cached_build=$(sed -n 's/^CMAKE_CACHEFILE_DIR:INTERNAL=//p' "$BDIR/CMakeCache.txt")
+  if ! same_directory "$cached_source" "$SCRIPT_DIR" || ! same_directory "$cached_build" "$BDIR"; then
+    echo "[configure] Source or build directory moved; clearing stale CMake configure state" >&2
+    echo "[configure] Cached custom options will reset; reapply any site-specific CMake settings" >&2
+    rm -rf -- "$BDIR/CMakeCache.txt" "$BDIR/CMakeFiles"
+  fi
 fi
 
 if [[ $CLEAN -eq 1 ]]; then
@@ -66,10 +102,49 @@ if [[ $CLEAN -eq 1 ]]; then
   fi
 fi
 
+# Try modules before deciding whether CUDA is available. Keep an already
+# loaded CUDA toolchain, and never load GPU modules for an explicit CPU build.
+detected_toolchain=""
+if [[ "$CUDA_MODE" != "off" ]] && ! command -v nvcc >/dev/null 2>&1; then
+  # Initialize modules if available
+  if [[ -f /etc/profile.d/modules.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/modules.sh || true
+  fi
+  if ! command -v module >/dev/null 2>&1 && [[ -f /usr/share/Modules/init/bash ]]; then
+    # shellcheck disable=SC1091
+    source /usr/share/Modules/init/bash || true
+  fi
+  if ! command -v module >/dev/null 2>&1 && [[ -f /etc/profile.d/lmod.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/lmod.sh || true
+  fi
+  if ! command -v module >/dev/null 2>&1 && [[ -f /etc/profile.d/z00_lmod.sh ]]; then
+    # shellcheck disable=SC1091
+    source /etc/profile.d/z00_lmod.sh || true
+  fi
+  # Fallback: if modulecmd exists, define a minimal module function
+  if ! command -v module >/dev/null 2>&1 && command -v modulecmd >/dev/null 2>&1; then
+    module() { eval "$(modulecmd bash "$@")"; }
+  fi
+  if command -v module >/dev/null 2>&1; then
+    for module_name in cuda/12.5 accel/cuda/12.5 cuda/12.2 accel/cuda/12.2 accel/nvhpc/24.9; do
+      echo "[env] Trying: module load ${module_name}" >&2
+      if module load "${module_name}" >/dev/null 2>&1 && command -v nvcc >/dev/null 2>&1; then
+        echo "[env] Loaded ${module_name}" >&2
+        break
+      fi
+    done
+    if ! command -v nvcc >/dev/null 2>&1; then
+      echo "[env] No CUDA-capable toolchain found after module load attempts; continuing without it" >&2
+    fi
+  fi
+fi
+
 # Detect CUDA availability if in auto mode
 CUDA_AVAILABLE=0
 if [[ "$CUDA_MODE" == "auto" || "$CUDA_MODE" == "on" ]]; then
-  if command -v nvcc >/dev/null 2>&1 || command -v nvc++ >/dev/null 2>&1; then
+  if command -v nvcc >/dev/null 2>&1; then
     CUDA_AVAILABLE=1
     echo "[detect] CUDA toolchain detected" >&2
   else
@@ -97,81 +172,87 @@ elif [[ "$CUDA_MODE" == "auto" ]]; then
   fi
 fi
 
-# Try to load NVHPC module if CUDA is enabled and nvc++ is missing
-detected_toolchain=""
-if [[ $ENABLE_CUDA -eq 1 ]] && ! command -v nvc++ >/dev/null 2>&1; then
-  # Initialize modules if available
-  if [[ -f /etc/profile.d/modules.sh ]]; then
-    # shellcheck disable=SC1091
-    source /etc/profile.d/modules.sh || true
-  fi
-  if ! command -v module >/dev/null 2>&1 && [[ -f /usr/share/Modules/init/bash ]]; then
-    # shellcheck disable=SC1091
-    source /usr/share/Modules/init/bash || true
-  fi
-  if ! command -v module >/dev/null 2>&1 && [[ -f /etc/profile.d/lmod.sh ]]; then
-    # shellcheck disable=SC1091
-    source /etc/profile.d/lmod.sh || true
-  fi
-  if ! command -v module >/dev/null 2>&1 && [[ -f /etc/profile.d/z00_lmod.sh ]]; then
-    # shellcheck disable=SC1091
-    source /etc/profile.d/z00_lmod.sh || true
-  fi
-  # Fallback: if modulecmd exists, define a minimal module function
-  if ! command -v module >/dev/null 2>&1 && command -v modulecmd >/dev/null 2>&1; then
-    module() { eval "$(modulecmd bash "$@")"; }
-  fi
-  if command -v module >/dev/null 2>&1; then
-    for module_name in cuda/12.5 accel/cuda/12.5 cuda/12.2 accel/cuda/12.2 accel/nvhpc/24.9; do
-      echo "[env] Trying: module load ${module_name}" >&2
-      if module load "${module_name}" >/dev/null 2>&1; then
-        echo "[env] Loaded ${module_name}" >&2
-        break
-      fi
-    done
-    if ! command -v nvcc >/dev/null 2>&1 && ! command -v nvc++ >/dev/null 2>&1; then
-      echo "[env] No CUDA-capable toolchain found after module load attempts; continuing without it" >&2
-    fi
-  fi
-fi
-
 # Decide compilers to pass to CMake
 cmake_args=( -S "$SCRIPT_DIR" -B "$BDIR" -DCMAKE_BUILD_TYPE="$BUILD_TYPE" )
 
 # Set CUDA mode
 if [[ $ENABLE_CUDA -eq 1 ]]; then
   cmake_args+=( -DDMFE_WITH_CUDA=ON )
-  # Explicitly set CUDA compiler if nvcc is available
-  if command -v nvcc >/dev/null 2>&1; then
+  # Keep a configured CUDA compiler rather than switching it on a repeat run.
+  cached_cuda_compiler=""
+  if [[ -f "$BDIR/CMakeCache.txt" ]]; then
+    cached_cuda_compiler=$(sed -n 's/^CMAKE_CUDA_COMPILER:[^=]*=//p' "$BDIR/CMakeCache.txt")
+  fi
+  if [[ -z "$cached_cuda_compiler" ]]; then
     cmake_args+=( -DCMAKE_CUDA_COMPILER="$(command -v nvcc)" )
   fi
 else
   cmake_args+=( -DDMFE_WITH_CUDA=OFF )
 fi
 
-# If not explicitly set and CUDA is enabled, try to pick a reasonable CUDA arch for the current GPU
-if [[ $ENABLE_CUDA -eq 1 ]] && [[ -z "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
+# Explicit architecture overrides take priority; keep a valid cached choice on
+# repeat builds (the login node GPU need not match the compute node GPUs).
+cached_arch=""
+if [[ -f "$BDIR/CMakeCache.txt" ]]; then
+  cached_arch=$(sed -n 's/^CMAKE_CUDA_ARCHITECTURES:[^=]*=//p' "$BDIR/CMakeCache.txt")
+fi
+if [[ $ENABLE_CUDA -eq 1 && -n "${CMAKE_CUDA_ARCHITECTURES:-}" ]]; then
+  cmake_args+=( "-DCMAKE_CUDA_ARCHITECTURES=$CMAKE_CUDA_ARCHITECTURES" )
+elif [[ $ENABLE_CUDA -eq 1 && -z "$cached_arch" ]]; then
   gpu_arch=""
   if command -v nvidia-smi >/dev/null 2>&1; then
-    gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -n1 | tr 'A-Z' 'a-z') || true
-    case "$gpu_name" in
-      *h100*|*hopper*|*sm_90*|*sm90*) gpu_arch=90 ;;
-      *a100*|*sm_80*|*sm80*) gpu_arch=80 ;;
-      *a10*|*l40*|*ada*|*sm_89*|*sm89*) gpu_arch=89 ;;
-      *v100*|*sm_70*|*sm70*) gpu_arch=70 ;;
-    esac
+    gpu_cap=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader 2>/dev/null |
+      sed -n '1{s/[[:space:]]//g;p;}') || true
+    if [[ "$gpu_cap" =~ ^([0-9]+)\.([0-9]+)$ ]]; then
+      gpu_arch="${BASH_REMATCH[1]}${BASH_REMATCH[2]}"
+    else
+      # Older drivers may not expose compute_cap. NVIDIA's capability table:
+      # https://developer.nvidia.com/cuda/gpus
+      gpu_name=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null |
+        sed -n '1p' | tr 'A-Z' 'a-z') || true
+      case "$gpu_name" in
+        *h100*|*hopper*|*sm_90*|*sm90*) gpu_arch=90 ;;
+        *a100*|*sm_80*|*sm80*) gpu_arch=80 ;;
+        *a10*|*sm_86*|*sm86*) gpu_arch=86 ;;
+        *l40*|*ada*|*sm_89*|*sm89*) gpu_arch=89 ;;
+        *v100*|*sm_70*|*sm70*) gpu_arch=70 ;;
+      esac
+    fi
   fi
+  # Do not ask an older toolkit to compile architectures it does not support.
+  supported_archs=$(nvcc --list-gpu-code 2>/dev/null |
+    sed -n 's/^sm_\([0-9][0-9]*\)$/\1/p' | tr '\n' ' ') || true
   if [[ -n "$gpu_arch" ]]; then
+    if [[ -n "$supported_archs" && " $supported_archs " != *" $gpu_arch "* ]]; then
+      echo "[error] CUDA compiler does not support detected GPU architecture $gpu_arch" >&2
+      exit 1
+    fi
     echo "[detect] Setting CUDA arch to $gpu_arch based on GPU" >&2
-    cmake_args+=( -DCMAKE_CUDA_ARCHITECTURES=$gpu_arch )
+    cmake_args+=( "-DCMAKE_CUDA_ARCHITECTURES=$gpu_arch" )
   else
-    # Fallback portable set if unknown
-    cmake_args+=( -DCMAKE_CUDA_ARCHITECTURES=80\;86\;89\;90 )
+    portable_archs=""
+    for arch in 80 86 89 90; do
+      if [[ -z "$supported_archs" || " $supported_archs " == *" $arch "* ]]; then
+        portable_archs="${portable_archs:+$portable_archs;}$arch"
+      fi
+    done
+    if [[ -z "$portable_archs" ]]; then
+      for arch in $supported_archs; do
+        portable_archs="${portable_archs:+$portable_archs;}$arch"
+      done
+    fi
+    cmake_args+=( "-DCMAKE_CUDA_ARCHITECTURES=$portable_archs" )
   fi
 fi
 
-# Compiler selection (only matters when CUDA is enabled or for C/C++ in CPU-only mode)
-if [[ $ENABLE_CUDA -eq 1 ]] && command -v nvc++ >/dev/null 2>&1; then
+# Let CMake retain cached compilers or initialize from the user's environment.
+# Automatic preferences are only for a fresh build without an explicit choice.
+if [[ -n "${CUDAHOSTCXX:-}" && $ENABLE_CUDA -eq 1 ]]; then
+  cmake_args+=( "-DCMAKE_CUDA_HOST_COMPILER=$CUDAHOSTCXX" )
+fi
+if [[ -n "${CC:-}${CXX:-}${CUDAHOSTCXX:-}" || -f "$BDIR/CMakeCache.txt" ]]; then
+  echo "[toolchain] Using requested or cached compilers" >&2
+elif [[ $ENABLE_CUDA -eq 1 ]] && command -v nvc++ >/dev/null 2>&1; then
   # Prefer NVHPC if present (works well as CUDA host and for C/C++)
   echo "[toolchain] Using NVHPC compilers (nvc, nvc++, nvfortran if needed)" >&2
   cmake_args+=(
@@ -273,7 +354,12 @@ fi
 echo "[configure] cmake ${cmake_args[*]}" >&2
 cmake "${cmake_args[@]}"
 
-CORES=$(nproc 2>/dev/null || echo 4)
+# nproc is absent on a standard macOS installation.
+CORES=${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)}
+if [[ ! "$CORES" =~ ^[1-9][0-9]*$ ]]; then
+  echo "[error] Invalid build parallelism: $CORES" >&2
+  exit 1
+fi
 
 echo "[build] cmake --build $BDIR -j $CORES" >&2
 cmake --build "$BDIR" -j "$CORES"

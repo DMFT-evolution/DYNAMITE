@@ -6,6 +6,7 @@
 
 #include "core/config.hpp"
 #include "core/backend_dispatch.hpp"
+#include "core/t1_cache.hpp"
 #include "simulation/simulation_data.hpp"
 
 extern SimulationConfig config;
@@ -57,4 +58,5 @@ void synchronizeCompressedData()
     copy(sim->host->QRB1int, sim->device->QRB1int);
     copy(sim->host->theta,   sim->device->theta);
     copy(sim->host->t1grid,  sim->device->t1grid);
+    dmfe::t1LastInvalidate();   // [PERF] see core/t1_cache.hpp
 }

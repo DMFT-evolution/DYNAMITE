@@ -1,7 +1,9 @@
 #include "math/math_sigma.hpp"
 #include "math/math_ops.hpp"
 #include <vector>
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 
 // CPU versions with OpenMP parallelization
 void SigmaR(const std::vector<double>& qk, const std::vector<double>& qr, std::vector<double>& result)

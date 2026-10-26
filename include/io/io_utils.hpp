@@ -110,9 +110,14 @@ bool loadSimulationState(const std::string& filename, SimulationData& sim,
                         bool use_serk2_param,
                         LoadedStateParams& loaded_params);
 
-// History saving
+// History saving (src/io/io_save_history.cpp, compiled in every build)
 void saveHistory(const std::string& filename, double delta, double delta_t, 
                  SimulationData& simulation, size_t len_param, double T0_param, bool gpu_param);
+#if DMFE_WITH_CUDA
+// Energy history evaluated on the GPU (src/io/io_output.cu)
+void energyHistoryGPU(SimulationData& simulation, size_t len_param, double T0_param,
+                      std::vector<double>& energy_history);
+#endif
 
 // Save functions
 void saveParametersToFile(const std::string& dirPath, double delta, double delta_t);

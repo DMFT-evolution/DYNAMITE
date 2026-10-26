@@ -1,189 +1,73 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Interpolation grids (paper-defined, non‑equidistant)
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/grid.svg" alt="Grid icon"/> Grid and interpolation
 
-**Audience:** readers who want the conceptual and mathematical background.
-
-For hands-on grid generation (CLI flags, file formats, validation), jump to
-[How-to → Generate new grids](../howto/generate-grids.md). For a minimal quick-start command, see
-[Tutorial → Generate grids](../tutorials/generate-grids.md).
-
-The *interpolation grid* is one of DYNAMITE’s core design choices: it fixes **where** the two‑time Green’s functions are sampled on the triangular domain $t'\le t$, and it ships with the **quadrature weights, interpolation stencils, and index maps** used to evaluate memory integrals efficiently.
-
-Conceptually, the algorithm keeps a *fixed* number of samples in the dimensionless time ratio
-$\theta=t'/t\in[0,1]$ and evolves only the outer time $t$ with an adaptive ODE solver. The grid is chosen so that microscopic features near $t'\approx t$ (small relative time) and near $t'\approx 0$ (quench/onset region) remain resolved for all simulated ages $t$.
-
-This page explains (i) the basic idea and why it matters for accuracy/scaling, (ii) what’s stored under `Grid_data/<L>/`, and (iii) the paper equations used to generate the shipped grid.
-
-## Quick orientation
-
-### What is being gridded?
-
-DYNAMITE parameterizes the triangular domain using the time ratio
-
-\[
-	\theta = t'/t \in [0,1],\quad \text{with } t'\le t.
-\]
-
-The grid is a **fixed set of monotone nodes** $\{\theta_i\}_{i=1}^N$ that is intentionally dense near $\theta\approx 0$ and $\theta\approx 1$.
-
-### Why non‑equidistant?
-
-At long times, Green’s functions can retain sharp features for small relative times $\tau=t-t'\lesssim\tau_{\rm micro}$ (i.e. very close to the diagonal $t'\approx t$), and (after a quench) can also remain sensitive to the early‑time region $t'\lesssim\tau_{\rm micro}$. The key requirement is that the grid spacings be fine enough to resolve these microscopic scales *when mapped back to physical time*, while keeping the number of ratio nodes fixed.
-
-This is captured by the resolution condition:
-
-\[
-	\theta_{i+1}-\theta_i \ll \frac{\tau_{\rm micro}}{t}\quad \text{for all } i \text{ with } \min(\theta_i,1-\theta_i)\lesssim \frac{\tau_{\rm micro}}{\min(t',\tau)}.
-\]
-
-Practically, this is why the grid must be dense near $\theta=0$ and $\theta=1$.
-
-### Where does it show up in practice?
-
-- Runtime interpolation uses precomputed **stencils** (indices + weights) derived from this fixed $\theta$ grid.
-- Memory integrals use spline‑consistent **quadrature weights** on the same nodes.
-- All of these are bundled under `Grid_data/<L>/` and loaded by the code at startup.
+The fields are stored on the points $(t_n,\theta_i t_n)$, with a fixed grid in $\theta=t'/t$ and adaptive times $t_n$ (see [Algorithm](algorithm.md)). This page describes the $\theta$ grid, the interpolation in $\theta$ and in $t$, and the files in `Grid_data/<L>/`. How to generate grids is explained in [Generate grids](../tutorials/generate-grids.md) and the [Grid generator](../grid-generator.md) reference.
 
 <figure style="text-align:center;">
-	<img src="/DYNAMITE/assets/interpolation-grid-diagram.svg" alt="Triangular time domain with dense and sparse grid regions" style="max-width: 680px; width: 100%; height: auto;" />
-	<figcaption>Triangular time domain with dense and sparse grid regions.</figcaption>
-	
+	<img src="/DYNAMITE/assets/interpolation-grid-diagram.svg" alt="Grid on the triangle t' ≤ t" style="max-width: 680px; width: 100%; height: auto;" />
+	<figcaption>Grid points on the triangle $0\le t'\le t$: adaptive in $t$, fixed in $\theta=t'/t$, dense near the diagonal and near $t'=0$.</figcaption>
 </figure>
 
-Only the triangular domain $t' \le t$ is simulated. The algorithm samples functions as $\mathcal A(t,\theta)\equiv A(t,\theta t)$ on a fixed irregular $\theta$ grid, and (crucially) evaluates memory integrals by interpolating along derived contours that remain dense in the RG‑relevant regions.
+## The $\theta$ grid
 
-DYNAMITE uses the non‑equidistant time grid defined in Lang–Sachdev–Diehl (Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)). All node locations and quadrature/interpolation metadata are precomputed and, for $L=512$, these are shipped under `Grid_data/512/`.
+For $i=1,\dots,L$ the grid generator uses
 
-On this page:
+$$
+\theta_i=\frac{\arctan\!\big(e^{\gamma}\big)-\arctan\!\big(e^{-\gamma\,y_i}\big)}{\arctan\!\big(e^{\gamma}\big)-\arctan\!\big(e^{-\gamma}\big)}\,,
+\qquad y_i=\frac{2i-1-L}{L-1}\,,
+\qquad \gamma=-\frac{L-1}{L}\,W_{-1}\!\Big(-\frac{1}{10\,t_{\max}}\Big)\,,
+$$
 
-- **Concept and code artifacts:** what the shipped grid package contains and how runtime uses it.
-- **Exact definition:** the explicit paper equations that define the base grid.
-- **Optional generator feature:** the \(\alpha/\delta\) index remapping (defaults reproduce the paper grid exactly).
-- **Practical use:** choosing $L$, regeneration, and quick convergence checks.
+where $W_{-1}$ is the lower branch of the Lambert $W$ function and $t_{\max}$ the largest time one intends to simulate (option `-M` of the grid generator). This is the family of grids of Eq. (16) of the [DYNAMITE paper](https://arxiv.org/abs/2604.06309) (arXiv version 1), where the expression for $\gamma$ differs slightly. The grid has $\theta_1=0$ and $\theta_L=1$, and near both ends it is geometric: $\theta_i$ and $1-\theta_i$ change by a constant factor $e^{-2\gamma/(L-1)}$ per point. The number of points that resolve a fixed microscopic window near either end therefore decreases only logarithmically with $t$.
 
-> **Important:** treat the grid choice as an algorithmic ingredient, not a cosmetic discretization. Using an equidistant grid will dramatically limit the accessible times.
+**Choice of $t_{\max}$.** $t_{\max}$ should not be smaller than the latest time you simulate; otherwise the resolution of the microscopic scales degrades at late times. The grid shipped in `Grid_data/512/` uses $t_{\max}=10^5$. For longer runs, generate a grid with a larger `-M` (see [Generate grids](../tutorials/generate-grids.md)).
 
-## What the files contain (and how the runtime uses them)
+**Optional reshaping.** The generator can evaluate the formula above at a remapped index, $i\to\alpha\,\varphi_\delta(i)+(1-\alpha)\,i$ with
 
-The grid package under `Grid_data/<L>/` is meant to be *complete*: the code does not have to recompute interpolation topology or quadrature rules at runtime.
+$$
+\varphi_\delta(i)=\frac{L-1}{2}\left(\frac{g_\delta(y_i)}{g_\delta(1)}+1\right)+1\,,\qquad
+g_\delta(x)=\operatorname{sign}(x)\Big[\big(|x|^3+\delta^3\big)^{1/3}-\delta\Big]\,,
+$$
 
-- `theta.dat`  — the fixed monotone node set $\{\theta_i\}$ for $\theta=t'/t$.
-- `phi1.dat`, `phi2.dat` — the two contour families used to discretize the memory integrals in the paper (main text Eq. (3)), evaluated from the same base nodes:
-	- $\phi^{(1)}_{ij}=\theta_i\,\theta_j$ (dense near the onset / early times)
-	- $\phi^{(2)}_{ij}=\theta_j+(1-\theta_j)\,\theta_i$ (dense near the diagonal / small relative time)
-- `int.dat` — quadrature weights (open‑clamped B‑spline; default $s=5$). By default these are generated via an index-space spline (`--int-method index-spline`) for better conditioning on highly nonuniform $\theta$ grids.
+controlled by `--alpha` $\in[0,1]$ and `--delta` $\ge0$. This shifts points from the two edges towards the middle of the $\theta$ range, where $t'\gg\tau_{\rm micro}$ and $t-t'\gg\tau_{\rm micro}$, and keeps the end points. The default $\alpha=\delta=0$ gives the grid above.
 
-> Notation note: here we use $\theta=t'/t$ for the time ratio. In data files, the node list is stored in `theta.dat`. The auxiliary contour coordinates are stored as `phi1.dat` and `phi2.dat`.
+**Other grids.** Any strictly increasing set of nodes with $\theta_1=0$ and $\theta_L=1$ can be supplied with `--theta-file`. The method does not depend on the particular grid; what matters is that it resolves the microscopic scales near both ends. Depending on the model, more aggressive grids with fewer points can reach the same accuracy, but in our experience the gain in run time is small (below about 50%); the default grid is deliberately conservative.
 
-Interpolation metadata (for fast gathers during convolution / stencil evaluation):
+## Interpolation in $\theta$
 
-- `posA1y.dat`, `posA2y.dat`, `posB2y.dat` — physical positions of the interpolation stencils assembled from $\theta$, $\varphi^{(1)}$, $\varphi^{(2)}$.
-- `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat` — index maps into base arrays (e.g. $C$, $R$, and derivatives) for fast gathers.
-- `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat` — interpolation weights matching the index maps.
+The memory integrals need the fields at the points $\phi^{(1)}_{ij}=\theta_i\theta_j$ and $\phi^{(2)}_{ij}=\theta_i+(1-\theta_i)\theta_j$, and, for the integral over $(t',t)$, at the ratio $\theta_i/\phi^{(2)}_{ij}$. None of these lie on the grid, so they are obtained by interpolation with weights that are computed once by the grid generator. The available methods (option `--interp-method`) are
 
-Provenance:
+| Method | Interpolation |
+|---|---|
+| `index-poly` (default) | Lagrange polynomial in the index $i$, in barycentric form |
+| `index-rational` | Floater–Hormann rational interpolation in the index |
+| `index-hermite` | cubic Hermite in the index |
+| `index-bspline` | B-spline kernel in the index (smoothing, not interpolating for degree ≥ 2) |
+| `poly`, `rational`, `bspline` | the same, directly in $\theta$ |
 
-- `grid_params.txt` — generator parameters (len, $T_\max$, spline order, interpolation method/order, (floater-Hormann) FH window if rational, optional `alpha`/`delta`, and the command line used).
+The `index-` methods interpolate the fields as functions of the grid index, $\mathcal A(t,\theta(i))$, which is smooth because $\theta(i)$ is a smooth function. They are more accurate and, above all, more stable than interpolation in $\theta$ on the strongly non-uniform grid, and they are the default. The order (`--interp-order`, default 9) sets the size of the stencil, $n+1$ points. Higher orders are more accurate for smooth data, but are slower and amplify noise more strongly; for the default settings, the interpolation error is far below the Runge–Kutta error.
 
-## Practical usage (where to look)
+## Quadrature
 
-This page focuses on the **why** and the **equations**.
+The integrals over $u$ (see [Algorithm](algorithm.md)) are evaluated as $\sum_j\nu_j\,(\dots)$ with weights $\nu_j$ obtained by integrating a spline through the grid points. The spline order is set with `--spline-order` (default 5, i.e. quintic). By default (`--int-method index-spline`) the spline is built in the index variable and integrated using the known derivative $\theta'(i)$; `theta-spline` builds it directly in $\theta$. The weights are stored in `int.dat`.
 
-- For the full practical grid-generation reference (flags/defaults, outputs, validation workflow), see
-	[How-to → Generate new grids](../howto/generate-grids.md).
-- For a fast “just generate the default grids” walkthrough, see
-	[Tutorial → Generate grids](../tutorials/generate-grids.md).
+## Interpolation in $t$
 
-## Explicit equations (as in Phys. Rev. Lett. **135**, 247101 (2025))
+Values at times between stored slices are obtained by cubic Hermite interpolation from the two neighbouring slices, using the stored derivatives `dQKv`, `dQRv`. The error of this interpolation, integrated over a step, scales like $\Delta t^5$, comparable to the Runge–Kutta error. With `-R true` the response is interpolated as $\log R$ instead; this is useful where $R$ decays exponentially, and the code falls back to $R$ wherever a stencil contains non-positive values.
 
-We parametrize the two‑point functions on the triangular domain $t_2 \le t_1$ by the time ratio $\theta = t_2/t_1 \in [0,1]$, i.e.
+## Files in `Grid_data/<L>/`
 
-\[
-\mathcal G(t_1,\theta) \equiv G(t_1,\theta\,t_1).
-\]
+| File | Size | Content |
+|---|---|---|
+| `theta.dat` | $L$ | the nodes $\theta_i$ |
+| `phi1.dat`, `phi2.dat` | $L\times L$ | the points $\phi^{(1)}_{ij}$ and $\phi^{(2)}_{ij}$ |
+| `int.dat` | $L$ | quadrature weights $\nu_j$ |
+| `posA1y.dat`, `posA2y.dat`, `posB2y.dat` | $L\times L$ | positions, as fractional grid index, of $\phi^{(1)}_{ij}$, $\phi^{(2)}_{ij}$ and $\theta_i/\phi^{(2)}_{ij}$ |
+| `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat` | $L\times L$ | first grid index of the interpolation stencil for each of these points |
+| `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat` | $L\times L\times(n+1)$ | interpolation weights |
+| `grid_params.txt` | | parameters and command line used to generate the grid |
 
-The fixed irregular grid $\{\theta_k\}_{k=1}^L$ (dense near $0$ and $1$) is given by the supplemental Eq. (S1):
+The program reads these files at start-up; nothing about the $\theta$ grid is computed during a run. The parameters in `grid_params.txt` are copied into the `params.txt` of every run.
 
-\[
-\xi_k = \frac{2k - 1 - L}{L - 1},\quad k=1,\dots,L,\qquad
-\sigma_0 = -\,W\!\left(-\frac{1}{t_{\max}}\right),
-\]
+## Choosing $L$
 
-and the monotone arctan‑based mapping
-
-\[
-	\theta_k = \frac{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0\,\xi_k)}{\arctan(\sigma_\infty) - \arctan(\sigma_\infty - \sigma_0)}.
-\]
-
-Here $\sigma_\infty$ is a large positive constant that fixes end‑point crowding; any choice that yields sufficient density near $0$ and $1$ for your $t_{\max}$ is acceptable. This mapping is analytically invertible and yields near‑endpoint spacings that satisfy the resolution condition (paper Eq. (2)).
-
-## Optional index remapping (alpha/delta)
-
-In addition to the paper‑exact grid above, the implementation supports an **optional** smooth non‑linear remapping of the *fractional index* prior to evaluating the underlying $\Theta(x)$ mapping (i.e. before producing node locations in $\theta\in[0,1]$).
-
-- `alpha` ∈ [0,1]: blends toward the non‑linear map.  
-- `delta` $\ge 0$:  controls the “softness” of the remapping.  
-
-The defaults `alpha=0, delta=0` reproduce the paper grid exactly. Non‑zero `alpha` re‑distributes nodes while preserving monotonicity and endpoints. If used, values are recorded in `Grid_data/<subdir>/grid_params.txt`.
-
-### Closed form of the remapping
-
-Let $L$ be the grid length and let $x\in[1, L]$ denote the 1‑based fractional index at which the original paper mapping $\Theta(x)$ (the function that produces $\theta\in[0,1]$) is evaluated. Define
-
-\[
-\begin{aligned}
-s(x) &\equiv \frac{2x - L - 1}{L - 1}\in[-1,1],\\
-c &\equiv \frac{L - 1}{2},\\
-g_\delta(s) &\equiv \operatorname{sign}(s)\left[(|s|^3 + \delta^3)^{1/3} - \delta\right],\\
-g_1 &\equiv (1 + \delta^3)^{1/3} - \delta,\\
-\varphi(x;\delta) &\equiv c\left( \frac{g_\delta(s(x))}{g_1} + 1 \right) + 1.
-\end{aligned}
-\]
-
-With a blend parameter $\alpha\in[0,1]$ and softness $\delta\ge 0$, the remapped index is
-
-\[
-x_\alpha \;\equiv\; \alpha\,\varphi(x;\delta) + (1-\alpha)\,x,
-\]
-
-and the modified grid is obtained by composition with the original mapping:
-
-\[
-\Theta_{\alpha,\delta}(x) \;\equiv\; \Theta\!\big(\, \alpha\,\varphi(x;\delta) + (1-\alpha)\,x \,\big).
-\]
-
-Remarks:
-- $\alpha=0$ (any $\delta$) yields the identity in index space, i.e., the paper‑exact grid. $\alpha=1$ applies the full non‑linear remapping.  
-- The normalization by $g_1$ clamps the transform so that endpoints map to endpoints (monotone, range preserved).
-
-For memory integrals (paper Eq. (3)), the paper introduces an integration variable $\phi$ and uses two contour families on the same $\theta$ grid:
-
-\[
-\rho_k^{(1)}(\alpha_j) = \phi_k\,\alpha_j,\qquad
-\rho_k^{(2)}(\alpha_j) = \alpha_j + (1-\alpha_j)\,\phi_k,\qquad
-\alpha_j \equiv \phi_j.
-\]
-
-These generate the “mixed” directions required by the convolution structure and define the 2D interpolation stencils used at runtime.
-
-DYNAMITE uses the following notation in code and data:
-
-- $\{\theta_i\}$ (stored in `theta.dat`).
-- The two induced contour families (stored in `phi1.dat` and `phi2.dat`).
-- Spline‑consistent quadrature weights (stored in `int.dat`, B‑spline degree $s$; default $s=5$). The recommended generator is `--int-method index-spline`.
-
-## Performance note
-
-Using these paper‑defined non‑equidistant grids is the primary reason the method attains (sub)linear growth of cost with simulated time. Although the high interpolation orders make the method reasonably insensitive to the precise grid choice, the grid must be tailored to the system. Using an equidistant grid for aging dynamics will be highly inefficient as it must resolve both the slow emergent time scales of the aging regime and the fast microscopic scales.
-
-## Choosing L and checking convergence
-
-- The code ships with a single set of grid parameters for $L=512$ with $\alpha=\delta=0$. Use larger L for higher fidelity and later times at higher cost.
-- Validate by comparing observables (energy(t), C(t,t), C(t, α t)) across L.
-- Near phase transitions, prefer larger L to capture critical scaling.
-
-Inputs directory structure:
-
-- `Grid_data/<L>/theta.dat`, `phi1.dat`, `phi2.dat`, `int.dat`
-- `Grid_data/<L>/posA1y.dat`, `posA2y.dat`, `posB2y.dat`
-- `Grid_data/<L>/indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat`
-- `Grid_data/<L>/weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat`
+The shipped grid has $L=512$. Larger $L$ is more accurate and more expensive: the work per step grows as $L^2$, and so does the size of the grid files. The memory needed for the history grows as $L$ times the number of stored slices. Check that the observables you need do not change when $L$ is doubled, in particular near dynamical transitions.

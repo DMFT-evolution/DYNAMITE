@@ -1,4 +1,6 @@
 #include "core/gpu_memory_utils.hpp"
+#include <vector>
+#include "core/t1_cache.hpp"
 #include "simulation/simulation_data.hpp"
 #include "simulation/device_simulation_data.hpp"
 #include "core/device_constants.hpp"
@@ -34,6 +36,7 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	sim.device->indsB2y     = sim.host->indsB2y;
 
 	sim.device->t1grid        = sim.host->t1grid;
+	dmfe::t1LastInvalidate();   // [PERF] see core/t1_cache.hpp
 	sim.device->delta_t_ratio = sim.host->delta_t_ratio;
 
 	sim.device->QKv   = sim.host->QKv;
@@ -91,7 +94,9 @@ void copyVectorsToGPU(SimulationData& sim, size_t len) {
 	sim.device->Stemp1.resize(len);
 	sim.device->Stemp2.resize(len);
 
-	sim.device->error_result.resize(1, 0.0);
+	// [CPC-REV] three slots: sum|d|, sum d^2 and max|d|, so that the adaptive
+	// controller can build any of the norms offered by --error-norm.
+	sim.device->error_result.resize(3, 0.0);
 
 	if (config.debug) {
 		cudaError_t err = cudaDeviceSynchronize();
@@ -146,9 +151,13 @@ void copyVectorsToCPU(SimulationData& sim) {
 	copyBack(sim.host->phi1, sim.device->phi1);
 	copyBack(sim.host->phi2, sim.device->phi2);
 
-	copyBack(sim.host->weightsA1y, sim.device->weightsA1y);
-	copyBack(sim.host->weightsA2y, sim.device->weightsA2y);
-	copyBack(sim.host->weightsB2y, sim.device->weightsB2y);
+	// [PERF] The stencil weights are read-only grid data: they are uploaded once by
+	// copyVectorsToGPU and no kernel ever writes them, so the host arrays are
+	// already authoritative and copying them back moved ~192 MB (for L = 512) over
+	// PCIe on every save, for nothing.
+	// copyBack(sim.host->weightsA1y, sim.device->weightsA1y);
+	// copyBack(sim.host->weightsA2y, sim.device->weightsA2y);
+	// copyBack(sim.host->weightsB2y, sim.device->weightsB2y);
 	copyBack(sim.host->integ, sim.device->integ);
 
 	copyBack(sim.host->indsA1y, sim.device->indsA1y);
@@ -172,6 +181,7 @@ void clearAllDeviceVectors(SimulationData& sim) {
 	cl(sim.device->posB1xOld); cl(sim.device->posB2xOld);
 	cl(sim.device->indsA1y); cl(sim.device->indsA2y); cl(sim.device->indsB2y);
 	cl(sim.device->integ); cl(sim.device->t1grid); cl(sim.device->delta_t_ratio);
+	dmfe::t1LastInvalidate();   // [PERF] see core/t1_cache.hpp
 	cl(sim.device->convA1_1); cl(sim.device->convA2_1); cl(sim.device->convA1_2); cl(sim.device->convA2_2);
 	cl(sim.device->convR_1); cl(sim.device->convR_2); cl(sim.device->convR_3); cl(sim.device->convR_4);
 	cl(sim.device->temp0); cl(sim.device->temp1); cl(sim.device->temp2); cl(sim.device->temp3); cl(sim.device->temp4);

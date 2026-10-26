@@ -1,11 +1,15 @@
 #include "core/device_utils.cuh"
 #include "core/config.hpp"
+#include "core/t1_cache.hpp"
+#include "core/globals.hpp"
+#include "simulation/simulation_data.hpp"
+#include "simulation/device_simulation_data.hpp"
 #include <sys/resource.h>
 #include <unistd.h>
 #include <chrono>
 #include "core/console.hpp"
 #include <cstdlib>
-#include <sys/sysinfo.h>
+// [CPC-REV] removed unused Linux-only include <sys/sysinfo.h> (macOS build)
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
 #endif
@@ -69,6 +73,7 @@ __global__ static void FusedUpdateKernel(
 	double* __restrict__ out,
 	const double* alpha,
 	const double* beta,
+	const double* __restrict__ scale,
 	size_t N) {
 	int i = blockIdx.x * blockDim.x + threadIdx.x;
 	if (i >= N) return;
@@ -77,7 +82,12 @@ __global__ static void FusedUpdateKernel(
 	if (extra2) result += extra2[i];
 	if (extra3) result += extra3[i];
 	if (subtract) result -= delta[i] * subtract[i];
-	out[i] = result;
+	// [PERF] `scale` folds the computeProduct launch that used to follow this one
+	// in QKRstepGPU (out[i] *= theta[i]).  Storing `result` and reloading it to
+	// multiply is the same double -- GPU registers hold IEEE doubles exactly and no
+	// FMA contraction is possible here because no addition follows -- so the value
+	// written is unchanged.
+	out[i] = scale ? (result * scale[i]) : result;
 }
 
 void FusedUpdate(const thrust::device_ptr<double>& a,
@@ -90,7 +100,8 @@ void FusedUpdate(const thrust::device_ptr<double>& a,
 				 const dmfe::device_vector<double>* extra2,
 				 const dmfe::device_vector<double>* extra3,
 				 const thrust::device_ptr<double>& subtract,
-				 cudaStream_t stream) {
+				 cudaStream_t stream,
+				 const dmfe::device_vector<double>* scale) {
 	size_t N = out.size();
 	int threads = 64;
 	int blocks = (N + threads - 1) / threads;
@@ -103,7 +114,9 @@ void FusedUpdate(const thrust::device_ptr<double>& a,
 		delta ? thrust::raw_pointer_cast(delta->data()) : nullptr,
 		subtract ? thrust::raw_pointer_cast(subtract) : nullptr,
 		thrust::raw_pointer_cast(const_cast<dmfe::device_vector<double>&>(out).data()),
-		alpha, beta, N);
+		alpha, beta,
+		scale ? thrust::raw_pointer_cast(scale->data()) : nullptr,
+		N);
 }
 
 bool isCompatibleGPUInstalled() {
@@ -196,3 +209,33 @@ void updatePeakMemory() {
     }
 }
 
+
+
+// ============================================================================
+// [PERF] Host-side mirror of sim->device->t1grid.back() -- see core/t1_cache.hpp
+// for why this is bit-exact.
+// ============================================================================
+namespace dmfe {
+namespace {
+    bool   g_t1_last_valid = false;
+    double g_t1_last_value = 0.0;
+}
+
+double t1LastGPU() {
+    if (!g_t1_last_valid) {
+        g_t1_last_value = sim->device->t1grid.back();   // cold: one blocking read
+        g_t1_last_valid = true;
+    }
+    return g_t1_last_value;
+}
+
+void t1LastSet(double v) {
+    g_t1_last_value = v;
+    g_t1_last_valid = true;
+}
+
+void t1LastInvalidate() {
+    g_t1_last_valid = false;
+}
+
+} // namespace dmfe

@@ -194,6 +194,8 @@ void saveParametersToFile(const std::string& dirPath, double delta, double delta
     // Tail-fit stabilization toggle
     params << "tail_fit_enabled = " << (config.tail_fit_enabled ? "true" : "false") << std::endl;
     params << "sparsify_sweeps = " << config.sparsify_sweeps << std::endl;
+    params << "sparsify_interval = " << config.sparsify_interval << std::endl;
+    params << "error_norm = " << errorNormName(config.error_norm) << std::endl;
     params << "maxLoop = " << config.maxLoop << std::endl;
     params << "rmax = [";
     for (size_t i = 0; i < config.rmax.size(); ++i) {
@@ -321,7 +323,11 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     update_params_prog(++params_step, params_steps_total);
 
     params << "# Performance Metrics" << std::endl;
-    auto now = std::chrono::system_clock::now();
+    // [CPC-REV] must use the SAME clock as program_start_time_snapshot. Under libc++
+    // (macOS) high_resolution_clock is steady_clock, so subtracting a
+    // system_clock::time_point is ill-formed; under libstdc++ the two happen to be
+    // the same type, which is why this only broke on Apple Clang.
+    auto now = std::chrono::high_resolution_clock::now();
     double runtime_seconds = std::chrono::duration<double>(now - snapshot.program_start_time_snapshot).count();
     params << "runtime seconds = " << std::fixed << std::setprecision(2) << runtime_seconds << std::endl;
     params << "runtime formatted = " << formatDuration(runtime_seconds) << std::endl;
@@ -355,6 +361,8 @@ void saveParametersToFileAsync(const std::string& dirPath, double delta, double 
     // Tail-fit stabilization toggle
     params << "tail_fit_enabled = " << (snapshot.config_snapshot.tail_fit_enabled ? "true" : "false") << std::endl;
     params << "sparsify_sweeps = " << snapshot.config_snapshot.sparsify_sweeps << std::endl;
+    params << "sparsify_interval = " << snapshot.config_snapshot.sparsify_interval << std::endl;
+    params << "error_norm = " << errorNormName(snapshot.config_snapshot.error_norm) << std::endl;
     params << "maxLoop = " << snapshot.config_snapshot.maxLoop << std::endl;
     params << "rmax = [";
     for (size_t i = 0; i < snapshot.config_snapshot.rmax.size(); ++i) {

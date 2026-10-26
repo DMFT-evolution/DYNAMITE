@@ -1,68 +1,40 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/sparsify.svg" alt="Sparsification icon"/> Sparsification
 
-**Audience:** readers who want to understand the pruning criterion and its effect on accuracy/performance.
+Every accepted time step adds a slice $C(t_n,\theta_i t_n)$, $R(t_n,\theta_i t_n)$, $i=1,\dots,L$, to the stored history. Kept in full, the history grows linearly with the number of steps, which at late times exceeds the memory of a GPU. Many of these slices are not needed: the history is only used through the cubic Hermite interpolation in $t$ (see [Grid and interpolation](interpolation-grids.md)), and where the fields vary slowly, a slice can be reconstructed from its neighbours. DYNAMITE therefore removes such slices periodically. The code is in `src/sparsify/`.
 
-Sparsification reduces memory load by pruning history with controlled error. This is particularly relevant for long simulations run on GPUs. The pruning criterion and reconstruction are implemented in `src/sparsify/`.
+## Criterion
 
-What is pruned: interior time‑nodes of the 1D history grid `t1grid` along $t_1$. Endpoints are always kept.
+Consider slice $n$ and its neighbours $n-1$ and $n+1$, with $H=t_{n+1}-t_{n-1}$. For each field $\mathcal A\in\{\mathcal C,\mathcal R\}$ and each ray $\theta_i$ the code evaluates
 
-Pruning criterion (CPU and GPU): for each interior i ≥ 2 with i + 1 < N, compute a smoothness measure using QK, QR and their t‑derivatives on the stencil {i−2, i−1, i, i+1} with non‑uniform gaps Δt:
+$$
+\Delta^{\mathcal A}_n(\theta_i)=\frac{H}{12}\Big[2\big(\mathcal A_{n+1,i}-\mathcal A_{n-1,i}\big)-H\big(\dot{\mathcal A}_{n-1,i}+\dot{\mathcal A}_{n+1,i}\big)\Big]\,,
+$$
 
-- Let $t_{\text{left}} = t[i-2],\; t_{\text{mid}} = t[i]$; define $\Delta_1 = t[i-1] - t_{\text{left}},\; \Delta_2 = t_{\text{mid}} - t_{\text{left}},\; \Delta_3 = t[i+1] - t_{\text{mid}}$ and scale $s = \Delta_2/12$.
-- For each component $j = 1\dots \text{len}$, accumulate
+where $\dot{\mathcal A}$ is the derivative along the ray. Only the two neighbours enter: $\Delta^{\mathcal A}_n$ compares the change of $\mathcal A$ across the interval with the trapezoidal estimate $\tfrac H2(\dot{\mathcal A}_{n-1}+\dot{\mathcal A}_{n+1})$, and is of order $H^4\,\partial_t^3\mathcal A$. It is small when the cubic Hermite interpolant through the two neighbours describes the interval well, so that slice $n$ adds little information. Slice $n$ is removed if
 
-  $$
-  \displaystyle s\,\big\lvert 2\,(QK[i]-QK[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QK[i-1]}{\Delta_1} + \tfrac{\mathrm d QK[i+1]}{\Delta_3}\big) \big\rvert
-  \; +\; s\,\big\lvert 2\,(QR[i]-QR[i-2]) - \Delta_2\,\big(\tfrac{\mathrm d QR[i-1]}{\Delta_1} + \tfrac{\mathrm d QR[i+1]}{\Delta_3}\big) \big\rvert.
-  $$
+$$
+\epsilon_{\rm sparse}(n)=\sum_{i=1}^{L}\Big(\big|\Delta^{\mathcal C}_n(\theta_i)\big|+\big|\Delta^{\mathcal R}_n(\theta_i)\big|\Big)<\epsilon\,,
+$$
 
-- If the total is below the threshold, node i is erasable; otherwise it is kept.
+with the same tolerance $\epsilon$ as for the Runge–Kutta steps (option `-e`).
 
-## Index reconstruction and derivative scaling
+## Procedure
 
-- Build the kept index list `inds` including $0$ and $N-1$.
-- Build `indsD` by shifting interior kept indices by $+1$ for derivative‑anchored data; set `indsD[0]=0`.
-- Compute `tfac` per kept chunk: `tfac[0]=1`, and for `i > 0`
+- Within one sweep, no two neighbouring slices are removed, so each removal is judged against neighbours that are kept. On the GPU only every second slice is considered; on the CPU every slice is considered, but after a removal the next slice is kept.
+- The first slice and the last two slices are always kept.
+- The derivatives are stored multiplied by the length of the preceding time interval (see [Equations](eoms-and-observables.md)). After a removal they are rescaled to the new, longer interval, so that the reduced history is again a consistent cubic Hermite representation.
+- Sparsification is part of the maintenance pass, which runs every `--sparsify-interval` steps (default 100000). Each pass performs up to `-w` sweeps and stops early if a sweep removes nothing. Afterwards the interpolation is recomputed and a checkpoint is written.
 
-  $$
-  \displaystyle \text{tfac}[i] = \frac{t\big[\text{inds}[i]\big] - t\big[\text{inds}[i-1]\big]}{t\big[\text{indsD}[i]\big] - t\big[\text{indsD}[i]-1\big]}.
-  $$
+## Settings
 
-- Gather arrays with these indices:
-	- QK, QR, r use `inds`.
-	- dQK, dQR, dr use `indsD` and are multiplied by tfac to preserve derivative consistency under grid compression.
-- Compress `t1grid` with `inds` and recompute $\Delta t$ and `delta_t_ratio` as $\Delta t_i/\Delta t_{i-1}$ for $i \ge 2$.
+| `-w` | Effect |
+|---|---|
+| `0` | No sparsification. Memory grows linearly with the number of steps. |
+| `1`, `2`, … | That many sweeps per maintenance pass (at most 10). |
+| `-1` (default) | One sweep, or two on a GPU whose memory is more than half full. |
 
-## Cadence and modes
+Because the default depends on the memory used on the GPU, also by other processes, set `-w` explicitly for runs that must be reproducible.
 
-- The GPU implementation evaluates flags at even indices for efficiency; CPU checks all interior indices.
-- Aggressive vs conservative modes only change the threshold value and sweep cadence; the mechanism is identical.
-- After sparsification, the code may try SERK2; whether this is enabled is a runtime configuration choice (see [Usage](../usage.md)).
+## Effect on accuracy
 
-## Choosing a threshold
-
-- The default threshold should be safe in the context of the mixed spherical $p$-spin model.
-- If a new threshold is needed, start from the default (tuned for len and ε) and validate on short runs by comparing C and R slices and derived observables (energy, gFDR/FDT diagnostics) with sparsification off. Increase threshold for more compression; decrease for more accuracy.
-
-Implementation references: `include/sparsify/sparsify_utils.hpp`, `src/sparsify/sparsify_utils.cpp` (CPU), `src/sparsify/sparsify_utils.cu` (GPU). Post‑prune, interpolation is re‑initialized automatically by downstream calls.
-
-```mermaid
-flowchart TD
-  start([Start sparsification sweep])
-  gather[Gather stencil<br/>&lbrace;i-2, i-1, i, i+1&rbrace;]
-  compute[Compute smoothness<br/>metric using QK/QR/derivatives]
-  threshold{Metric &lt; threshold?}
-  erase[Mark node erasable]
-  keep[Keep node]
-  next{More interior nodes?}
-  rebuild[Rebuild kept index lists<br/>inds, indsD]
-  scale[Rescale derivatives<br/>with tfac]
-  compress[Write compressed histories<br/>update Δt ratios]
-  done([Sparsification complete])
-
-  start --> gather --> compute --> threshold
-  threshold -->|Yes| erase --> next
-  threshold -->|No| keep --> next
-  next -->|Yes| gather
-  next -->|No| rebuild --> scale --> compress --> done
-```
+Each removed slice changes the history by less than $\epsilon$ in the sense above, the same bound as for a single Runge–Kutta step. The criterion does not control how such a change propagates in the subsequent evolution; that is monitored by the Runge–Kutta error estimate. A direct check is to repeat a run, or its first part, with `-w 0` and compare the observables of interest. In the benchmarks of the [DYNAMITE paper](https://arxiv.org/abs/2604.06309), sparsification reduces the growth of the memory to roughly $t^{1/3}$.

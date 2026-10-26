@@ -1,34 +1,15 @@
 #include "version/version_info.hpp"
-#include <array>
-#include <memory>
-#include <cstdio>
 #include <sstream>
-
-static std::string executeCommand(const std::string& command) {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
-    if (!pipe) {
-        return "unknown";
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    if (!result.empty() && result.back() == '\n') {
-        result.pop_back();
-    }
-    return result.empty() ? "unknown" : result;
-}
+#include "dmfe_version_stamp.hpp"   // generated at build time by cmake/dmfe_version.cmake
 
 VersionInfo::VersionInfo() {
-    git_hash = executeCommand("git rev-parse HEAD 2>/dev/null");
-    if (git_hash == "unknown") {
-        git_hash = executeCommand("git rev-parse --short HEAD 2>/dev/null");
-    }
-    git_branch = executeCommand("git rev-parse --abbrev-ref HEAD 2>/dev/null");
-    git_tag = executeCommand("git describe --tags --exact-match 2>/dev/null");
-    std::string git_status = executeCommand("git diff-index --quiet HEAD -- 2>/dev/null; echo $?");
-    git_dirty = (git_status != "0");
+    // [CPC-REV] Git state of the source tree at build time (see cmake/dmfe_version.cmake).
+    // It used to be obtained by running git when the program started, which reported the
+    // state of the current working directory instead of the build.
+    git_hash = DMFE_GIT_HASH;
+    git_branch = DMFE_GIT_BRANCH;
+    git_tag = DMFE_GIT_TAG;
+    git_dirty = (DMFE_GIT_DIRTY != 0);
     build_date = __DATE__;
     build_time = __TIME__;
 #ifdef __GNUC__
@@ -42,24 +23,27 @@ VersionInfo::VersionInfo() {
 #else
     compiler_version = "Unknown compiler";
 #endif
-    // Runtime check for CUDA version (replaces compile-time __CUDACC__ check)
-    std::string nvcc_output = executeCommand("nvcc --version 2>/dev/null");
-    if (nvcc_output.find("release") != std::string::npos) {
-        // Extract version, e.g., "release 12.1" -> "CUDA 12.1"
-        size_t pos = nvcc_output.find("release ");
-        if (pos != std::string::npos) {
-            std::string version = nvcc_output.substr(pos + 8, 4);  // Assumes format like "12.1"
-            cuda_version = "CUDA " + version;
-        } else {
-            cuda_version = "CUDA (version unknown)";
+    // [CPC-REV][PERF] The CUDA toolkit version is stamped in at configure time.
+    // It used to be discovered by running `nvcc --version` through popen() on every
+    // run, which reported "No CUDA" in params.txt whenever the compute node had no
+    // nvcc in PATH -- i.e. for most cluster jobs, including CUDA builds -- and cost
+    // a shell fork per run.  DMFE_CUDA_TOOLKIT_VERSION is defined by CMake exactly
+    // when the build really does contain CUDA code.
+#ifdef DMFE_CUDA_TOOLKIT_VERSION
+    {
+        std::string v = DMFE_CUDA_TOOLKIT_VERSION;
+        // Keep the historical "CUDA <major>.<minor>" shape.
+        const size_t first = v.find('.');
+        if (first != std::string::npos) {
+            const size_t second = v.find('.', first + 1);
+            if (second != std::string::npos) v = v.substr(0, second);
         }
-    } else {
-        cuda_version = "No CUDA";
+        cuda_version = "CUDA " + v;
     }
-    code_version = executeCommand("git describe --tags --always --dirty 2>/dev/null");
-    if (code_version == "unknown") {
-        code_version = "v1.0.0-dev";
-    }
+#else
+    cuda_version = "No CUDA";
+#endif
+    code_version = DMFE_CODE_VERSION;
 }
 
 std::string VersionInfo::toString() const {

@@ -47,6 +47,25 @@ __global__ void computeSigmaKandRKernel(const double* __restrict__ qK,
     sigmaR[i] = sR;
 }
 
+// [PERF] see math_sigma.cuh: the four per-stage launches merged into one.
+__global__ void computeSigmaKandRBatchedKernel(SigmaBatchDesc batch, size_t len) {
+    const int k = blockIdx.y;
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= (int)len) return;
+    double sK, sR;
+    eval_sigmaK_sigmaR_fused(batch.qK[k][i], batch.qR[k][i], sK, sR);
+    batch.sigmaK[k][i] = sK;
+    batch.sigmaR[k][i] = sR;
+}
+
+void computeSigmaKandRBatchedGPU(const SigmaBatchDesc& batch, size_t len, cudaStream_t stream) {
+    if (batch.n == 0) return;
+    const int threads = 64;                       // must match computeSigmaKandRKernel
+    const int blocks  = static_cast<int>((len + threads - 1) / threads);
+    dim3 grid(static_cast<unsigned>(blocks), static_cast<unsigned>(batch.n));
+    computeSigmaKandRBatchedKernel<<<grid, threads, 0, stream>>>(batch, len);
+}
+
 // Host and device entry points for SigmaK/SigmaR
 void SigmaKGPU(const dmfe::device_vector<double>& qk, dmfe::device_vector<double>& result, cudaStream_t stream) {
     assert(qk.size() == result.size());

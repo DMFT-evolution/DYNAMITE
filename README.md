@@ -1,305 +1,43 @@
 # DYNAMITE
 
-> GitHub repository: https://github.com/DMFT-evolution/DMFE  \
-> Documentation: https://dmft-evolution.github.io/DYNAMITE/
-
 [![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
 
-DYNAMITE is a CUDA/C++ solver for long-time, non‑stationary dynamics governed by dynamical mean‑field equations. It implements a numerical renormalization scheme based on two‑dimensional interpolation of correlation and response functions, reducing the cost of aging dynamics from cubic to (sub)linear in simulated time. The code was introduced in “Numerical renormalization of glassy dynamics” (Lang, Sachdev, Diehl; Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6)), where it reaches time scales orders of magnitude beyond previous methods and resolves a finite‑temperature transition between strongly and weakly ergodicity‑broken glasses in the spherical mixed p‑spin model. While validated on a glassy system, the approach applies broadly to models with overdamped excitations.
+DYNAMITE (DYNAmical Mean-fIeld Time Evolution solver) integrates two-time dynamical mean-field equations for the correlation and response functions $C(t,t')$ and $R(t,t')$ to long times. The released program solves the equations of the mixed spherical $p$-spin model after a quench and reaches times of order $10^7$.
 
-Keywords (for search): DMFT, dynamical mean-field equations, nonequilibrium dynamics, aging dynamics, spin glass, spherical p-spin, numerical renormalization, interpolation grids, CUDA, C++.
+The two-time functions are stored on a fixed non-uniform grid in $\theta=t'/t$ and an adaptive grid in $t$. The memory integrals are evaluated by interpolation with precomputed weights, and time slices that the interpolation does not need are removed from the history. Each time step then has a fixed cost, so that the run time grows linearly with the simulated time at late times, instead of cubically as with a uniform time step. The program runs on CPUs and, considerably faster, on NVIDIA GPUs.
 
-Key features:
-- GPU‑accelerated kernels with a CPU fallback
-- Non‑equilibrium quench dynamics with automatic checkpoint/resume
-- Parameter‑organized outputs (HDF5 or binary) and lightweight text logs
-- Ready‑to‑use interpolation grids under `Grid_data/<L>/`
+**Documentation:** <https://dmft-evolution.github.io/DYNAMITE/>
 
 ## Build
 
-From the project root (this directory):
+Requirements: CMake ≥ 3.24 and a C++17 compiler; OpenMP, CUDA and HDF5 are optional.
 
 ```bash
-./build.sh
+./build.sh               # with CUDA if available
+./build.sh --cuda=off    # CPU only
 ```
 
-Or manually:
-
-```bash
-cmake -S . -B build
-cmake --build build -j $(nproc)
-```
-
-If you previously ran cmake from a parent directory accidentally (e.g. from $HOME), remove the stray build directory you created and re-run from here.
+The executable `RG-Evo` is placed in the repository root. See [Install](https://dmft-evolution.github.io/DYNAMITE/install/) for build options.
 
 ## Run
 
-After build the executable is placed in the project root:
-
 ```bash
-./RG-Evo
-# If enabled, a shared-runtime variant is also produced:
-./RG-Evo-shared
+./RG-Evo -h                                   # all options and defaults
+./RG-Evo -p 2 -q 3 -l 1 -T inf -G 0 -e 1e-8 -t 1 -m 1e6 -g false -o Results/
 ```
 
-Show help and defaults:
+This runs the pure 2-spin model (`-l 1`), quenched from a random initial condition (`-T inf`) to zero temperature (`-G 0`), up to $t=1$ on the CPU. The results are written to a new directory below `Results/`; `correlation.txt` lists $t$, the energy $E(t)$ and $C(t,0)$. Interpolation grids are read from `Grid_data/<L>/` (the repository contains $L=512$) and generated automatically for other $L$.
 
-```bash
-./RG-Evo -h
-```
+See the [first run](https://dmft-evolution.github.io/DYNAMITE/tutorials/first-run/) and [running without a GPU](https://dmft-evolution.github.io/DYNAMITE/tutorials/cpu-only/) tutorials.
 
-### Generate interpolation grids (theta/phi/pos) and interpolation metadata
+## Citation
 
-The `grid` subcommand creates interpolation grids and metadata under `Grid_data/<L>/`.
+If you use DYNAMITE, please cite
 
-Usage:
+J. Lang, V. Citro, L. Leuzzi, F. Ricci-Tersenghi, “DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations,” [arXiv:2604.06309](https://arxiv.org/abs/2604.06309).
 
-```bash
-./RG-Evo grid [--len L] [--Tmax X] [--dir SUBDIR] \
-							[--alpha X] [--delta X] \
-							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
-# METHODS: poly | rational | bspline
-							[--spline-order n] [--interp-method METHOD] [--interp-order n] [--fh-stencil m]
-# Short aliases: -L, -M, -d, -V, -s, -m, -o, -f
-```
+The method was introduced in J. Lang, S. Sachdev, S. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://doi.org/10.1103/z64g-nqs6).
 
-Examples:
+## Contributing and license
 
-```bash
-# Generate 512-point grids with barycentric Lagrange (degree 9)
-./RG-Evo grid --len 512 --Tmax 100000 --dir 512 --interp-method index-poly --interp-order 9
-
-# Generate with rational barycentric (Floater–Hormann style interface) of order 9
-./RG-Evo grid -L 512 --interp-method rational --interp-order 9
-
-# Same, using a wider FH window (blend across m=n+5 nodes)
-./RG-Evo grid -L 512 --interp-method rational --interp-order 9 --fh-stencil 14
-
-# Generate with B-spline of degree 9 (global collocation weights)
-./RG-Evo grid -L 512 --interp-method bspline --interp-order 9
-
-# Apply optional index remapping (alpha in [0,1], delta >= 0) to slightly re-distribute theta nodes
-./RG-Evo grid -L 512 --alpha 0.25 --delta 0.5 --dir 512-custom
-```
-
-Outputs written to `Grid_data/<SUBDIR>/` include:
-
-- Grids: `theta.dat` (N), `phi1.dat` (N×N), `phi2.dat` (N×N)
-- Integration weights: `int.dat` (N) — spline‑consistent open‑clamped B‑spline quadrature (degree s; default s=5)
-- Position grids: `posA1y.dat`, `posA2y.dat`, `posB2y.dat` (each N×N)
-- Interpolation metadata (theta → targets):
-	- A1 (phi1): `indsA1y.dat` (N×N start indices), `weightsA1y.dat`
-	- A2 (phi2): `indsA2y.dat`, `weightsA2y.dat`
-	- B2 (theta/(phi2−1e−200)): `indsB2y.dat`, `weightsB2y.dat`
-
-Notes on methods:
-- poly writes local stencils: each entry stores a start index and n+1 weights.
-- rational (Floater–Hormann) defaults to m=n+1 (like poly). Set --fh-stencil m (m ≥ n+1) to blend multiple degree-n stencils over a window for extra stability on irregular nodes; each entry then stores m weights.
-- bspline writes dense weights per entry (global map). Prefer poly/rational when y changes frequently between evaluations.
-
-Notes on alpha/delta (optional):
-- The base grid follows the paper exactly. You can optionally apply a smooth non-linear remapping in index space controlled by `--alpha` (blend toward the non-linear map) and `--delta` (softness near the center). Defaults are `--alpha 0 --delta 0`, i.e., the paper grid. Any non-zero `alpha` will slightly re-distribute nodes while preserving monotonicity. The chosen values are recorded in `Grid_data/<SUBDIR>/grid_params.txt` as `alpha` and `delta`.
-
-### Automatic grid provisioning at startup
-
-When you start a simulation, the code ensures that interpolation grids for the requested length `-L` are available:
-
-- It first checks `Grid_data/<L>/` for the required files.
-- If missing, it scans other subdirectories under `Grid_data/` for a matching `grid_params.txt` with `len=<L>` and will reuse it via a symlink (`Grid_data/<L> -> Grid_data/<subdir>`) or by copying files.
-- If none are found, it automatically runs the grid subcommand to generate a fresh set with sensible defaults: `Tmax=100000`, `--spline-order=5`, `--interp-method=index-poly`, `--interp-order=9` (and `--fh-stencil n+1` if rational is selected).
-
-This makes first runs smooth: a plain `./RG-Evo -L 512 ...` will auto-provision `Grid_data/512/` if needed.
-
-### I/O architecture and progress UI
-
-The I/O layer is modular and reports progress via a compact TUI:
-
-- Main writers: `data.h5` when HDF5 is available (runtime-loaded by default) or `data.bin` fallback when not. Parameters go to `params.txt`; histories (`rvec.txt`, `energy.txt`, `qk0.txt`, and when `-D true` the per-step telemetry log `step_metrics.txt`) and compressed snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`) are written separately.
-- Runtime-optional HDF5: the program tries to load system `libhdf5`/`libhdf5_hl` at runtime. It prints which libraries were loaded; if unavailable or an error occurs, it falls back to `data.bin` automatically.
-- Save telemetry windows (fraction of the save task): main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90]. The status line reaches 1.0 when all outputs are complete.
-- TUI messages: a "Save started" line is printed (without filename unless `--debug true`) and a final "Save finished: <dir>" line when done. In async mode, the simulation continues while saving in the background.
-
-## Documentation
-
-- User & Developer Docs (MkDocs): see `docs/` and `mkdocs.yml`.
-- API Reference: generated under `docs/reference/api/` via `./docs/gen_api.sh`.
-- Quick links:
-  - Install: `docs/install.md`
-  - Usage: `docs/usage.md`
-  - Tutorials: `docs/tutorials/`
-  - Concepts & Architecture: `docs/concepts/`
-	- Cite: `docs/reference/cite.md`
-
-## Contributing
-
-See `CONTRIBUTING.md` and `CODE_OF_CONDUCT.md`. Update docs when changing public behavior and run `./docs/gen_api.sh` after header changes.
-
-## License
-
-Licensed under the Apache License, Version 2.0. See the `LICENSE` file for details.
-
-## Cite
-
-If you use DYNAMITE, please cite the software (see `CITATION.cff` and docs Reference → Cite) and the method paper: J. Lang, S. Sachdev, S. Diehl, Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
-
-## Build options
-
-Pass options to CMake at configure time (either via `./build.sh ...` or directly with `cmake -S . -B build ...`). Defaults shown in parentheses.
-
-- CMAKE_BUILD_TYPE (Release) — Standard CMake build type: Release, Debug, RelWithDebInfo, MinSizeRel.
-- CMAKE_CUDA_ARCHITECTURES (80;86;89;90) — Space- or semicolon-separated SM list. Example: `-DCMAKE_CUDA_ARCHITECTURES="80;90"`.
-- DMFE_DEBUG (OFF) — Enables CUDA device debug flags (-G, lineinfo), disables fast-math, sets THRUST_DEBUG=1.
-- DMFE_NATIVE (ON) — Adds `-march=native` for host compilation when using GCC/Clang.
-- DMFE_PORTABLE_BUILD (OFF) — Portable/cluster helper. Forces `DMFE_NATIVE=OFF` and uses shared CUDA runtime (see below).
-- DMFE_STATIC_CUDART (ON) — Link CUDA runtime statically; helps run on systems without a local CUDA toolkit. Set `OFF` to use shared cudart.
-- DMFE_BUILD_SHARED_VARIANT (ON) — Also build `RG-Evo-shared` with shared CUDA runtime.
-- USE_HDF5 (OFF) — Compile-time HDF5 linkage. Requires dev packages (e.g., `libhdf5-dev`). Defines `USE_HDF5` and links `HDF5::HDF5`.
-- USE_HDF5_RUNTIME (ON) — Runtime-optional HDF5 via dlopen. Adds `src/io/h5_runtime.cpp`, defines `H5_RUNTIME_OPTIONAL=1`, links `-ldl`. Note: Many distro builds hide the `H5T_*` native type globals; for best compatibility, ensure the HDF5 High-Level runtime library is present (e.g. `libhdf5_hl.so` / `libhdf5_serial_hl.so`). If the loader prints that it loaded `libhdf5*.so` but not the HL library and HDF5 writes fail, the program will fall back to `data.bin`.
-- DMFE_PREFER_CLANG_HOST (OFF) — Prefer `clang++-14` as CUDA host compiler if available.
-
-Examples:
-
-```bash
-# Release build with explicit arch list
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES="80;86;90"
-
-# Debug build with device debug and thrust checks
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DDMFE_DEBUG=ON
-
-# Portable build for heterogeneous clusters (no -march=native, shared cudart)
-cmake -S . -B build -DDMFE_PORTABLE_BUILD=ON -DCMAKE_CUDA_ARCHITECTURES=80
-
-# Enable compile-time HDF5 (system must provide HDF5 dev libs)
-cmake -S . -B build -DUSE_HDF5=ON
-
-# Disable runtime-optional HDF5 wrapper
-cmake -S . -B build -DUSE_HDF5_RUNTIME=OFF
-
-# Build only static cudart variant and skip shared one
-cmake -S . -B build -DDMFE_BUILD_SHARED_VARIANT=OFF -DDMFE_STATIC_CUDART=ON
-```
-
-Toolchain hints:
-
-- The helper `build.sh` tries NVHPC (`nvc++`) first (via environment modules if available), otherwise selects a GCC/Clang version compatible with your CUDA.
-- To override compilers manually, pass standard CMake variables, e.g.:
-
-```bash
-cmake -S . -B build \
-	-DCMAKE_C_COMPILER=gcc-12 -DCMAKE_CXX_COMPILER=g++-12 \
-	-DCMAKE_CUDA_HOST_COMPILER=g++-12
-```
-
-## Clean build
-
-```bash
-./build.sh --clean        # cleans ./build
-# or
-./build.sh build --clean  # equivalent
-```
-
-## Usage
-
-- Typical run:
-
-```bash
-./RG-Evo -m 120000 -D false -q 4 -l 0.5 -L 512
-```
-
-- Common flags (see `-h` for full list and defaults):
-	- `-p INT` primary parameter p
-	- `-q INT` secondary parameter p2
-	- `-l, --lambda FLOAT` coupling lambda
-	- `-T, --T0 FLOAT|inf` initial temperature (use `inf` for infinity)
-	- `-G, --Gamma FLOAT` final temperature
-	- `-L INT` grid length L (must match available data, e.g. 512/1024/2048)
-	- `-m INT` max number of loops
-	- `-t FLOAT` max simulation time
-	- `-d FLOAT` minimum time step
-	- `-e, --error FLOAT` max error per step
-	- `-R, --log-response-interp BOOL` log-space interpolation for the response: interpolate $QR$ via $f_R=\log(QR)$ and $g_R=dQR/QR$ (fallback to linear if any stencil has $QR\le 0$). The correlation $QK$ is interpolated in the ordinary linear domain.
-	- `-o, --out-dir DIR` directory to write all outputs into (overrides defaults)
-	- `-s BOOL` save outputs (default true; pass `false` to disable)
-	- `-S, --serk2 BOOL` use SERK2 method (default true)
-	- `-w, --sparsify-sweeps INT` set number of sparsification sweeps per maintenance pass (`-1` auto [default], `0` off, `>0` fixed count)
-	- `-D BOOL` debug messages (default true)
-	- `-g, --gpu BOOL` enable GPU acceleration (default true)
-	- `-A, --async-export BOOL` enable asynchronous data export (default true)
-	- `-I, --allow-incompatible-versions BOOL` allow loading data saved with incompatible versions (default false)
-	- `-v` print version info and exit
-	- `-c, --check FILE` check version compatibility of a params file and exit
-
-GPU/CPU: By default, the program attempts to use GPU acceleration if compatible hardware is detected (`--gpu true`). You can explicitly disable GPU acceleration with `--gpu false` to force CPU-only execution. The program will automatically fall back to CPU if GPU is disabled or if no compatible GPU hardware is found.
-
-### Sparsification sweeps (auto/default)
-
-If you don't specify `--sparsify-sweeps`, the program picks sweeps automatically:
-- CPU: 1 sweep
-- GPU: 1 sweep normally, 2 sweeps if GPU memory usage exceeds 50% of total
-
-Set `--sparsify-sweeps 0` to disable sparsification entirely.
-
-## Data Export Modes
-
-The program supports two data export modes controlled by the `--async-export` flag:
-
-- **Asynchronous export** (`--async-export true`, default): Data saving operations run in background threads, allowing the simulation to continue without waiting for I/O operations to complete. This improves performance for long-running simulations but carries a small risk of data loss if the program terminates unexpectedly before background saves complete.
-
-- **Synchronous export** (`--async-export false`): All data saving operations complete before the simulation continues. This ensures data integrity but may slow down the simulation during save operations, especially for large datasets.
-
-For most use cases, asynchronous export is recommended as it provides better performance while the built-in synchronization ensures data is properly saved at program termination. Use synchronous export if you need guaranteed data integrity at every save point or are experiencing issues with missing files.
-
-## Inputs (required data)
-
-Interpolation grids are loaded at startup from `Grid_data/<L>/`, where `<L>` is the grid length you pass via `-L` (defaults to 512). If missing, they are auto-generated as described above. The directory contains:
-
-- `theta.dat`, `phi1.dat`, `phi2.dat`, `int.dat`
-- `posA1y.dat`, `posA2y.dat`, `posB2y.dat`
-- `indsA1y.dat`, `indsA2y.dat`, `indsB2y.dat`
-- `weightsA1y.dat`, `weightsA2y.dat`, `weightsB2y.dat`
-
-Example: `Grid_data/512/...` for `-L 512`. On first use the program may create a symlink `Grid_data/512 -> Grid_data/<existing>` when reusing an equivalent set.
-
-## Outputs (where data is saved)
-
-At startup, an output root directory is selected:
-
-- If you pass `-o /path/to/dir` (or `--out-dir /path/to/dir`), all results are written there. The path is created if needed.
-- Otherwise, if the executable resides under your `$HOME`, results are written under `config.outputDir` (default in code: `/nobackups/<username>/Results/`, resolved from `$USER`/`$LOGNAME`).
-- Else results go to `config.resultsDir` (default `Results/`, relative to the working dir).
-
-Both defaults live in `include/config.hpp`. The CLI `--out-dir` provides a runtime override without rebuilding.
-
-Example:
-
-```bash
-./RG-Evo -L 512 -l 0.5 -o /scratch/$USER/dmfe_runs
-```
-
-Within the selected root, results are organized by parameters:
-
-```
-<root>/p=<p>_p2=<p2>_lambda=<lambda>_T0=<inf|value>_G=<Gamma>_len=<L>/
-```
-
-Files produced (depending on HDF5 availability and flags):
-
-- `data.h5` — main state (preferred when HDF5 is available)
-	- Datasets: `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec`
-	- Attributes: `time`, `iteration`, `len`, `delta`, `delta_t`, `T0`, `lambda`, `p`, `p2`, `energy`, plus build/version metadata
-- `data.bin` — binary fallback when HDF5 is not available
-- `params.txt` — human-readable parameters, runtime stats, environment, version info
-	- includes `log_response_interp = true|false` when present (legacy files may omit; treated as false)
-- `correlation.txt` — tab-separated time, energy, QK[0] samples during run
-- `energy.txt`, `rvec.txt`, `qk0.txt` — histories derived at save time
-- `QK_compressed`, `QR_compressed` — compact binary snapshots of selected arrays
-
-Saving occurs periodically and at the end when `-s true` (default). Disable with `-s false`.
-
-## Resume/continue runs
-
-On startup, the code looks for an existing checkpoint in the parameter directory (`data.h5` or `data.bin`) and resumes automatically if parameters match. A compatibility check against `params.txt` is performed when present, including version compatibility: versions are considered compatible if at least the first two positions of the version number agree (e.g., v1.2.3.4 is compatible with v1.2.5.6). If incompatible data is found, loading will be aborted unless the `--allow-incompatible-versions true` flag is used. If compatible data is found, the simulation will save its output into the existing directory. To inspect a params file without running:
-
-```bash
-./RG-Evo -c /path/to/Results/.../params.txt
-```
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). DYNAMITE is distributed under the Apache License 2.0; see [`LICENSE`](LICENSE).

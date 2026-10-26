@@ -3,7 +3,9 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 
 using namespace std;
 

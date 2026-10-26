@@ -8,6 +8,7 @@
 #include "core/config.hpp"
 #include "core/config_build.hpp"
 #include "core/stream_pool.hpp"
+#include "core/t1_cache.hpp"
 #include "core/gpu_memory_utils.hpp"
 #include "core/backend_dispatch.hpp"
 #include "core/vector_utils.hpp"
@@ -56,6 +57,18 @@ extern size_t peak_gpu_memory_mb;
 // Track last rollback iteration
 int last_rollback_loop = -1000;
 
+// [CPC-REV] Backend-agnostic accessor for the index of the active integrator
+// (1 = RK54/Dormand-Prince, 2 = SSPRK(10,4), >=3 = SERK2 ladder).
+// rk->host->init is assigned only on the CPU path and rk->device->init only on the
+// GPU path (init_RK54GPU() / init_SSPRK104GPU() / init_SERK2()).
+static inline int dmfe_active_rk_init() {
+#if DMFE_WITH_CUDA
+    return config.gpu ? rk->device->init : rk->host->init;
+#else
+    return rk->host->init;
+#endif
+}
+
 int runSimulation() {
 #if DMFE_WITH_CUDA
     // Only create CUDA streams if we're actually using the GPU
@@ -102,7 +115,7 @@ int runSimulation() {
     std::cout << std::fixed << std::setprecision(14);
 
 #if DMFE_WITH_CUDA
-    double t = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back());
+    double t = (config.gpu ? dmfe::t1LastGPU() : sim->host->t1grid.back());
 #else
     double t = sim->host->t1grid.back();
 #endif
@@ -112,7 +125,7 @@ int runSimulation() {
     bool skip_save_notice_emitted = false;
     auto has_progress_beyond_loaded = [&]() -> bool {
 #if DMFE_WITH_CUDA
-        double cur = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back());
+        double cur = (config.gpu ? dmfe::t1LastGPU() : sim->host->t1grid.back());
 #else
         double cur = sim->host->t1grid.back();
 #endif
@@ -131,11 +144,12 @@ int runSimulation() {
     while (t < config.tmax && config.loop < config.maxLoop && config.delta_t >= config.delta_t_min - std::numeric_limits<double>::epsilon() * std::max(std::abs(config.delta_t), std::abs(config.delta_t_min))) {
     if (ui.interrupted()) { aborted_by_signal = true; break; }
 #if DMFE_WITH_CUDA
-        t = (config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back()) + config.delta_t;
+        t = (config.gpu ? dmfe::t1LastGPU() : sim->host->t1grid.back()) + config.delta_t;
 #else
         t = sim->host->t1grid.back() + config.delta_t;
 #endif
         config.delta_old = config.delta;
+        const double step_delta_t = config.delta_t;   // step size used by this update()
         config.delta = update(pool);
 
         if (config.tail_fit_enabled) {
@@ -153,7 +167,7 @@ int runSimulation() {
             updatePeakMemory();
         }
 
-        if (config.loop % 100000 == 0) {
+        if (config.loop % config.sparsify_interval == 0) {   // [CPC-REV] was hard-wired 100000
             // Update peak memory
             updatePeakMemory();
             
@@ -161,7 +175,7 @@ int runSimulation() {
             // Do not mutate config.sparsify_sweeps unless user provided explicit value.
             // We decide the effective sweep count below when computing max_sweeps.
 #else
-        if (config.loop % 100000 == 0) {
+        if (config.loop % config.sparsify_interval == 0) {   // [CPC-REV] was hard-wired 100000
 #endif
             
 #if DMFE_WITH_CUDA
@@ -190,8 +204,14 @@ int runSimulation() {
 #else
             size_t prev_size = sim->host->t1grid.size();
             int count = 0;
-            int max_sweeps = 1;
+            // [CPC-REV] CPU-only builds used to hard-code one sweep, so
+            // --sparsify-sweeps (including 0 = disable) was silently ignored and
+            // sparsification could not be switched off -- which made the
+            // convergence tests requested by referee 2 (point 2) impossible in
+            // that configuration.
+            int max_sweeps = (config.sparsify_sweeps >= 0) ? config.sparsify_sweeps : 1;
 #endif
+            // [CPC-REV] max_sweeps == 0 disables sparsification entirely.
             while (count < std::min(10, max_sweeps)) {
 #if DMFE_WITH_CUDA
                 if (config.gpu) {
@@ -269,22 +289,24 @@ int runSimulation() {
         else if (config.delta > 2 * config.delta_max && config.delta_t > config.delta_t_min) {
             config.delta_t *= 0.9;
         }
-        if (rk->host->init == 2 && config.delta > config.delta_max && config.rmax[0] / config.specRad > config.delta_t) {
-#if DMFE_WITH_CUDA
-            if (config.gpu) {
-                init_RK54GPU();
-            } else {
-#endif
-                rk->host->init = 1;
-#if DMFE_WITH_CUDA
-            }
-#endif
-            config.delta_t *= 0.5;
-        }
-#if DMFE_WITH_CUDA
-        if (config.delta > 2 * config.delta_max && config.gpu) {
+        // [CPC-REV] Step rejection / rollback, identical on both backends.  In the
+        // first release this branch was inside `#if DMFE_WITH_CUDA` AND gated by
+        // `config.gpu`, so the CPU backend had no rollback at all: a step with
+        // eps_RK > 2 eps was kept and only the next step size was reduced by 0.9
+        // (referee 2, point 2).  rollbackState() already had a complete CPU
+        // implementation; it is now called on the CPU exactly as on the GPU.
+        //
+        // The released code also contained a CPU-only branch here that demoted
+        // SSPRK(10,4) back to Dormand-Prince.  It tested rk->host->init, which the GPU
+        // path never assigns, so it never ran on the GPU; it has been removed so that
+        // the CPU controller is the GPU one.
+        if (config.delta > 2 * config.delta_max) {
             // Determine safe rollback window (need at least 2 past points; n < currentSize-1)
-            size_t currentSize = sim->device->t1grid.size();
+#if DMFE_WITH_CUDA
+            size_t currentSize = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
+#else
+            size_t currentSize = sim->host->t1grid.size();
+#endif
             int max_allowed = static_cast<int>(currentSize) - 2; // as per rollbackState guard
             int n = std::min(10, std::max(0, max_allowed));
             if (n > 0) {
@@ -293,21 +315,43 @@ int runSimulation() {
                     std::cerr << dmfe::console::WARN() << "Rollback of " << n << " iterations failed; reducing step without rollback." << std::endl;
                 } else {
                     last_rollback_loop = config.loop;
-                    t = sim->device->t1grid.back() + config.delta_t;
+#if DMFE_WITH_CUDA
+                    t = (config.gpu ? dmfe::t1LastGPU() : sim->host->t1grid.back()) + config.delta_t;
+#else
+                    t = sim->host->t1grid.back() + config.delta_t;
+#endif
                 }
             } else {
                 std::cerr << dmfe::console::WARN() << "Insufficient history to rollback; reducing step without rollback." << std::endl;
             }
 
             // Reduce step and re-initialize integrator
-            config.delta_t = 0.5 * std::min(std::max(config.delta_t, config.delta_t_min), config.rmax[rk->device->init-1] / config.specRad);
-            if (rk->device->init > 3) {
-                init_SERK2(2 * (rk->device->init - 3));
+            // rollbackState() resets delta_t to the last interval of the restored
+            // history.  Taking the minimum with the step that was just rejected makes
+            // consecutive rejections halve the step geometrically; otherwise every
+            // further rejection restarts from the same restored interval and the run
+            // rewinds ten slices at a time without ever reducing the step.
+            const int m = dmfe_active_rk_init();
+            config.delta_t = 0.5 * std::min(std::max(std::min(config.delta_t, step_delta_t), config.delta_t_min),
+                                            config.rmax[std::max(m, 1) - 1] / config.specRad);
+#if DMFE_WITH_CUDA
+            if (config.gpu) {
+                if (rk->device->init > 3) {
+                    init_SERK2(2 * (rk->device->init - 3));
+                } else {
+                    init_SSPRK104GPU();
+                }
             } else {
-                init_SSPRK104GPU();
+#endif
+                // Same as init_SSPRK104GPU() above.  The CPU has no SERK2 stages, so
+                // rk->host->init never exceeds 2 and the SERK2 branch has no CPU analogue.
+                rk->host->init = 2;
+#if DMFE_WITH_CUDA
             }
+#endif
         }
 
+#if DMFE_WITH_CUDA
         size_t current_t1len = config.gpu ? sim->device->t1grid.size() : sim->host->t1grid.size();
         // When GPU is disabled, avoid reading from device memory to prevent implicit D->H copies
         double qk0 = config.gpu
@@ -342,7 +386,7 @@ int runSimulation() {
         if (config.debug) {
             double sim_time_sample;
 #if DMFE_WITH_CUDA
-            sim_time_sample = config.gpu ? sim->device->t1grid.back() : sim->host->t1grid.back();
+            sim_time_sample = config.gpu ? dmfe::t1LastGPU() : sim->host->t1grid.back();
 #else
             sim_time_sample = sim->host->t1grid.back();
 #endif
@@ -416,22 +460,30 @@ int runSimulation() {
     }
 
 #if DMFE_WITH_CUDA
-    if (config.gpu && !config.save_output) {
+    // [CPC-REV] The host copies are only consistent with the device state after a
+    // full copy.  Previously this happened only with -s false, while the final values
+    // below were always read from the host first: on the GPU, saveCompressedData()
+    // copies t1grid (but not QKv) to the host, so the index below ran past the end of
+    // the host QKv and long GPU runs crashed before closing correlation.txt.
+    if (config.gpu && final_snapshot == nullptr) {
         copyVectorsToCPU(*sim);
-    } 
+    }
 #endif
 
     double output_delta_t = config.delta_t;
     double output_delta = config.delta;
     int output_loop = config.loop;
-    double output_t1grid_last = sim->host->t1grid.back();
-    double output_rvec_last = sim->host->rvec.back();
-    double output_drvec_last = sim->host->drvec.back();
-    double output_QKv_last = sim->host->QKv[(sim->host->t1grid.size() - 1) * config.len];
-    double output_QRv_last = sim->host->QRv[(sim->host->t1grid.size() - 1) * config.len];
+    double output_t1grid_last = 0.0, output_rvec_last = 0.0, output_drvec_last = 0.0;
+    double output_QKv_last = 0.0, output_QRv_last = 0.0;
 
-    // Use snapshot data for final output if async saving was used
-    if (final_snapshot != nullptr) {
+    // Use snapshot data for final output if a final save was made
+    if (final_snapshot == nullptr) {
+        output_t1grid_last = sim->host->t1grid.back();
+        output_rvec_last = sim->host->rvec.back();
+        output_drvec_last = sim->host->drvec.back();
+        output_QKv_last = sim->host->QKv[(sim->host->t1grid.size() - 1) * config.len];
+        output_QRv_last = sim->host->QRv[(sim->host->t1grid.size() - 1) * config.len];
+    } else {
         output_t1grid_last = final_snapshot->t1grid.back();
         output_rvec_last = final_snapshot->rvec.back();
         output_drvec_last = final_snapshot->drvec.back();

@@ -1,8 +1,19 @@
 #include "sparsify/sparsify_utils.hpp"
 #include "core/config.hpp"
+#include "core/t1_cache.hpp"
 #include "simulation/simulation_data.hpp"
 #include "simulation/device_simulation_data.hpp"
-#include "core/host_device_utils.hpp"
+// [CPC-REV] was #include "core/host_device_utils.hpp".  That header (and its
+// src/core/host_device_utils.cu) is a complete duplicate of live code: the three
+// host helpers it declares are defined in src/core/host_utils.cpp, and the five
+// device helpers -- SubtractGPU, scalarMultiply, scalarMultiply_ptr,
+// AddSubtractGPU, FusedUpdate -- are defined in src/core/device_utils.cu with the
+// same signatures.  The .cu was never listed in CMakeLists.txt, so the duplicate
+// definitions never reached the linker, but adding it to the build would have
+// produced the same silent ODR clash we fixed for backend_dispatch.cpp, and the
+// header's declaration of FusedUpdate had already drifted from the real one.  The
+// pair is removed; this translation unit used none of it.
+#include "core/device_vector.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -19,98 +30,12 @@
 extern SimulationConfig config;
 extern SimulationData* sim;
 
-// CPU gather lambda function implementation
-auto gather = [](const std::vector<double>& v,
-                 const std::vector<size_t>& idxs,
-                 size_t len,
-                 const std::vector<double>& scale = {}) {
-    std::vector<double> out(idxs.size() * len);
-    for (size_t i = 0; i < idxs.size(); ++i) {
-        size_t offset = idxs[i] * len;
-        double factor = (scale.empty() ? 1.0 : scale[i]);
-        for (size_t j = 0; j < len; ++j) {
-            out[i * len + j] = factor * v[offset + j];
-        }
-    }
-    return std::move(out);
-};
-
-void sparsifyNscale(double threshold) {
-    bool erased = false;
-    int loop = 0;
-    std::vector<size_t> inds = {0};
-    inds.reserve(sim->host->t1grid.size());
-
-    for (size_t i = 2; i + 1 < sim->host->t1grid.size(); ++i) {
-        double tleft = sim->host->t1grid[i - 2];
-        double tmid  = sim->host->t1grid[i];
-        double tdiff1 = sim->host->t1grid[i - 1] - tleft;
-        double tdiff2 = tmid - tleft;
-        double tdiff3 = sim->host->t1grid[i + 1] - tmid;
-
-        double val = 0.0;
-        for (int j = 0; j < config.len; ++j) {
-            double df_term1 = sim->host->dQKv[(i - 1) * config.len + j];
-            double df_term2 = sim->host->dQKv[(i + 1) * config.len + j];
-            double f_term1 = sim->host->QKv[i * config.len + j] - sim->host->QKv[(i - 2) * config.len + j];
-            val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
-        }
-
-        for (int j = 0; j < config.len; ++j) {
-            double df_term1 = sim->host->dQRv[(i - 1) * config.len + j];
-            double df_term2 = sim->host->dQRv[(i + 1) * config.len + j];
-            double f_term1 = sim->host->QRv[i * config.len + j] - sim->host->QRv[(i - 2) * config.len + j];
-            val += std::abs(tdiff2 / 12.0 * (2 * f_term1 - tdiff2 * (df_term1 / tdiff1 + df_term2 / tdiff3)));
-        }
-
-        if (val < threshold && !erased) {
-            erased = true;
-            ++loop;
-        } else {
-            erased = false;
-            ++loop;
-            inds.push_back(loop);
-        }
-    }
-
-    inds.push_back(sim->host->t1grid.size() - 2);
-    inds.push_back(sim->host->t1grid.size() - 1);
-
-    // Calculate rotated and modded indices
-    std::vector<size_t> indsD(inds.size());
-    indsD[0] = 0; // First index remains the same
-    for (size_t i = 0; i < inds.size() - 1; ++i) {
-        indsD[i + 1] = inds[i] + 1;
-    }
-
-    // Compute tfac
-    std::vector<double> tfac(inds.size());
-    tfac[0] = 1.0;
-    for (size_t i = 1; i < inds.size(); ++i) {
-        tfac[i] = (sim->host->t1grid[inds[i]] - sim->host->t1grid[inds[i - 1]]) / (sim->host->t1grid[indsD[i]] - sim->host->t1grid[indsD[i] - 1]);
-    }
-
-    // printVectorDifference(gather(rvec, inds, 1),rvec);
-
-    sim->host->QKv   = gather(sim->host->QKv, inds, config.len);
-    sim->host->QRv   = gather(sim->host->QRv, inds, config.len);
-    sim->host->dQKv  = gather(sim->host->dQKv, indsD, config.len, tfac);
-    sim->host->dQRv  = gather(sim->host->dQRv, indsD, config.len, tfac);
-    sim->host->rvec  = gather(sim->host->rvec, inds, 1);
-    sim->host->drvec = gather(sim->host->drvec, indsD, 1, tfac);
-    sim->host->t1grid = gather(sim->host->t1grid, inds, 1);
-
-    // Δt ratio
-    std::vector<double> dgrid(inds.size());
-    for (size_t i = 1; i < sim->host->t1grid.size(); ++i)
-        dgrid[i] = sim->host->t1grid[i] - sim->host->t1grid[i - 1];
-    for (size_t i = 2; i < sim->host->t1grid.size(); ++i)
-        sim->host->delta_t_ratio[i] = dgrid[i] / dgrid[i - 1];
-
-    sim->host->delta_t_ratio.resize(inds.size());
-
-    // Note: interpolate() should be called by the caller after sparsification
-}
+// [CPC-REV] The host (CPU) implementation of sparsifyNscale() and its `gather`
+// helper used to live here and were compiled only in CUDA builds, while a second,
+// non-equivalent copy in sparsify_utils.cpp was compiled in CPU-only builds.  The
+// implementation has been moved verbatim to src/sparsify/sparsify_utils.cpp, which
+// is now compiled unconditionally, so that both build configurations run exactly
+// the same sweep.  Only the device kernels remain in this file.
 
 // GPU gather kernel
 __global__ void gatherKernel(const double* __restrict__ v,
@@ -272,6 +197,7 @@ void sparsifyNscaleGPU(double threshold, cudaStream_t stream) {
     sim->device->rvec = gatherGPU(sim->device->rvec, filtered, 1);
     sim->device->drvec = gatherGPU(sim->device->drvec, indsD, 1, tfac);
     sim->device->t1grid = gatherGPU(sim->device->t1grid, filtered, 1);
+    dmfe::t1LastInvalidate();   // [PERF] see core/t1_cache.hpp
 
     size_t new_n = sim->device->t1grid.size();
     sim->device->delta_t_ratio.resize(new_n);

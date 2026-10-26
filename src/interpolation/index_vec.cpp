@@ -6,7 +6,9 @@
 
 #include "core/config.hpp"
 #include "math/math_ops.hpp"
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 #include <numeric>
 
 // Global simulation configuration (defined in main.cpp)
@@ -66,64 +68,75 @@ void indexVecLN3(const std::vector<double>& weights, const std::vector<size_t>& 
 void indexVecN(const size_t length, const std::vector<double>& weights, const std::vector<size_t>& inds,
                const std::vector<double>& dtratio, std::vector<double>& qK_result, std::vector<double>& qR_result, size_t len)
 {
+    // Cubic Hermite interpolation in t at the times theta_i * t (the "B1" values).
+    // dQKv[n], dQRv[n] hold the derivative at slice n-1 times (t_n - t_{n-1}).
+    //
+    // [CPC-REV] This routine now follows indexVecNKernel_optimized (index_vec.cu)
+    // branch by branch.  Before, the CPU version
+    //  - dropped the derivative term in the last interval, i.e. between the last
+    //    stored slice and the current Runge-Kutta stage, where only the left
+    //    derivative is available.  This lowered the order of the interpolation
+    //    there and made CPU runs several orders of magnitude less accurate than GPU
+    //    runs (pure p=2 benchmark up to t=1: |dC| 7e-9 instead of 2e-13);
+    //  - used log(dQRv) instead of dQRv/QRv in the log-response branch, and wrong
+    //    signs in its last-interval fallback;
+    //  - read dtratio[curr_i + 1] out of bounds for the last interval.
     (void)length;
-    (void)dtratio;
-    size_t dims[] = {len, len};
-    size_t t1len = dtratio.size();
+    const size_t t1len = dtratio.size();
 
     #pragma omp parallel for schedule(static)
-    for (size_t i = 0; i < dims[0]; i++)
+    for (size_t i = 0; i < len; i++)
     {
-        (void)t1len;
+        if (t1len < 2) {
+            for (size_t j = 0; j < len; j++) {
+                qK_result[j + len * i] = sim->host->QKv[j];
+                qR_result[j + len * i] = sim->host->QRv[j];
+            }
+            continue;
+        }
         const double weight = weights[i];
-        const double weight2 = weight * weight; 
+        const double weight2 = weight * weight;
         const double weight3 = weight2 * weight;
-        const size_t base_i = inds[i] - 1;
         const size_t curr_i = inds[i];
-        const double coeff1 = 1.0 - 3.0 * weight2 - 2.0 * weight3;
-        const double coeff2 = 3.0 * weight2 + 2.0 * weight3;
-        const double coeff3 = weight + 2.0 * weight2 + weight3;
-        const double coeff4 = (weight2 + weight3) / dtratio[curr_i + 1];
-        for (size_t j = 0; j < dims[1]; j++)
-        {
-            if (curr_i < t1len - 1) {
-                qK_result[j + dims[1] * i] = coeff1 * sim->host->QKv[base_i * dims[1] + j] +
-                                             coeff2 * sim->host->QKv[curr_i * dims[1] + j] -
-                                             coeff3 * sim->host->dQKv[curr_i * dims[1] + j] -
-                                             coeff4 * sim->host->dQKv[(curr_i + 1) * dims[1] + j];
-                if (!::config.log_response_interp) {
-                    qR_result[j + dims[1] * i] = coeff1 * sim->host->QRv[base_i * dims[1] + j] +
-                                                 coeff2 * sim->host->QRv[curr_i * dims[1] + j] -
-                                                 coeff3 * sim->host->dQRv[curr_i * dims[1] + j] -
-                                                 coeff4 * sim->host->dQRv[(curr_i + 1) * dims[1] + j];
-                } else {
-                    const double f_base = log(sim->host->QRv[base_i * dims[1] + j]);
-                    const double f_curr = log(sim->host->QRv[curr_i * dims[1] + j]);
-                    const double df_base = log(sim->host->dQRv[base_i * dims[1] + j]);
-                    const double df_curr = log(sim->host->dQRv[curr_i * dims[1] + j]);
-                    const double f_interp = coeff1 * f_base + coeff2 * f_curr - coeff3 * df_curr - coeff4 * df_base;
-                    qR_result[j + dims[1] * i] = exp(f_interp);
-                } 
-            } else {
-                const double qK_base = sim->host->QKv[base_i * dims[1] + j];
-                const double qK_curr = sim->host->QKv[curr_i * dims[1] + j];
-                qK_result[j + dims[1] * i] = (1.0 - weight2) * qK_base + weight2 * qK_curr;
+        const size_t base_i = curr_i - 1;
+        const double* QK  = &sim->host->QKv[0];
+        const double* QR  = &sim->host->QRv[0];
+        const double* dQK = &sim->host->dQKv[0];
+        const double* dQR = &sim->host->dQRv[0];
 
-                const double qR_base = sim->host->QRv[base_i * dims[1] + j];
-                const double qR_curr = sim->host->QRv[curr_i * dims[1] + j];
-                if (!::config.log_response_interp) {
-                    qR_result[j + dims[1] * i] = (1.0 - weight2) * qR_base + weight2 * qR_curr;
+        if (curr_i < t1len - 1) {
+            // Interior interval: derivatives at both ends.
+            const double coeff1 = 1.0 - 3.0 * weight2 - 2.0 * weight3;
+            const double coeff2 = 3.0 * weight2 + 2.0 * weight3;
+            const double coeff3 = weight + 2.0 * weight2 + weight3;
+            const double coeff4 = (weight2 + weight3) / dtratio[curr_i + 1];
+            for (size_t j = 0; j < len; j++) {
+                const size_t b = base_i * len + j, c = curr_i * len + j, n = c + len;
+                qK_result[j + len * i] = coeff1 * QK[b] + coeff2 * QK[c] - coeff3 * dQK[c] - coeff4 * dQK[n];
+                const double lin = coeff1 * QR[b] + coeff2 * QR[c] - coeff3 * dQR[c] - coeff4 * dQR[n];
+                if (::config.log_response_interp && QR[b] > 0.0 && QR[c] > 0.0) {
+                    const double f = coeff1 * log(QR[b]) + coeff2 * log(QR[c])
+                                   - coeff3 * (dQR[c] / QR[b]) - coeff4 * (dQR[n] / QR[c]);
+                    qR_result[j + len * i] = exp(f);
                 } else {
-                    if (qR_base > 0.0 && qR_curr > 0.0) {
-                        const double f_base = log(qR_base);
-                        const double f_curr = log(qR_curr);
-                        const double f_interp = (1.0 - weight2) * f_base - weight2 * f_curr;
-                        qR_result[j + dims[1] * i] = exp(f_interp);
-                    } else {
-                        qR_result[j + dims[1] * i] = (1.0 - weight2) * qR_base - weight2 * qR_curr;
-                    }
+                    qR_result[j + len * i] = lin;
                 }
-            } 
+            }
+        } else {
+            // Last interval (up to the current stage): only the left derivative is known.
+            const double coeff1 = 1.0 - weight2;
+            const double coeff2 = weight + weight2;
+            for (size_t j = 0; j < len; j++) {
+                const size_t b = base_i * len + j, c = curr_i * len + j;
+                qK_result[j + len * i] = coeff1 * QK[b] + weight2 * QK[c] - coeff2 * dQK[c];
+                const double lin = coeff1 * QR[b] + weight2 * QR[c] - coeff2 * dQR[c];
+                if (::config.log_response_interp && QR[b] > 0.0 && QR[c] > 0.0) {
+                    const double f = coeff1 * log(QR[b]) + weight2 * log(QR[c]) - coeff2 * (dQR[c] / QR[b]);
+                    qR_result[j + len * i] = exp(f);
+                } else {
+                    qR_result[j + len * i] = lin;
+                }
+            }
         }
     }
 }

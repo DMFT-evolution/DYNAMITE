@@ -9,6 +9,8 @@
 #include "math/math_sigma.cuh"
 #include "io/io_utils.hpp"
 #include "core/device_utils.cuh"
+#include "core/gpu_events.hpp"
+#include "core/t1_cache.hpp"
 #include <thrust/transform.h>
 #include <thrust/reduce.h>
 #include <thrust/for_each.h>
@@ -127,11 +129,17 @@ __global__ void append4Kernel(
     double* __restrict__ QRv,
     double* __restrict__ dQKv,
     double* __restrict__ dQRv,
-    const double* __restrict__ t1grid,
+    // [PERF] t1grid is read (idx-1, idx-2) and written (idx) by this kernel now,
+    // so it is a single non-const pointer: two __restrict__ pointers to the same
+    // array, one of them written, would be undefined behaviour.
+    double* __restrict__ t1grid,
+    double* __restrict__ delta_t_ratio,
+    double* __restrict__ drvec,
     size_t idx,         // time index being appended
     size_t offset,      // element offset = previous size of QKv
     size_t len,
-    double t)
+    double t,
+    double dr)
 {
     const size_t i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= len) return;
@@ -142,30 +150,29 @@ __global__ void append4Kernel(
     QRv[offset + i]  = qR[i];
     dQKv[offset + i] = dqK[i] * dt;
     dQRv[offset + i] = dqR[i] * dt;
-}
 
-// Update t1grid[idx], delta_t_ratio[idx], and drvec[idx] on device.
-__global__ void updateTimeScalarsKernel(
-    double* __restrict__ t1grid,
-    double* __restrict__ delta_t_ratio,
-    double* __restrict__ drvec,
-    size_t idx,
-    double t,
-    double dr)
-{
-    if (threadIdx.x == 0 && blockIdx.x == 0) {
-        const double tprev1 = t1grid[idx - 1];
-        const double dt = t - tprev1;
+    // [PERF] The scalar update that used to be a separate <<<1,1>>> launch
+    // (updateTimeScalarsKernel, on another stream) is done here by one thread.  It
+    // reads t1grid[idx-1] and t1grid[idx-2], which this kernel does not write, and
+    // writes t1grid[idx], delta_t_ratio[idx] and drvec[idx], which nothing here
+    // reads; `dt` is the same expression as above.  Same values, one launch fewer,
+    // and the two kernels no longer race to store the same t1grid[idx].
+    if (i == 0) {
         t1grid[idx] = t;
         if (idx > 1) {
-            const double tprev2 = t1grid[idx - 2];
-            delta_t_ratio[idx] = dt / (tprev1 - tprev2);
+            delta_t_ratio[idx] = dt / (t1grid[idx - 1] - t1grid[idx - 2]);
         } else {
             delta_t_ratio[idx] = 0.0;
         }
         drvec[idx] = dt * dr;
     }
 }
+
+// [PERF] updateTimeScalarsKernel used to live here: a <<<1,1>>> launch, on a
+// second stream, that wrote t1grid[idx], delta_t_ratio[idx] and drvec[idx].  It is
+// now the `i == 0` branch of append4Kernel / replace4Kernel above, which already
+// had `dt` in hand -- one launch fewer per stage, and the two kernels no longer
+// both store t1grid[idx].
 
 // Fused replacement of the last slice (qK,qR,dqK,dqR) with scaling by dt using t1grid[idx-1].
 __global__ void replace4Kernel(
@@ -177,11 +184,17 @@ __global__ void replace4Kernel(
     double* __restrict__ QRv,
     double* __restrict__ dQKv,
     double* __restrict__ dQRv,
-    const double* __restrict__ t1grid,
+    // [PERF] t1grid is read (idx-1, idx-2) and written (idx) by this kernel now,
+    // so it is a single non-const pointer: two __restrict__ pointers to the same
+    // array, one of them written, would be undefined behaviour.
+    double* __restrict__ t1grid,
+    double* __restrict__ delta_t_ratio,
+    double* __restrict__ drvec,
     size_t idx,         // time index being replaced (typically last = size-1)
     size_t offset,      // element offset = idx * len
     size_t len,
-    double t)
+    double t,
+    double dr)
 {
     const size_t i = blockIdx.x * blockDim.x + threadIdx.x;
     if (i >= len) return;
@@ -192,6 +205,22 @@ __global__ void replace4Kernel(
     QRv[offset + i]  = qR[i];
     dQKv[offset + i] = dqK[i] * dt;
     dQRv[offset + i] = dqR[i] * dt;
+
+    // [PERF] The scalar update that used to be a separate <<<1,1>>> launch
+    // (updateTimeScalarsKernel, on another stream) is done here by one thread.  It
+    // reads t1grid[idx-1] and t1grid[idx-2], which this kernel does not write, and
+    // writes t1grid[idx], delta_t_ratio[idx] and drvec[idx], which nothing here
+    // reads; `dt` is the same expression as above.  Same values, one launch fewer,
+    // and the two kernels no longer race to store the same t1grid[idx].
+    if (i == 0) {
+        t1grid[idx] = t;
+        if (idx > 1) {
+            delta_t_ratio[idx] = dt / (t1grid[idx - 1] - t1grid[idx - 2]);
+        } else {
+            delta_t_ratio[idx] = 0.0;
+        }
+        drvec[idx] = dt * dr;
+    }
 }
 
 // GPU time-step functions (CPU versions are in time_steps.cpp)
@@ -248,7 +277,7 @@ dmfe::device_vector<double> QKstepGPU(
     thrust::counting_iterator<size_t> idx_first(0);
     thrust::counting_iterator<size_t> idx_last = idx_first + len;
 
-    thrust::for_each(thrust::cuda::par.on(pool[6]),
+    thrust::for_each(thrust::cuda::par_nosync.on(pool[6]),
         idx_first, idx_last,
         [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1grid.size() - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->device->temp0.begin(), temp1 = sim->device->temp1.begin(), temp4 = sim->device->temp4.begin(), temp5 = sim->device->temp5.begin(), temp6 = sim->device->temp6.begin(), temp7 = sim->device->temp7.begin(), temp8 = sim->device->temp8.begin()] __device__ (size_t i) {
             temp0[i] = ptr[i * len];
@@ -361,15 +390,30 @@ void QKRstepGPU(
     thrust::device_ptr<double> qR = get_slice_ptr(QRv,t1len-1,len);
     thrust::counting_iterator<size_t> idx_first(0);
     thrust::counting_iterator<size_t> idx_last = idx_first + len;
-    cudaEvent_t ready;
-    cudaEventCreateWithFlags(&ready, cudaEventDisableTiming);
+    // [PERF] These events used to be created (and never destroyed) on every call,
+    // i.e. ~2 per Runge-Kutta stage.  They are stateless handles, so one static
+    // instance is enough; this removes two API calls and a leak per stage.
+    static cudaEvent_t ready   = nullptr;
+    static cudaEvent_t convDone = nullptr;
+    if (!ready) {
+        cudaEventCreateWithFlags(&ready,    cudaEventDisableTiming);
+        cudaEventCreateWithFlags(&convDone, cudaEventDisableTiming);
+    }
 
-    thrust::for_each(thrust::cuda::par.on(pool[0]),
+    thrust::for_each(thrust::cuda::par_nosync.on(pool[0]),
         idx_first, idx_last,
-        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1len - 1), ptr = QKB1int.data(), qk0 = QKv[(t1len - 1) * len], temp0 = sim->device->temp0.begin(), temp1 = sim->device->temp1.begin(), temp4 = sim->device->temp4.begin(), temp5 = sim->device->temp5.begin(), temp6 = sim->device->temp6.begin(), temp7 = sim->device->temp7.begin(), temp8 = sim->device->temp8.begin()] __device__ (size_t i) {
+        // [PERF] `qk0 = QKv[(t1len - 1) * len]` used to be captured by value: a
+        // thrust::device_reference conversion, i.e. a one-element blocking
+        // device->host copy -- and therefore an implicit device-wide barrier --
+        // executed once per Runge-Kutta stage.  The element is now read on the
+        // device instead.  It is the same double at the same address, used in the
+        // same two expressions, so temp4[0] and temp5[0] are bit for bit what they
+        // were.
+        [len, T0, Gamma, rInt_back = rInt.data() + (rInt.size() - 1), t1_back = t1grid.data() + (t1len - 1), ptr = QKB1int.data(), qk0_ptr = thrust::raw_pointer_cast(QKv.data()) + (t1len - 1) * len, temp0 = sim->device->temp0.begin(), temp1 = sim->device->temp1.begin(), temp4 = sim->device->temp4.begin(), temp5 = sim->device->temp5.begin(), temp6 = sim->device->temp6.begin(), temp7 = sim->device->temp7.begin(), temp8 = sim->device->temp8.begin()] __device__ (size_t i) {
             temp0[i] = ptr[i * len];
             temp1[i] = DflambdaGPU(ptr[i * len]);
             if (i == 0) {
+                const double qk0 = *qk0_ptr;
                 temp4[0] = DflambdaGPU(qk0) / T0;
                 temp5[0] = qk0 / T0;
                 temp6[0] = -(*rInt_back);
@@ -379,33 +423,125 @@ void QKRstepGPU(
         }
     );
 
-    cudaDeviceSynchronize();
+    // [PERF] cudaDeviceSynchronize() removed.  The batched convolution below reads
+    // temp8, written by the thrust::for_each above; issuing it on the SAME stream
+    // (pool[0]) makes that dependency implicit, so no host-side barrier is needed.
+    // Ordering, not arithmetic, changes: every kernel still reads exactly the same
+    // values it read before.
 
     // Step 1: Run reductions
-    ConvAGPU_Stream(SigmaRA1int, QKB1int, sim->device->convA1_1, sim->device->temp8, integ, theta, pool[1]);
-    ConvAGPU_Stream(SigmaKA1int, QRB1int, sim->device->convA2_1, sim->device->temp8, integ, theta, pool[2]);
-    ConvAGPU_Stream(QRA1int, SigmaKB1int, sim->device->convA1_2, sim->device->temp8, integ, theta, pool[3]);
-    ConvAGPU_Stream(QKA1int, SigmaRB1int, sim->device->convA2_2, sim->device->temp8, integ, theta, pool[4]);
-    ConvRGPU_Stream(SigmaRA2int, QKB2int, sim->device->convR_1, sim->device->temp8, integ, theta, pool[5]);
-    ConvRGPU_Stream(QRA2int, SigmaKB2int, sim->device->convR_2, sim->device->temp8, integ, theta, pool[6]);
-    ConvRGPU_Stream(SigmaRA2int, QRB2int, sim->device->convR_3, sim->device->temp8, integ, theta, pool[7]);
-    ConvRGPU_Stream(QRA2int, SigmaRB2int, sim->device->convR_4, sim->device->temp8, integ, theta, pool[8]);
+    // [PERF] The eight reductions used to be eight separate launches of
+    // (len x 64) threads on eight streams.  They are now a single launch with a
+    // (len x 8) grid: the same blocks, the same blockDim and the same per-block
+    // reduction, so every value is bit-for-bit what it was, but seven launches
+    // and their stream bookkeeping disappear and the occupancy grows eightfold.
+    {
+        ConvBatchDesc batch;
+        auto P = [](const dmfe::device_vector<double>& v) { return thrust::raw_pointer_cast(v.data()); };
+        auto Q = [](dmfe::device_vector<double>& v) { return thrust::raw_pointer_cast(v.data()); };
+        batch.add(ConvKind::A, P(SigmaRA1int), P(QKB1int),     Q(sim->device->convA1_1));
+        batch.add(ConvKind::A, P(SigmaKA1int), P(QRB1int),     Q(sim->device->convA2_1));
+        batch.add(ConvKind::A, P(QRA1int),     P(SigmaKB1int), Q(sim->device->convA1_2));
+        batch.add(ConvKind::A, P(QKA1int),     P(SigmaRB1int), Q(sim->device->convA2_2));
+        batch.add(ConvKind::R, P(SigmaRA2int), P(QKB2int),     Q(sim->device->convR_1));
+        batch.add(ConvKind::R, P(QRA2int),     P(SigmaKB2int), Q(sim->device->convR_2));
+        batch.add(ConvKind::R, P(SigmaRA2int), P(QRB2int),     Q(sim->device->convR_3));
+        batch.add(ConvKind::R, P(QRA2int),     P(SigmaRB2int), Q(sim->device->convR_4));
+        ConvBatchedGPU(batch, integ, theta, sim->device->temp8, len, len, pool[0]);
+    }
 
-    cudaDeviceSynchronize();
+    // [PERF] cudaDeviceSynchronize() replaced by a single event.  The three
+    // consumers below run on pool[9], pool[10] and pool[11] and read the outputs of
+    // the batched convolution, which is issued on pool[0]; one recorded event and
+    // three waits express exactly that dependency without blocking the host.
+    cudaEventRecord(convDone, pool[0]);
+    cudaStreamWaitEvent(pool[9],  convDone, 0);
+    cudaStreamWaitEvent(pool[10], convDone, 0);
+    cudaStreamWaitEvent(pool[11], convDone, 0);
 
     // Step 3: Fuse everything
     FusedUpdate(thrust::device_pointer_cast(sim->device->temp0.data()), qK, sim->device->temp2, thrust::raw_pointer_cast(sim->device->temp4.data()), thrust::raw_pointer_cast(sim->device->temp6.data()), nullptr, &sim->device->convR_1, &sim->device->convA1_1, &sim->device->convA2_1, nullptr, pool[9]);
 
     // Compute d2qK
-    FusedUpdate(thrust::device_pointer_cast(sim->device->temp1.data()), qR, sim->device->temp3, thrust::raw_pointer_cast(sim->device->temp5.data()), thrust::raw_pointer_cast(sim->device->temp7.data()), &rInt, &sim->device->convR_2, &sim->device->convA1_2, &sim->device->convA2_2, qK, pool[10]);
+    // [PERF] the `theta` factor that used to be applied by a separate
+    // computeProduct launch right after this one is now the last operation of the
+    // fused kernel itself (see FusedUpdateKernel in core/device_utils.cu).
+    FusedUpdate(thrust::device_pointer_cast(sim->device->temp1.data()), qR, sim->device->temp3, thrust::raw_pointer_cast(sim->device->temp5.data()), thrust::raw_pointer_cast(sim->device->temp7.data()), &rInt, &sim->device->convR_2, &sim->device->convA1_2, &sim->device->convA2_2, qK, pool[10], &theta);
 
     // Combine d1qK and d2qK
-    computeProduct<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->device->temp3.data()),thrust::raw_pointer_cast(theta.data()),len);
     cudaEventRecord(ready, pool[9]);
     cudaStreamWaitEvent(pool[10], ready, 0);
     computeSum<<<blocks, threads, 0, pool[10]>>>(thrust::raw_pointer_cast(sim->device->temp2.data()),thrust::raw_pointer_cast(sim->device->temp3.data()),thrust::raw_pointer_cast(outK.data()) + n * len, len);
 
     QRstepFused(qR, theta, sim->device->convR_3, sim->device->convR_4, rInt, thrust::raw_pointer_cast(outR.data()) + n * len, pool[11]);
+}
+
+// [PERF] Same computation as rstepGPU() below, but the scalar r(t) is stored
+// wherever the caller wants it instead of being copied to the host and copied
+// straight back into a device array.  computeRstepResult evaluates exactly the
+// same expression from exactly the same inputs; only the destination address
+// changes, so the double that ends up in rvec[] is the same bit pattern.  What
+// disappears is a blocking device->host copy followed by a blocking host->device
+// copy, i.e. two implicit device-wide barriers per Runge-Kutta stage.
+void rstepGPU_into(
+    const thrust::device_ptr<const double>& qK,
+    const thrust::device_ptr<const double>& qR,
+    double t,
+    const dmfe::device_vector<double>& integ,
+    const dmfe::device_vector<double>& theta,
+    double Gamma,
+    double T0,
+    StreamPool& pool,
+    double* out_r) {
+
+    const size_t len = theta.size();
+    const int threads = 64;
+    const int blocks = static_cast<int>((len + threads - 1) / threads);
+
+    // NOTE: deliberately left on the LEGACY default stream.  Because the pool
+    // streams are blocking streams, this launch is ordered after all pending work
+    // on them and everything issued afterwards is ordered after it; it is the
+    // barrier that keeps the temp0..temp4 scratch buffers, shared with
+    // QKRstepGPU, free of read-after-write races.
+    computeSigmaKandRKernel<<<blocks, threads, 0>>>(
+        thrust::raw_pointer_cast(qK),
+        thrust::raw_pointer_cast(qR),
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp1.data()),
+        len
+    );
+
+    // [PERF] the two single-block ConvA reductions are one launch with a
+    // (depth x 2) grid; see ConvAScalarBatchDesc in convolution/convolution.cuh.
+    // Issuing them on the same stream also removes the event that used to join
+    // pool[2] into pool[3].
+    {
+        const size_t clen = integ.size();
+        const size_t cdepth = sim->device->temp1.size() / clen;
+        ConvAScalarBatchDesc cb;
+        cb.add(thrust::raw_pointer_cast(sim->device->temp1.data()), thrust::raw_pointer_cast(qK),
+               thrust::raw_pointer_cast(sim->device->temp2.data()), t);
+        cb.add(thrust::raw_pointer_cast(sim->device->temp0.data()), thrust::raw_pointer_cast(qR),
+               thrust::raw_pointer_cast(sim->device->temp3.data()), t);
+        ConvABatchedScalarGPU(cb, integ, theta, clen, cdepth, pool[3]);
+    }
+
+    // Fused final computation on GPU
+    computeRstepResult<<<1, 1, 0, pool[3]>>>(
+        thrust::raw_pointer_cast(sim->device->temp0.data()),
+        thrust::raw_pointer_cast(sim->device->temp2.data()),
+        thrust::raw_pointer_cast(sim->device->temp3.data()),
+        thrust::raw_pointer_cast(qK),
+        out_r,
+        Gamma,
+        T0
+    );
+
+    // [PERF] Published so that the next interpolateGPU (whose indexVecR2GPU reads
+    // rvec on stream 0) can wait on it.  pool[3] is joined with pool[2] just above
+    // and is itself ordered after the legacy-default-stream launch, so this single
+    // event covers the whole of rstepGPU and everything that preceded it.
+    cudaEventRecord(dmfe::EventPool::instance()[dmfe::EV_RSTEP_OUT], pool[3]);
 }
 
 double rstepGPU(
@@ -418,36 +554,10 @@ double rstepGPU(
     double T0,
     StreamPool& pool) {
 
-    const size_t len = theta.size();
-    const int threads = 64;
-    const int blocks = static_cast<int>((len + threads - 1) / threads);
-    cudaEvent_t ready;
-    cudaEventCreateWithFlags(&ready, cudaEventDisableTiming);
-
-    computeSigmaKandRKernel<<<blocks, threads, 0>>>(
-        thrust::raw_pointer_cast(qK),
-        thrust::raw_pointer_cast(qR),
-        thrust::raw_pointer_cast(sim->device->temp0.data()),
-        thrust::raw_pointer_cast(sim->device->temp1.data()),
-        len
-    );
-
-    ConvAGPU_Stream(sim->device->temp1, qK, sim->device->temp2, t, integ, theta, pool[2]);
-    ConvAGPU_Stream(sim->device->temp0, qR, sim->device->temp3, t, integ, theta, pool[3]);
-
-    cudaEventRecord(ready, pool[2]);
-    cudaStreamWaitEvent(pool[3], ready, 0);
-
-    // Fused final computation on GPU
-    computeRstepResult<<<1, 1, 0, pool[3]>>>(
-        thrust::raw_pointer_cast(sim->device->temp0.data()),
-        thrust::raw_pointer_cast(sim->device->temp2.data()),
-        thrust::raw_pointer_cast(sim->device->temp3.data()),
-        thrust::raw_pointer_cast(qK),
-        thrust::raw_pointer_cast(sim->device->temp4.data()),
-        Gamma,
-        T0
-    );
+    // [PERF] thin wrapper kept for the callers that really do want the value on
+    // the host (appendAllGPU / replaceAllGPU, not used by the GPU integrators).
+    rstepGPU_into(qK, qR, t, integ, theta, Gamma, T0, pool,
+                  thrust::raw_pointer_cast(sim->device->temp4.data()));
 
     return sim->device->temp4[0];
 }
@@ -587,7 +697,10 @@ double drstep2GPU(
     ));
 
     thrust::for_each(
-        thrust::cuda::par.on(pool[0]),
+        // [PERF] par -> par_nosync: the batched convolution below is issued on the
+        // same stream, so the dependency is implicit and the trailing
+        // cudaStreamSynchronize of the synchronous policy is pure host stall.
+        thrust::cuda::par_nosync.on(pool[0]),
         begin, end,
         [] __device__ (const thrust::tuple<
             double, double, double, double,
@@ -611,14 +724,31 @@ double drstep2GPU(
     );
 
     // Compute convolution results
-    ConvAGPU_Stream(sim->device->temp1, QKv, sim->device->temp4, 1.0, sim->device->integ, sim->device->theta, pool[1]);
-    ConvAGPU_Stream(sim->device->temp0, QRv, sim->device->temp5, 1.0, sim->device->integ, sim->device->theta, pool[2]);
-    ConvAGPU_Stream(sim->device->temp3, QKv, sim->device->temp6, t, sim->device->integ, sim->device->theta, pool[3]);
-    ConvAGPU_Stream(sim->device->temp2, QRv, sim->device->temp7, t, sim->device->integ, sim->device->theta, pool[4]);
-    ConvAGPU_Stream(sim->device->temp1, dQKv, sim->device->temp8, t, sim->device->integ, sim->device->theta, pool[5]);
-    ConvAGPU_Stream(sim->device->temp0, dQRv, sim->device->temp9, t, sim->device->integ, sim->device->theta, pool[6]);
+    // [PERF] six single-block ConvA reductions on six streams -> one launch with a
+    // (depth x 6) grid on pool[0], the same stream as the thrust::for_each above,
+    // so the dependency on temp0..temp3 needs no host-side barrier.  Each entry
+    // keeps its own scalar t (1.0 for the first two), and the kernel body is
+    // ConvAGPUKernel unchanged; see ConvAScalarBatchDesc.
+    {
+        const size_t clen = sim->device->integ.size();
+        const size_t cdepth = sim->device->temp1.size() / clen;
+        auto P = [](const dmfe::device_vector<double>& v) { return thrust::raw_pointer_cast(v.data()); };
+        auto Q = [](dmfe::device_vector<double>& v) { return thrust::raw_pointer_cast(v.data()); };
+        ConvAScalarBatchDesc cb;
+        cb.add(P(sim->device->temp1), thrust::raw_pointer_cast(QKv),  Q(sim->device->temp4), 1.0);
+        cb.add(P(sim->device->temp0), thrust::raw_pointer_cast(QRv),  Q(sim->device->temp5), 1.0);
+        cb.add(P(sim->device->temp3), thrust::raw_pointer_cast(QKv),  Q(sim->device->temp6), t);
+        cb.add(P(sim->device->temp2), thrust::raw_pointer_cast(QRv),  Q(sim->device->temp7), t);
+        cb.add(P(sim->device->temp1), thrust::raw_pointer_cast(dQKv), Q(sim->device->temp8), t);
+        cb.add(P(sim->device->temp0), thrust::raw_pointer_cast(dQRv), Q(sim->device->temp9), t);
+        ConvABatchedScalarGPU(cb, sim->device->integ, sim->device->theta, clen, cdepth, pool[0]);
+    }
 
-    cudaDeviceSynchronize();
+    // [PERF] cudaDeviceSynchronize() removed: computeDrstep2Result below is launched
+    // on the LEGACY default stream, which is by definition ordered after all pending
+    // work on every blocking stream, and pool[1..6] are blocking streams (created
+    // with plain cudaStreamCreate).  The barrier was therefore redundant for
+    // correctness and only stalled the host once per accepted step.
 
     // Compute final result
     computeDrstep2Result<<<1, 1, 0>>>(
@@ -651,7 +781,9 @@ double energyGPU(
     
     size_t len = theta.size();
     size_t t1len = t1grid.size();
-    const double t = t1grid.back();
+    // [PERF] host mirror instead of a blocking one-element D2H copy of
+    // t1grid.back(); see core/t1_cache.hpp.
+    const double t = dmfe::t1LastGPU();
 
     thrust::device_ptr<double> qK = get_slice_ptr(QKv, t1len - 1, len);
     thrust::device_ptr<double> qR = get_slice_ptr(QRv, t1len- 1, len);
@@ -743,6 +875,7 @@ void appendAllGPU(
 
     // 1) update sim->device->t1grid and sim->device->delta_t_ratio
     sim->device->t1grid.push_back(t);
+    dmfe::t1LastSet(t);   // [PERF] see core/t1_cache.hpp
     size_t idx = sim->device->t1grid.size() - 1;
     double tdiff = sim->device->t1grid[idx] - sim->device->t1grid[idx - 1];
     if (idx > 1) {
@@ -815,22 +948,29 @@ void appendAllGPU_ptr(
         thrust::raw_pointer_cast(sim->device->dQKv.data()),
         thrust::raw_pointer_cast(sim->device->dQRv.data()),
         thrust::raw_pointer_cast(sim->device->t1grid.data()),
-        idx,
-        offset,
-        len,
-        t);
-
-    // Update time scalars (t1grid[idx], delta[idx], drvec[idx]) on device
-    updateTimeScalarsKernel<<<1, 1, 0, pool[1]>>>(
-        thrust::raw_pointer_cast(sim->device->t1grid.data()),
         thrust::raw_pointer_cast(sim->device->delta_t_ratio.data()),
         thrust::raw_pointer_cast(sim->device->drvec.data()),
         idx,
+        offset,
+        len,
         t,
         dr);
 
+    // [PERF] append4Kernel has just stored this very double at t1grid[idx]; keep
+    // the host mirror in step so that t1grid.back() never has to be read back.
+    dmfe::t1LastSet(t);
+
+    // [PERF] the time scalars (t1grid[idx], delta_t_ratio[idx], drvec[idx]) are now
+    // written by the append/replace kernel above; the separate <<<1,1>>> launch on
+    // pool[1] is gone.
+
     // Compute r(t) and store it in d_rvec[idx]
-    sim->device->rvec[idx] = rstepGPU(qK, qR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool);
+    // [PERF] was `sim->device->rvec[idx] = rstepGPU(...)`, i.e. one double copied
+    // device->host (blocking) and immediately copied back host->device (blocking).
+    // rvec has just been resized, so the address is valid for the whole launch.
+    rstepGPU_into(qK, qR, t, sim->device->integ, sim->device->theta,
+                  config.Gamma, config.T0, pool,
+                  thrust::raw_pointer_cast(sim->device->rvec.data()) + idx);
 }
 
 void replaceAllGPU(
@@ -850,6 +990,7 @@ void replaceAllGPU(
     }
     {
         sim->device->t1grid.back() = t;
+        dmfe::t1LastSet(t);   // [PERF] see core/t1_cache.hpp
         double tdiff = (sim->device->t1grid[sim->device->t1grid.size() - 1] - sim->device->t1grid[sim->device->t1grid.size() - 2]);
 
         if (sim->device->t1grid.size() > 2) {
@@ -903,20 +1044,25 @@ void replaceAllGPU_ptr(
         thrust::raw_pointer_cast(sim->device->dQKv.data()),
         thrust::raw_pointer_cast(sim->device->dQRv.data()),
         thrust::raw_pointer_cast(sim->device->t1grid.data()),
-        idx,
-        offset,
-        len,
-        t);
-
-    // Update time scalars for the last entry
-    updateTimeScalarsKernel<<<1, 1, 0, pool[1]>>>(
-        thrust::raw_pointer_cast(sim->device->t1grid.data()),
         thrust::raw_pointer_cast(sim->device->delta_t_ratio.data()),
         thrust::raw_pointer_cast(sim->device->drvec.data()),
         idx,
+        offset,
+        len,
         t,
         dr);
 
+    // [PERF] replace4Kernel has just stored this very double at t1grid[idx].
+    dmfe::t1LastSet(t);
+
+    // [PERF] the time scalars (t1grid[idx], delta_t_ratio[idx], drvec[idx]) are now
+    // written by the append/replace kernel above; the separate <<<1,1>>> launch on
+    // pool[1] is gone.
+
     // Update r(t) at the last position
-    sim->device->rvec.back() = rstepGPU(qK, qR, t, sim->device->integ, sim->device->theta, config.Gamma, config.T0, pool);
+    // [PERF] see appendAllGPU_ptr: the round trip through the host is gone.
+    rstepGPU_into(qK, qR, t, sim->device->integ, sim->device->theta,
+                  config.Gamma, config.T0, pool,
+                  thrust::raw_pointer_cast(sim->device->rvec.data())
+                      + (sim->device->rvec.size() - 1));
 }

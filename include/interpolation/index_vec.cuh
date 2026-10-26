@@ -18,6 +18,34 @@ void indexVecLN3GPU(
     dmfe::device_vector<double>& qr_result,
     cudaStream_t stream = 0);
 
+// [PERF] Batched form of the two calls interpolateGPU makes per stage (slices A1
+// and A2).  See the comment on indexVecLN3Kernel_batched in index_vec.cu: the
+// arithmetic is unchanged, only the number of launches.  Falls back to the two
+// separate launches (on streamA / streamB) whenever the shapes differ or an
+// unrolled kernel would be selected.
+struct LN3PairDesc {
+    const double* weights[2];
+    const size_t* inds[2];
+    double*       qk_out[2];
+    double*       qr_out[2];
+};
+
+void indexVecLN3GPU_pair(
+    const dmfe::device_vector<double>& weightsA,
+    const dmfe::device_vector<size_t>& indsA,
+    dmfe::device_vector<double>& qkA,
+    dmfe::device_vector<double>& qrA,
+    cudaStream_t streamA,
+    const dmfe::device_vector<double>& weightsB,
+    const dmfe::device_vector<size_t>& indsB,
+    dmfe::device_vector<double>& qkB,
+    dmfe::device_vector<double>& qrB,
+    cudaStream_t streamB,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    size_t len,
+    cudaStream_t batchStream);
+
 // Precompute logs of the last `len` entries of QRv into provided device buffer (positive -> log, non-positive -> original)
 void prepareLN3LogSliceGPU_into(size_t len,
     const dmfe::device_vector<double>& QRv,

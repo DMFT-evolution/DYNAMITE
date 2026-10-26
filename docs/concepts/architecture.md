@@ -1,111 +1,56 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/architecture.svg" alt="Architecture icon"/> Architecture
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/architecture.svg" alt="Architecture icon"/> Code structure and file formats
 
-**Audience:** readers who want a map of the codebase and module responsibilities.
+## Source tree
 
-The code mirrors physics operations:
+Headers are in `include/<module>/`, sources in `src/<module>/`. Most modules have a CPU implementation (`.cpp`) and a CUDA implementation (`.cu`) with the same interface; the CUDA files are only compiled in CUDA builds.
 
-- EOMs (`include/EOMs/`): RK54 (adaptive) with auto-switch to SSPRK104; optional SERK2 trials post-sparsification.
-- Interpolation (`include/interpolation/`): sparse 2D interpolation kernels and index maps.
-- Convolution (`include/convolution/`): memory-kernel evaluations.
-- Sparsification (`include/sparsify/`): maintains sublinear memory/compute with error control.
-- Simulation (`include/simulation/`): orchestration, checkpoints, and async I/O.
-- Core/Math/IO/Version: utilities, numeric primitives, I/O (HDF5 runtime), version policy.
+| Module | Content |
+|---|---|
+| `EOMs` | right-hand sides of the equations of motion (`time_steps`), Runge–Kutta methods (`runge_kutta`) |
+| `math` | the covariance $f$ and its derivatives (`math_ops`), the memory kernels (`math_sigma`) |
+| `interpolation` | interpolation in $\theta$ and $t$ at the quadrature nodes |
+| `convolution` | quadrature sums for the memory integrals |
+| `search` | location of interpolation intervals in the adaptive $t$ grid |
+| `sparsify` | removal of time slices from the history |
+| `simulation` | main loop, step-size control, rollback |
+| `grid` | the `RG-Evo grid` subcommand |
+| `io` | checkpoints, `params.txt`, text output, loading of grids and checkpoints |
+| `core` | command-line options, initialization, CPU/GPU dispatch, memory management |
+| `ui`, `version` | terminal output; version information and compatibility checks |
 
-## System flow
+`main.cpp` parses the options, either runs the grid generator or initializes a simulation, and calls the main loop in `src/simulation/simulation_runner.cpp`. The build produces a static library `DFME-core` and the executable `RG-Evo`.
 
-```mermaid
-flowchart TD
-  init[Initialization<br/>src/core] --> eoms[EOM kernels<br/>src/EOMs]
-  eoms --> interp[Interpolation maps<br/>src/interpolation]
-  interp --> conv[Convolution evaluators<br/>src/convolution]
-  conv --> sparsify[Sparsification<br/>src/sparsify]
-  sparsify --> sim[Simulation orchestrator<br/>src/simulation] 
-  sim --> eoms
-  sim --> io[IO layer<br/>src/io]
-  io -->|async or sync| storage[(Outputs:<br/>data.h5, data.bin, params.txt)]
-  sim --> console[Console/UI feedback]
+## Output directory
 
-  classDef module fill:#1f77b4,stroke:#0d3b66,color:#fff
-  sim:::module
-  eoms:::module
-  interp:::module
-  conv:::module
-  sparsify:::module
-  io:::module
-```
+Each run directory (see [Usage](../usage.md#output)) contains:
 
-## I/O layer (modular, runtime‑optional HDF5)
+| File | Written | Content |
+|---|---|---|
+| `params.txt` | at every checkpoint | run record: command line, all parameters, program version and Git commit, compiler and CUDA version, host name, CPU or GPU mode, grid parameters, run time and peak memory |
+| `data.h5` or `data.bin` | at every checkpoint | the full state, from which a run can be continued |
+| `correlation.txt` | after every step | columns $t$, $E(t)$, $C(t,0)$ |
+| `QK_compressed`, `QR_compressed`, `t1_compressed.txt` | at every checkpoint | $C$ and $R$ at the last time on an $L\times L$ grid, see below |
+| `energy.txt`, `rvec.txt`, `qk0.txt` | at every checkpoint | $E(t)$, $\mu(t)$ and $C(t,0)$ at the stored times $t_n$ |
+| `step_metrics.txt` | at every checkpoint, with `-D true` | per step: $t$, wall-clock time, memory used |
 
-The monolithic save path was split into focused modules:
-- `io_save_hdf5.*`: write `data.h5` when HDF5 is available. Uses a runtime loader by default and falls back to the compile‑time path if enabled.  
-- `io_save_binary.*`: binary fallback (`data.bin`) identical in content layout to the HDF5 datasets.  
-- `io_save_params.*`: `params.txt` with CLI, grid provenance (including `alpha`/`delta` if used), version/build info, runtime stats.  
-- `io_save_compressed.*`: compact snapshots (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`).  
-- `io_save_driver.*`: orchestrates sync/async export and progress signaling.
+Checkpoints are written at every maintenance pass (every `--sparsify-interval` steps) and at the end of the run. `correlation.txt` is the most complete record of a run, because it contains every step, also those removed later by sparsification; the files written at checkpoints only contain the stored times. It also keeps the steps that were later discarded by a rollback: after a rejected step the time in the first column jumps back. To remove the discarded steps, keep only the lines whose time is smaller than the time of every later line (see [Reading outputs](../tutorials/reading-outputs.md)). Text files start with a comment line beginning with `#` (except `correlation.txt`).
 
-### Compressed snapshots: file formats (`QK_compressed`, `QR_compressed`, `t1_compressed.txt`)
+### Checkpoint
 
-The compressed snapshots are designed for quickly plotting/inspecting the final state
-without loading the full history (HDF5/binary) data.
+`data.h5` holds the datasets `QKv`, `QRv`, `dQKv`, `dQRv` (length $L\times n_t$, time-major: the $L$ values of slice $n$ are contiguous), `t1grid`, `rvec`, `drvec` (length $n_t$), and attributes with the model and numerical parameters, the current time, step count and energy. The meaning of the datasets is given in [Equations](eoms-and-observables.md#what-is-stored). `data.bin` contains the same data in a binary format that is read by the program itself. `scripts/ImportDMFE.wl` imports `data.h5` into Mathematica.
 
-They consist of two binary matrices and one text file:
+### Compressed snapshot
 
-- `QK_compressed`: a dense $L\times L$ matrix (double precision). In the current codebase this is saved from `QKB1int`.
-- `QR_compressed`: a dense $L\times L$ matrix (double precision). In the current codebase this is saved from `QRB1int`.
-- `t1_compressed.txt`: a length-$L$ vector of time points.
-
-#### Binary layout
-
-Both `QK_compressed` and `QR_compressed` share the same binary layout:
-
-1. `rows`: `size_t` (native endian)
-2. `cols`: `size_t` (native endian)
-3. `rows*cols` values of type `double` (native endian)
-
-Notes:
-
-- Because the header uses `size_t`, the header is typically 16 bytes on 64-bit systems, but can be 8 bytes on 32-bit systems.
-- Most modern machines are little-endian; if you read these files on a different architecture you must account for endianness.
-
-#### Meaning of `t1_compressed.txt` and the $(t_1,\theta)$ coordinates
-
-The text file `t1_compressed.txt` stores the values
+`QK_compressed` and `QR_compressed` each hold an $L\times L$ matrix: two integers of type `size_t` (rows, columns), followed by the values as `double` in row-major order, all in the byte order of the machine that wrote them. With $t_i=\theta_i\,t_{\rm last}$ listed in `t1_compressed.txt`,
 
 $$
-t_1[i] = t_{\mathrm{last}}\,\theta[i],\qquad i=0,\dots,L-1,
+\texttt{QK\_compressed}[i,j]=C(t_i,\theta_j t_i)\,,\qquad \texttt{QR\_compressed}[i,j]=R(t_i,\theta_j t_i)\,,
 $$
 
-where $t_{\mathrm{last}}$ is the final simulated time (the last entry in the integrator's `t1grid`) and
-$\theta=t_2/t_1\in(0,1]$ is the dimensionless ratio used by the internal compressed representation.
+i.e. row $i$ is the correlation at the earlier time $t_i$, as a function of $\theta=t'/t_i$. To read off $C(t_w+\tau,t_w)$, interpolate at $t_i=t_w+\tau$ and $\theta=t_w/(t_w+\tau)$. `scripts/plot_correlation.py` does this; see [Reading outputs](../tutorials/reading-outputs.md).
 
-In other words, if you load:
+## CPU and GPU
 
-$$
-t_1\_\text{points} = \texttt{loadtxt}(\texttt{t1\_compressed.txt}),\qquad t_{\mathrm{last}} = t_1\_\text{points}[-1],\qquad \theta\_\text{points} = t_1\_\text{points}/t_{\mathrm{last}},
-$$
+The program is a single executable. In a CUDA build, `-g true` (the default) runs the integration on the GPU if one is found, and otherwise on the CPU. The state lives in host memory (`SimulationData::host`) or device memory (`SimulationData::device`); for checkpoints the device data is copied to the host and written, by default in a background thread (`-A true`), so that the integration continues meanwhile. At most one checkpoint is written at a time.
 
-then the compressed matrices are interpreted as samples on the grid
-
-$$
-(t_1,\theta) \in (\theta\_\text{points}\,t_{\mathrm{last}})\times(\theta\_\text{points}).
-$$
-
-This is why typical post-processing evaluates waiting-time slices via
-
-$$
-t_1 = t_w+\tau,\qquad \theta = \frac{t_w}{t_w+\tau}.
-$$
-
-See also: `scripts/plot_correlation.py` and the “Reading outputs” tutorial.
-
-### Console/TUI behavior:
-- HDF5 libraries are loaded at runtime (dlopen); the program prints which libraries were found. If unavailable or a write error occurs, saving continues via `data.bin`.  
-- Save progress is staged: main file [0.10..0.50], params [0.50..0.65], histories [0.65..0.80], compressed [0.80..0.90], then DONE.  
-
-### Accuracy knobs:
-
-- Grid length L (512/1024/2048): convergence in observables vs. runtime.  
-- Integrator error tolerance ε and minimum step: trade accuracy vs. cost.  
-- Sparsification mode: aggressive vs. conservative.
-
-GPU/CPU paths are interchangeable; ensure convergence checks are done on your platform of choice.
+The two backends implement the same equations, interpolation, quadrature and step-size control. They differ in the order of the floating-point operations and therefore agree only to within the tolerance, not bit for bit. Remaining differences in the algorithm: the SERK2 methods exist only on the GPU, and the sparsification considers every second slice on the GPU but all slices (with the same rule against removing neighbours) on the CPU.

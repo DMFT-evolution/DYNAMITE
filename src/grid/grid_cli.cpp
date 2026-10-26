@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <sstream>
+#include <fstream>   // [CPC-REV] --theta-file
 #include "core/console.hpp"
 
 #include "grid/theta_grid.hpp"
@@ -29,6 +30,16 @@ static void print_grid_usage(const char* prog) {
               << "  -m, --interp-method METHOD   Interp method for metadata: poly | rational | bspline | index-bspline | index-poly | index-rational | index-hermite (default: index-poly)\n"
               << "  -o, --interp-order n         Interpolation order/degree n (default: 9)\n"
               << "  -f, --fh-stencil m           FH window size m (rational/index-rational only). Default: n+1; must satisfy m >= n+1\n"
+              // [CPC-REV] referee 1 asks whether the theta = t'/t discretisation is tied
+              // to the aging ansatz.  It is not: the solver reads the node positions from
+              // Grid_data/<subdir>/theta.dat.  This option lets the user supply an
+              // arbitrary, strictly increasing grid on [0,1] and have all phi grids,
+              // quadrature weights and interpolation stencils built from it.
+              << "  -T, --theta-file FILE        Read the theta nodes from FILE (one value per line,\n"
+              << "                               strictly increasing, theta_1=0, theta_L=1) instead of\n"
+              << "                               generating them from the analytic family.  Implies\n"
+              << "                               --int-method theta-spline and a theta-space\n"
+              << "                               --interp-method (poly | rational | bspline).\n"
               << "\n"
               << "Defaults: Tmax=100000, int-method=index-spline, interp-method=index-poly, interp-order=9.\n";
 }
@@ -46,6 +57,7 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     std::string int_method = "index-spline"; // default: stable integration weights via index-spline + analytic theta'(u)
     std::string interp_method = "index-poly"; // default: local barycentric polynomial in uniform index coordinate
     int interp_order = 9;               // default order for interpolation
+    std::string theta_file;             // [CPC-REV] optional user-supplied theta grid
     int fh_stencil = -1;                // optional FH window size (>= d+1); default: d+1
 
     // Capture full command line for provenance
@@ -73,13 +85,54 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     else if ((a == "--interp-method" || a == "-m") && !read_next_str(interp_method)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-method" << std::endl; exitCode = 1; return true; }
     else if ((a == "--interp-order" || a == "-o") && !read_next_int(interp_order)) { std::cerr << dmfe::console::ERR() << "Missing value for --interp-order" << std::endl; exitCode = 1; return true; }
     else if ((a == "--fh-stencil" || a == "-f") && !read_next_int(fh_stencil)) { std::cerr << dmfe::console::ERR() << "Missing value for --fh-stencil" << std::endl; exitCode = 1; return true; }
+        else if ((a == "--theta-file" || a == "-T") && !read_next_str(theta_file)) { std::cerr << dmfe::console::ERR() << "Missing value for --theta-file" << std::endl; exitCode = 1; return true; }
         else if (a == "-h" || a == "--help") { print_grid_usage(argv[0]); exitCode = 0; return true; }
     }
 
     if (subdir.empty()) subdir = std::to_string(len);
 
     std::vector<long double> theta;
-    generate_theta_grid(len, Tmax, theta, alpha, delta);
+    if (!theta_file.empty()) {
+        // [CPC-REV] user-supplied theta grid (referee 1; referee 2, point 6).
+        std::ifstream tf(theta_file);
+        if (!tf) {
+            std::cerr << dmfe::console::ERR() << "Cannot open --theta-file " << theta_file << std::endl;
+            exitCode = 1; return true;
+        }
+        long double v;
+        while (tf >> v) theta.push_back(v);
+        if (theta.size() < 4) {
+            std::cerr << dmfe::console::ERR() << "--theta-file must contain at least 4 nodes" << std::endl;
+            exitCode = 1; return true;
+        }
+        for (std::size_t i = 1; i < theta.size(); ++i) {
+            if (!(theta[i] > theta[i-1])) {
+                std::cerr << dmfe::console::ERR() << "--theta-file must be strictly increasing (violated at line "
+                          << (i + 1) << ")" << std::endl;
+                exitCode = 1; return true;
+            }
+        }
+        if (theta.front() != 0.0L || theta.back() != 1.0L) {
+            std::cerr << dmfe::console::ERR() << "--theta-file must start at 0 and end at 1 (got "
+                      << (double)theta.front() << " ... " << (double)theta.back() << ")" << std::endl;
+            exitCode = 1; return true;
+        }
+        len = theta.size();
+        if (subdir.empty()) subdir = std::to_string(len);
+        if (int_method != "theta-spline") {
+            std::cout << dmfe::console::INFO() << "--theta-file: forcing --int-method theta-spline" << std::endl;
+            int_method = "theta-spline";
+        }
+        if (interp_method.rfind("index", 0) == 0) {
+            std::cout << dmfe::console::INFO() << "--theta-file: '" << interp_method
+                      << "' relies on the analytic index map; forcing --interp-method poly" << std::endl;
+            interp_method = "poly";
+        }
+        std::cout << dmfe::console::INFO() << "Using " << len << " user-supplied theta nodes from "
+                  << theta_file << std::endl;
+    } else {
+        generate_theta_grid(len, Tmax, theta, alpha, delta);
+    }
 
     // Generate phi grids
     std::vector<long double> phi1, phi2;
@@ -100,7 +153,12 @@ bool maybe_handle_grid_cli(int argc, char** argv, int& exitCode) {
     // Position grids (A1y, A2y, B2y) from theta and phi using interpolation-based inverse
     std::vector<double> posA1y, posA2y, posB2y;
     // Use long double inputs directly (internals operate in long double; outputs remain double)
-    generate_pos_grids(len, Tmax, theta, phi1, phi2, posA1y, posA2y, posB2y, alpha, delta);
+    if (!theta_file.empty()) {
+        // [CPC-REV] no analytic theta(y) available for a user grid
+        generate_pos_grids_from_nodes(theta, phi1, phi2, posA1y, posA2y, posB2y);
+    } else {
+        generate_pos_grids(len, Tmax, theta, phi1, phi2, posA1y, posA2y, posB2y, alpha, delta);
+    }
 
     // Compute interpolation weights for mapping theta -> phi1 and theta -> phi2 entries (N*N queries each)
     // For each entry (row-major), take query xq = phiX[i*N+j].
