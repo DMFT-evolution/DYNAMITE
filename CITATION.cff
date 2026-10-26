@@ -13,7 +13,7 @@ type: software
 repository-code: "https://github.com/DMFT-evolution/DYNAMITE"
 url: "https://dmft-evolution.github.io/DYNAMITE/"
 version: 1.4.0.0
-date-released: 2026-26-10
+date-released: 2026-10-26
 license: Apache-2.0
 keywords:
   - dynamical mean-field equations
@@ -39,18 +39,9 @@ authors:
     given-names: Federico
     affiliation: "Dipartimento di Fisica, Sapienza Universita di Roma, Italy; CNR-Nanotec; INFN Sezione di Roma I"
     orcid: "https://orcid.org/0000-0003-4970-7376"
-# NOTE (CPC revision): replace the Zenodo DOI below
-# before tagging v1.4.0.0, then upload the tag to Zenodo and paste the minted DOI
-# into `identifiers`, into `preferred-citation.doi` and into bibliography.bib.
-identifiers:
-  - type: doi
-    value: "10.5281/zenodo.XXXXXXX"
-    description: "Archived snapshot of release v1.4.0.0"
 preferred-citation:
   type: article
   title: "DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations"
-  journal: "Computer Physics Communications"
-  year: 2026
   authors:
     - family-names: Lang
       given-names: Johannes
@@ -60,3 +51,7 @@ preferred-citation:
       given-names: Luca
     - family-names: Ricci-Tersenghi
       given-names: Federico
+  journal: "arXiv preprint"
+  year: 2026
+  doi: "10.48550/arXiv.2604.06309"
+  url: "https://arxiv.org/abs/2604.06309"
