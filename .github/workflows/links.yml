@@ -15,7 +15,8 @@ jobs:
           args: >
             --verbose
             --no-progress
-            --exclude-mail
+            --exclude '^https://dmft-evolution\.github\.io/'
+            --exclude '^https://(doi\.org/10\.1103|journals\.aps\.org)/'
             --accept 200,429
             --scheme https
             --max-redirects 5
