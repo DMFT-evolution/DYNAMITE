@@ -1,27 +1,18 @@
 # <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/tag.svg" alt="Version tag icon"/> Version compatibility
 
-**Audience:** users who need to interpret resume warnings/errors and version policy.
+A run is continued from its checkpoint only if the program version that wrote it is compatible with the current one (see [Continuing a run](../usage.md#continuing-a-run)). The version is taken from the `code_version` entry of the run's `params.txt` and compared with that of the running program (`./RG-Evo -v`):
 
-Outputs embed build/version metadata. Resume compatibility is determined by the version policy and can be overridden explicitly.
+| Case | Result |
+|---|---|
+| same version | continued |
+| same first two version numbers (e.g. `1.4.0` and `1.4.2`) | continued; a warning is printed if the Git commits differ |
+| no version recorded | continued with a warning |
+| different first two version numbers | not continued and a new run directory is created; continued with a warning if `-I true` is given |
 
-## Policy
+`./RG-Evo -c path/to/params.txt` reports the result of this comparison without starting a run.
 
-- Identical: code_version in file equals current code_version → resume allowed silently.
-- Compatible: major.minor match (first two numeric parts equal) → resume allowed; warnings may be emitted if git branch/hash differ.
-- Warning: file version unknown or partial metadata → resume allowed with a warning.
-- Incompatible: major.minor differ → resume aborted unless an explicit override is enabled.
+If you continue a run with `-I true`, or with a different commit of the same version, note the commit in your records and check that the observables continue smoothly across the restart.
 
-## Behavior and sources
+The version, the Git commit and branch, and whether the source had uncommitted changes are recorded when the program is built (`cmake/dmfe_version.cmake`). The version is the output of `git describe --tags --always --dirty`. A build from a source tree that is not a Git checkout, e.g. a release archive, reports the version set by the CMake option `DMFE_FALLBACK_VERSION` and the commit `unknown`.
 
-- Version info sources: `include/version/version_info.hpp` and `src/version/version_info.cpp` (code_version, git hash/branch, compiler, CUDA/OpenMP flags).
-- Checks and reporting: `src/version/version_compat.cpp` (functions: analyzeVersionCompatibility, checkVersionCompatibilityInteractive/basic), used during config parsing and when resuming.
-- Practical configuration (including the resume override and any helper shortcuts) is documented in [Usage](../usage.md).
-
-## What is compared when resuming
-
-- Primarily the code version string. Additional metadata (git branch/hash, dirty state) are reported as warnings when major.minor are equal but commits differ.
-- Runtime options (integrator choices, interpolation mode, sparsification aggressiveness) are stored with outputs and re‑applied; mismatches are surfaced in logs even if resuming is allowed.
-
-## Recommendation
-
-- Prefer resuming only with compatible versions. If you must override, record the exact git hash and re‑validate observables (energy, equal‑time C, representative C(t, αt)).
+The comparison is implemented in `src/version/version_compat.cpp`.

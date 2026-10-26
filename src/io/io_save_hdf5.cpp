@@ -114,9 +114,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
         std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << std::endl;
     }
     saveParametersToFile(dirPath, delta, delta_t);
-#if DMFE_WITH_CUDA
     saveHistory(filename, delta, delta_t, *sim, config.len, config.T0, config.gpu);
-#endif
 #elif defined(USE_HDF5)
 #if DMFE_WITH_CUDA
     copyVectorsToCPU(*sim);
@@ -213,9 +211,7 @@ void saveSimulationStateHDF5(const std::string& filename, double delta, double d
     }
     update_prog(total_elems, total_elems);
     saveParametersToFile(dirPath, delta, delta_t);
-#if DMFE_WITH_CUDA
     saveHistory(filename, delta, delta_t, *sim, config.len, config.T0, config.gpu);
-#endif
 #endif // runtime optional vs compile-time HDF5
 }
 
@@ -278,9 +274,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
         std::cout << dmfe::console::SAVE() << "Saved HDF5 data to " << filename << " (async)" << std::endl;
     }
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
-#if DMFE_WITH_CUDA
     saveHistoryAsync(filename, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
-#endif
 #elif defined(USE_HDF5)
     const double p_start = 0.10, p_end = 0.50, p_span = (p_end - p_start);
     const double last_t1 = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
@@ -320,9 +314,7 @@ void saveSimulationStateHDF5Async(const std::string& filename, const SimulationD
     }
     update_prog(total_elems, total_elems);
     saveParametersToFileAsync(dirPath, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
-#if DMFE_WITH_CUDA
     saveHistoryAsync(filename, snapshot.config_snapshot.delta, snapshot.config_snapshot.delta_t, snapshot);
-#endif
 #endif
 }
 #endif // defined(H5_RUNTIME_OPTIONAL) || defined(USE_HDF5)

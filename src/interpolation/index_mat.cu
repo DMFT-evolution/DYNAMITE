@@ -31,6 +31,22 @@ __device__ inline double atomicAdd_double(double* address, double val) {
 #endif
 
 // Dynamic-depth kernel: supports arbitrary stencil depth at runtime
+// [PERF] The occupancy hint was `__launch_bounds__(64, 1)`, i.e. "at least one
+// 64-thread block per SM", which lets ptxas spend as many registers as it likes:
+// it used 122-126 of them, so only ~8 blocks (512 of the 2048 threads an H100 SM
+// can hold) were resident and there was little to hide the memory latency with.
+// Asking for 16 blocks per SM does cap the budget (61 and 64 registers, no
+// spills) and does double the resident warps -- and it is SLOWER: measured on an
+// H100, indexVecLN3 goes 42.4 -> 46.6 us and indexMatAll 32.9 -> 45.2 us per
+// launch.  These kernels are limited by the memory-level parallelism of a single
+// thread (each one issues `depth` independent gathers), not by the number of
+// resident warps, so the extra registers are worth more than the occupancy.  The
+// hint is therefore left as it was; re-measure before changing it.
+//
+// (An occupancy hint is bit-exact either way: it changes register allocation and
+// instruction scheduling only.  nvcc does not reassociate floating-point
+// expressions, and --use_fast_math does not enable reassociation, so each thread
+// evaluates the same accumulation in the same order on the same operands.)
 __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic(const double* __restrict__ posx,
                                           const size_t* __restrict__ indsy,
                                           const double* __restrict__ weightsy,
@@ -45,6 +61,10 @@ __global__ __launch_bounds__(64, 1) void indexMatAllKernel_dynamic(const double*
                                           size_t depth,
                                           size_t t1len,
                                           size_t prod) {
+    // [PERF] NOTE: staging the j-major stencil weights in shared memory with
+    // coalesced loads was tried here too (see indexVecLN3Kernel_batched in
+    // index_vec.cu) and is bit-exact but slower on an H100.  Re-measure before
+    // trying it again.
     size_t j = blockIdx.x * blockDim.x + threadIdx.x;
     if (j >= prod) return;
 
@@ -365,10 +385,12 @@ public:
         if (cached_depth == depth) return;
         cached_depth = depth;
         switch(depth) {
-            case 3:  cached_kernel = call_specialized<3>; break;
-            case 5:  cached_kernel = call_specialized<5>; break;
-            case 7:  cached_kernel = call_specialized<7>; break;
-            case 9:  cached_kernel = call_specialized<9>; break;
+            // [PERF] see the note in index_vec.cu: depth = order + 1; the even depths are
+    // deliberately not specialized (measured slower on H100).
+            case 3: cached_kernel = call_specialized<3>; break;
+            case 5: cached_kernel = call_specialized<5>; break;
+            case 7: cached_kernel = call_specialized<7>; break;
+            case 9: cached_kernel = call_specialized<9>; break;
             case 11: cached_kernel = call_specialized<11>; break;
             case 13: cached_kernel = call_specialized<13>; break;
             case 15: cached_kernel = call_specialized<15>; break;

@@ -9,6 +9,29 @@
 
 // ================= indexVecLN3 =====================
 
+// ============================================================================
+// [PERF] NOTE on the weights layout (measured, do not "fix" without re-measuring).
+//
+// The stencil weights arrive from Grid_data in j-major order: the `depth` weights
+// of output j are contiguous, so a warp reads, for each d, 32 addresses 8*depth
+// bytes apart.  That looks like a textbook uncoalesced access, and indexVecLN3 +
+// indexMatAll are ~48% of all GPU time, so it is the obvious thing to attack.  It
+// is a trap: the ~20 cache lines a warp touches for one d are exactly the lines
+// the other depth-1 loads need, so the DRAM traffic is already minimal and only
+// the L1 request count is high.  Three bit-exact rewrites were tried on an H100
+// and all three are SLOWER:
+//   * d-major (transposed) device copies, fully coalesced:  42.4 -> 46.8 us
+//     (indexVecLN3) and 32.9 -> 33.7 us (indexMatAll), plus 80 ms of host-side
+//     transpose at start-up -- coalescing buys nothing because the traffic was
+//     never the problem, and the per-thread stencil is now spread over `depth`
+//     streams 2 MB apart;
+//   * staging the block's slice in shared memory:  whole-run wall 2.44 -> 2.68 s;
+//   * __launch_bounds__(64, 16) to double occupancy: 42.4 -> 46.6 us and
+//     32.9 -> 45.2 us -- these kernels live on the memory-level parallelism of a
+//     single thread, not on the number of resident warps.
+// ============================================================================
+
+
 template <int DEPTH>
 __global__ __launch_bounds__(64, 1)
 void indexVecLN3Kernel_specialized(
@@ -132,7 +155,14 @@ public:
         if (cached_depth != depth) {
             cached_depth = depth;
             switch(depth) {
-                case 9:  cached_kernel = call_specialized<9>; break;
+                // [PERF] NOTE: this switches on the stencil DEPTH = interpolation order + 1, not
+    // on the order, so the shipped order-9 grids (depth 10) fall through to
+    // call_dynamic.  We measured the unrolled specialization for depth 10 and it is
+    // *slower* on an H100 (26.5 us vs 22.9 us for indexVecLN3): with
+    // __launch_bounds__(64,1) the fully unrolled body raises register pressure
+    // without buying latency hiding.  The even depths are therefore deliberately
+    // NOT listed; re-measure before adding them.
+                case 9: cached_kernel = call_specialized<9>; break;
                 case 11: cached_kernel = call_specialized<11>; break;
                 case 13: cached_kernel = call_specialized<13>; break;
                 case 15: cached_kernel = call_specialized<15>; break;
@@ -175,6 +205,129 @@ void indexVecLN3GPU(
     g_QKv_global_size = QKv.size();
     g_current_len = len; // store len for offset computation inside optimizer
     IndexVecLN3Optimizer::execute(weights, inds, qk_result, qr_result, stream);
+}
+
+// ============================================================================
+// [PERF] Batched LN3 interpolation.
+//
+// interpolateGPU() interpolates the A1 and A2 slices with two separate launches
+// of this kernel per Runge-Kutta stage, on two different streams.  It is the most
+// expensive kernel in the run (348 ms of 1.45 s of GPU time in a 1124-step
+// benchmark) and each launch is only (prod/64) blocks, so merging the two into a
+// single (blocks x 2) grid both halves the launch count and doubles the number of
+// resident blocks.
+//
+// BIT-EXACTNESS: the body is the dynamic kernel above, character for character.
+// Element j of slice k accumulates the same `depth` products in the same order
+// from the same operands; there is no reduction across threads and no shared
+// state.  Only the block-to-launch mapping changes.
+//
+// The batched path is taken only when the two slices agree in `prod` and `depth`
+// and the depth is not one of the values for which a fully unrolled kernel is
+// selected above; otherwise the two original launches are issued unchanged.
+// ============================================================================
+// [PERF] The occupancy hint was `__launch_bounds__(64, 1)`, i.e. "at least one
+// 64-thread block per SM", which lets ptxas spend as many registers as it likes:
+// it used 122-126 of them, so only ~8 blocks (512 of the 2048 threads an H100 SM
+// can hold) were resident and there was little to hide the memory latency with.
+// Asking for 16 blocks per SM does cap the budget (61 and 64 registers, no
+// spills) and does double the resident warps -- and it is SLOWER: measured on an
+// H100, indexVecLN3 goes 42.4 -> 46.6 us and indexMatAll 32.9 -> 45.2 us per
+// launch.  These kernels are limited by the memory-level parallelism of a single
+// thread (each one issues `depth` independent gathers), not by the number of
+// resident warps, so the extra registers are worth more than the occupancy.  The
+// hint is therefore left as it was; re-measure before changing it.
+//
+// (An occupancy hint is bit-exact either way: it changes register allocation and
+// instruction scheduling only.  nvcc does not reassociate floating-point
+// expressions, and --use_fast_math does not enable reassociation, so each thread
+// evaluates the same accumulation in the same order on the same operands.)
+__global__ __launch_bounds__(64, 1)
+void indexVecLN3Kernel_batched(
+    const double* __restrict__ QKv,
+    const double* __restrict__ QRv,
+    LN3PairDesc batch,
+    size_t depth,
+    size_t offset,
+    size_t prod)
+{
+    // [PERF] NOTE: the stencil weights are j-major (thread j reads w[j*depth + d]),
+    // so each of the `depth` loads of a warp touches ~20 cache lines for 256 useful
+    // bytes.  We tried staging the block's slice in shared memory with coalesced
+    // loads: it is bit-exact but *slower* on an H100 (whole-run wall 2.68 s vs
+    // 2.44 s) -- L1 already absorbs the reuse, and the extra __syncthreads and
+    // shared-memory footprint cost more than the coalescing buys.  Re-measure
+    // before trying it again.
+    const int k = blockIdx.y;
+    size_t j = blockIdx.x * blockDim.x + threadIdx.x;
+    if (j >= prod) return;
+    size_t index = batch.inds[k][j];
+    const double* w = batch.weights[k] + j * depth;
+    double qk = 0.0, qr = 0.0;
+    for (int d = 0; d < depth; ++d) {
+        double wj = w[d];
+        qk += wj * QKv[offset + index + d];
+        qr += wj * QRv[offset + index + d];
+    }
+    batch.qk_out[k][j] = qk;
+    batch.qr_out[k][j] = qr;
+}
+
+static bool dmfe_ln3_depth_is_specialized(size_t depth)
+{
+    switch (depth) {
+        case 9: case 11: case 13: case 15: case 17: return true;
+        default: return false;
+    }
+}
+
+void indexVecLN3GPU_pair(
+    const dmfe::device_vector<double>& weightsA,
+    const dmfe::device_vector<size_t>& indsA,
+    dmfe::device_vector<double>& qkA,
+    dmfe::device_vector<double>& qrA,
+    cudaStream_t streamA,
+    const dmfe::device_vector<double>& weightsB,
+    const dmfe::device_vector<size_t>& indsB,
+    dmfe::device_vector<double>& qkB,
+    dmfe::device_vector<double>& qrB,
+    cudaStream_t streamB,
+    const dmfe::device_vector<double>& QKv,
+    const dmfe::device_vector<double>& QRv,
+    size_t len,
+    cudaStream_t batchStream)
+{
+    const size_t prodA  = indsA.size();
+    const size_t prodB  = indsB.size();
+    const size_t depthA = weightsA.size() / prodA;
+    const size_t depthB = weightsB.size() / prodB;
+
+    if (prodA != prodB || depthA != depthB || dmfe_ln3_depth_is_specialized(depthA)) {
+        // Shapes differ, or an unrolled kernel is the better choice: keep the two
+        // original launches, on their original streams.
+        indexVecLN3GPU(weightsA, indsA, QKv, QRv, len, qkA, qrA, streamA);
+        indexVecLN3GPU(weightsB, indsB, QKv, QRv, len, qkB, qrB, streamB);
+        return;
+    }
+
+    LN3PairDesc b;
+    b.weights[0] = thrust::raw_pointer_cast(weightsA.data());
+    b.inds[0]    = thrust::raw_pointer_cast(indsA.data());
+    b.qk_out[0]  = thrust::raw_pointer_cast(qkA.data());
+    b.qr_out[0]  = thrust::raw_pointer_cast(qrA.data());
+    b.weights[1] = thrust::raw_pointer_cast(weightsB.data());
+    b.inds[1]    = thrust::raw_pointer_cast(indsB.data());
+    b.qk_out[1]  = thrust::raw_pointer_cast(qkB.data());
+    b.qr_out[1]  = thrust::raw_pointer_cast(qrB.data());
+
+    const size_t offset = QKv.size() - len;
+    const int threads = 64;                      // must match the single-slice kernel
+    const int blocks  = static_cast<int>((prodA + threads - 1) / threads);
+    dim3 grid(static_cast<unsigned>(blocks), 2u);
+    indexVecLN3Kernel_batched<<<grid, threads, 0, batchStream>>>(
+        thrust::raw_pointer_cast(QKv.data()),
+        thrust::raw_pointer_cast(QRv.data()),
+        b, depthA, offset, prodA);
 }
 
 // ================= indexVecLN3 (log QR) =====================

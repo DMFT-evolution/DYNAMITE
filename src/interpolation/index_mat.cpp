@@ -6,7 +6,9 @@
 #include "simulation/simulation_data.hpp"
 #include <algorithm>
 #include <numeric>
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 
 using namespace std;
 

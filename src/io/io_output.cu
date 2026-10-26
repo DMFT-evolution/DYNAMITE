@@ -94,18 +94,23 @@ __global__ void computeEnergyHistoryKernel(
     double t = t1grid[t_idx];
     size_t base_idx = t_idx * len;
     
+    // [CPC-REV] BUG FIX. This kernel (used only for the GPU energy history written
+    // to energy.txt) still evaluated the beta_0 contribution of Eq. (14) as
+    // f'(C(t,0))/T0 and, in addition, multiplied it by t together with the memory
+    // integral.  The correct expression is
+    //     E(t) = -[ t * sum_i nu_i f'(C(t,theta_i t)) R(t,theta_i t) + f(C(t,0))/T0 ]
+    // i.e. f and not f', and no factor t on the beta_0 term.  The CPU path
+    // (energyCPU(), src/EOMs/time_steps.cpp) and the GPU scalar energyGPU() were
+    // corrected in commit de696f84; this kernel was missed, so CPU and GPU energy
+    // histories disagreed by [t f'(C(t,0)) - f(C(t,0))]/T0 whenever T0 was finite.
+    // For the T0 = inf runs of the manuscript the term is ~1e-50 and both agree.
     for (int i = tid; i < len; i += nthreads) {
         double qk = QKv[base_idx + i];
         double qr = QRv[base_idx + i];
         double sigmaK = DflambdaGPU(qk);
-        
+
         // Match the ConvAGPU scaling approach
         sum += sigmaK * qr * integ_shared[i];
-        
-        // Add direct term for i=0
-        if (i == 0) {
-            sum += sigmaK / T0;
-        }
     }
     
     // Block-level reduction
@@ -121,7 +126,9 @@ __global__ void computeEnergyHistoryKernel(
     
     // Write final energy (negative because it's -energy)
     if (tid == 0) {
-        energy_history[t_idx] = -t * reduction_shared[0];
+        // [CPC-REV] see the note above: beta_0 term added outside the t prefactor
+        // and evaluated with f, not f'.
+        energy_history[t_idx] = -(t * reduction_shared[0] + flambdaGPU(QKv[base_idx]) / T0);
     }
 }
 
@@ -214,285 +221,29 @@ SimulationDataSnapshot createDataSnapshot()
     return snapshot;
 }
 
-void saveHistory(const std::string& filename, double delta, double delta_t, 
-                 SimulationData& simulation, size_t len_param, double T0_param, bool gpu_param)
+// Energy E(t_n) for all stored times on the GPU; used by saveHistory()
+// (src/io/io_save_history.cpp).
+void energyHistoryGPU(SimulationData& simulation, size_t len_param, double T0_param,
+                      std::vector<double>& energy_history)
 {
-    // Ensure data is on CPU for saving
-    if (gpu_param) {
-        copyVectorsToCPU(simulation);
-    }
-    
-    size_t t1len = simulation.host->t1grid.size();
-    std::vector<double> energy_history(t1len);
-    std::vector<double> qk0_history(t1len);
-    
-    if (gpu_param) {
-        // Use GPU to compute energy history efficiently
-        dmfe::device_vector<double> d_energy_history(t1len);
+    const size_t t1len = simulation.device->t1grid.size();
+    dmfe::device_vector<double> d_energy_history(t1len);
 
-        int threads = 64;
-        size_t shmem = len_param * sizeof(double) + threads * sizeof(double);
+    int threads = 64;
+    size_t shmem = len_param * sizeof(double) + threads * sizeof(double);
 
-        computeEnergyHistoryKernel<<<t1len, threads, shmem>>>(
-            thrust::raw_pointer_cast(simulation.device->QKv.data()),
-            thrust::raw_pointer_cast(simulation.device->QRv.data()),
-            thrust::raw_pointer_cast(simulation.device->integ.data()),
-            thrust::raw_pointer_cast(simulation.device->theta.data()),
-            thrust::raw_pointer_cast(simulation.device->t1grid.data()),
-            thrust::raw_pointer_cast(d_energy_history.data()),
-            T0_param, len_param, t1len
-        );
-        
-        // Copy energy history back to CPU
-        thrust::copy(d_energy_history.begin(), d_energy_history.end(), energy_history.begin());
-        
-        // Extract QK[0] values for each time step (parallelized on CPU side)
-        #pragma omp parallel for schedule(static)
-        for (long long i = 0; i < (long long)t1len; ++i) {
-            qk0_history[i] = simulation.host->QKv[i * len_param];  // QKv[i * len] is QK[0] at time step i
-        }
-    } else {
-        // CPU computation of energy history
-        #pragma omp parallel for schedule(static)
-        for (long long i = 0; i < (long long)t1len; ++i) {
-            std::vector<double> temp(len_param, 0.0);
-            std::vector<double> QKv_i(simulation.host->QKv.begin() + i * len_param,
-                                      simulation.host->QKv.begin() + (i + 1) * len_param);
-            std::vector<double> QRv_i(simulation.host->QRv.begin() + i * len_param,
-                                      simulation.host->QRv.begin() + (i + 1) * len_param);
-            SigmaK(QKv_i, temp);
-            energy_history[i] = -(ConvA(temp, QRv_i, simulation.host->t1grid[i])[0] + flambda(QKv_i[0]) / T0_param);
-            qk0_history[i] = QKv_i[0];  // QK[0] at time step i
-        }
-    }
-    
-    // Get directory path from filename
-    std::string dirPath = filename.substr(0, filename.find_last_of('/'));
-    
-    // Progress mapping for histories phase: [0.65 .. 0.80]
-    const double p_start = 0.65;
-    const double p_end   = 0.80;
-    const double p_span  = (p_end - p_start);
-    const double last_t1 = simulation.host->t1grid.empty() ? 0.0 : simulation.host->t1grid.back();
-    auto update_hist_prog = [&](size_t done, size_t total){
-        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
-        if (frac > p_end) frac = p_end;
-        if (frac < p_start) frac = p_start;
-        _setSaveProgress(frac, last_t1, "histories");
-    };
-    const bool write_times = config.debug && !simulation.host->debug_step_runtimes.empty();
-    // IMPORTANT: step_metrics is *not* sparsified/downsampled; we write all recorded debug telemetry.
-    // Keep vector usage conservative: only consume indices that exist, and keep time/memory fallbacks.
-    const size_t debug_sample_count = write_times ? simulation.host->debug_step_runtimes.size() : 0;
-    const auto& memory_history = simulation.host->debug_step_memory;
-    const bool memory_available = !memory_history.empty();
-    size_t total_lines = simulation.host->t1grid.size() * 3 + debug_sample_count; // rvec + energy + qk0 (+times when debug)
-    size_t done_lines = 0;
-    update_hist_prog(done_lines, total_lines);
+    computeEnergyHistoryKernel<<<t1len, threads, shmem>>>(
+        thrust::raw_pointer_cast(simulation.device->QKv.data()),
+        thrust::raw_pointer_cast(simulation.device->QRv.data()),
+        thrust::raw_pointer_cast(simulation.device->integ.data()),
+        thrust::raw_pointer_cast(simulation.device->theta.data()),
+        thrust::raw_pointer_cast(simulation.device->t1grid.data()),
+        thrust::raw_pointer_cast(d_energy_history.data()),
+        T0_param, len_param, t1len
+    );
 
-    // Save rvec history
-    std::string rvecFilename = dirPath + "/rvec.txt";
-    std::ofstream rvecFile(rvecFilename);
-    if (rvecFile) {
-        rvecFile << std::fixed << std::setprecision(16);
-        rvecFile << "# Time\trvec\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            rvecFile << simulation.host->t1grid[i] << "\t" << simulation.host->rvec[i] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        rvecFile.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
-    }
-    
-    // Save energy history
-    std::string energyFilename = dirPath + "/energy.txt";
-    std::ofstream energyFile(energyFilename);
-    if (energyFile) {
-        energyFile << std::fixed << std::setprecision(16);
-        energyFile << "# Time\tEnergy\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            energyFile << simulation.host->t1grid[i] << "\t" << energy_history[i] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        energyFile.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
-    }
-    
-    // Save QK[0] history
-    std::string qk0Filename = dirPath + "/qk0.txt";
-    std::ofstream qk0File(qk0Filename);
-    if (qk0File) {
-        qk0File << std::fixed << std::setprecision(16);
-        qk0File << "# Time\tQK[0]\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            qk0File << simulation.host->t1grid[i] << "\t" << qk0_history[i] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        qk0File.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
-    }
-
-    // Save wall-clock runtime history when debug telemetry is available
-    if (write_times && debug_sample_count > 0) {
-        std::string stepMetricsFilename = dirPath + "/step_metrics.txt";
-        std::ofstream timesFile(stepMetricsFilename);
-        if (timesFile) {
-            timesFile << std::fixed << std::setprecision(16);
-            std::string memory_header = gpu_param ? "GPUMemoryMB" : "RAMMemoryMB";
-            timesFile << "# Time\tRuntimeSeconds\t" << memory_header << "\n";
-            for (size_t i = 0; i < debug_sample_count; ++i) {
-                // Use the debug time vector when present; otherwise fall back to closest t1grid entry.
-                size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
-                double sim_time_value = (i < simulation.host->debug_step_times.size())
-                    ? simulation.host->debug_step_times[i]
-                    : (t1len ? simulation.host->t1grid[safe_idx] : 0.0);
-
-                // Memory telemetry might be absent or shorter; use last-known value when available.
-                double memory_value = (i < memory_history.size())
-                    ? memory_history[i]
-                    : (memory_available ? memory_history.back() : 0.0);
-
-                timesFile << sim_time_value << "\t" << simulation.host->debug_step_runtimes[i]
-                          << "\t" << memory_value << "\n";
-                if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-            }
-            timesFile.close();
-        } else {
-            std::cerr << dmfe::console::ERR() << "Could not open file " << stepMetricsFilename << std::endl;
-        }
-    }
-    
-    // Consolidated summary line for history files
-    if (config.debug) {
-    std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0"
-          << (write_times ? ", step_metrics" : "") << "; " << t1len 
-                  << " time points) under " << dirPath << std::endl;
-    }
-    // Ensure we end histories phase at 0.80
-    update_hist_prog(total_lines, total_lines);
-}
-
-// Async version of saveHistory that works with snapshot data (simplified, no GPU operations)
-void saveHistoryAsync(const std::string& filename, double delta, double delta_t, const SimulationDataSnapshot& snapshot)
-{
-    // Get directory path from filename
-    std::string dirPath = filename.substr(0, filename.find_last_of('/'));
-    
-    size_t t1len = snapshot.t1grid.size();
-    std::vector<double> energy_history(t1len);
-    
-    // CPU computation of energy history (same as synchronous version)
-    #pragma omp parallel for schedule(static)
-    for (long long i = 0; i < (long long)t1len; ++i) {
-        std::vector<double> temp(snapshot.current_len, 0.0);
-        std::vector<double> QKv_i(snapshot.QKv.begin() + i * snapshot.current_len,
-                                  snapshot.QKv.begin() + (i + 1) * snapshot.current_len);
-        std::vector<double> QRv_i(snapshot.QRv.begin() + i * snapshot.current_len,
-                                  snapshot.QRv.begin() + (i + 1) * snapshot.current_len);
-        SigmaK(QKv_i, temp);
-        energy_history[i] = -(ConvA(temp, QRv_i, snapshot.t1grid[i])[0] + flambda(QKv_i[0]) / snapshot.config_snapshot.T0);
-    }
-    
-    // Progress mapping for histories phase: [0.65 .. 0.80]
-    const double p_start = 0.65;
-    const double p_end   = 0.80;
-    const double p_span  = (p_end - p_start);
-    const double last_t1 = snapshot.t1grid.empty() ? 0.0 : snapshot.t1grid.back();
-    auto update_hist_prog = [&](size_t done, size_t total){
-        double frac = p_start + (total ? (p_span * (double)done / (double)total) : 0.0);
-        if (frac > p_end) frac = p_end;
-        if (frac < p_start) frac = p_start;
-        _setSaveProgress(frac, last_t1, "histories");
-    };
-    const bool write_times = config.debug && !snapshot.debug_step_runtimes.empty();
-    // IMPORTANT: step_metrics is *not* sparsified/downsampled; we write all recorded debug telemetry.
-    const size_t debug_sample_count = write_times ? snapshot.debug_step_runtimes.size() : 0;
-    const auto& memory_history = snapshot.debug_step_memory;
-    const bool memory_available = !memory_history.empty();
-    size_t total_lines = snapshot.t1grid.size() * 3 + debug_sample_count;
-    size_t done_lines = 0;
-    update_hist_prog(done_lines, total_lines);
-
-    // Save rvec history
-    std::string rvecFilename = dirPath + "/rvec.txt";
-    std::ofstream rvecFile(rvecFilename);
-    if (rvecFile) {
-        rvecFile << std::fixed << std::setprecision(16);
-        rvecFile << "# Time\trvec\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            rvecFile << snapshot.t1grid[i] << "\t" << snapshot.rvec[i] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        rvecFile.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << rvecFilename << std::endl;
-    }
-    
-    // Save energy history
-    std::string energyFilename = dirPath + "/energy.txt";
-    std::ofstream energyFile(energyFilename);
-    if (energyFile) {
-        energyFile << std::fixed << std::setprecision(16);
-        energyFile << "# Time\tEnergy\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            energyFile << snapshot.t1grid[i] << "\t" << energy_history[i] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        energyFile.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << energyFilename << std::endl;
-    }
-    
-    // Save QK[0] history
-    std::string qk0Filename = dirPath + "/qk0.txt";
-    std::ofstream qk0File(qk0Filename);
-    if (qk0File) {
-        qk0File << std::fixed << std::setprecision(16);
-        qk0File << "# Time\tQK[0]\n";
-        for (size_t i = 0; i < t1len; ++i) {
-            qk0File << snapshot.t1grid[i] << "\t" << snapshot.QKv[i * snapshot.current_len] << "\n";
-            if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-        }
-        qk0File.close();
-    } else {
-    std::cerr << dmfe::console::ERR() << "Could not open file " << qk0Filename << std::endl;
-    }
-
-    if (write_times && debug_sample_count > 0) {
-        std::string stepMetricsFilename = dirPath + "/step_metrics.txt";
-        std::ofstream timesFile(stepMetricsFilename);
-        if (timesFile) {
-            timesFile << std::fixed << std::setprecision(16);
-            std::string memory_header = snapshot.config_snapshot.gpu ? "GPUMemoryMB" : "RAMMemoryMB";
-            timesFile << "# Time\tRuntimeSeconds\t" << memory_header << "\n";
-            for (size_t i = 0; i < debug_sample_count; ++i) {
-                size_t safe_idx = t1len ? std::min(i, t1len - 1) : 0;
-                double sim_time_value = (i < snapshot.debug_step_times.size())
-                    ? snapshot.debug_step_times[i]
-                    : (t1len ? snapshot.t1grid[safe_idx] : 0.0);
-                double memory_value = (i < memory_history.size())
-                    ? memory_history[i]
-                    : (memory_available ? memory_history.back() : 0.0);
-                timesFile << sim_time_value << "\t" << snapshot.debug_step_runtimes[i]
-                          << "\t" << memory_value << "\n";
-                if ((i & 0x3FF) == 0) { done_lines += 1024; update_hist_prog(done_lines, total_lines); }
-            }
-            timesFile.close();
-        } else {
-            std::cerr << dmfe::console::ERR() << "Could not open file " << stepMetricsFilename << std::endl;
-        }
-    }
-    
-    // Consolidated summary line for history files (async)
-    if (config.debug) {
-    std::cout << dmfe::console::SAVE() << "Saved histories (rvec, energy, qk0"
-        << (write_times ? ", step_metrics" : "") << "; " << t1len 
-          << " time points) under " << dirPath << " (async)" << std::endl;
-    }
-    update_hist_prog(total_lines, total_lines);
+    energy_history.resize(t1len);
+    thrust::copy(d_energy_history.begin(), d_energy_history.end(), energy_history.begin());
 }
 
 

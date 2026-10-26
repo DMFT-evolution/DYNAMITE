@@ -237,7 +237,11 @@ std::string findExistingParamDir(const std::string& resultsDir_param, int p_para
                 if (fileExists(param_file) && checkParametersMatch(param_file, p_param, p2_param, lambda_param, T0_param, Gamma_param, len_param, delta_t_min_param, delta_max_param, use_serk2_param)) {
                     // Also check version compatibility
                     VersionAnalysis analysis = analyzeVersionCompatibility(param_file);
-                    if (analysis.level == VersionCompatibility::IDENTICAL || analysis.level == VersionCompatibility::COMPATIBLE || analysis.level == VersionCompatibility::WARNING) {
+                    // [CPC-REV] with -I true, runs written by an incompatible version are
+                    // found as well; before, they were skipped here, so that the option
+                    // never reached the load-time check that it controls.
+                    if (analysis.level == VersionCompatibility::IDENTICAL || analysis.level == VersionCompatibility::COMPATIBLE || analysis.level == VersionCompatibility::WARNING
+                        || (analysis.level == VersionCompatibility::INCOMPATIBLE && config.allow_incompatible_versions)) {
                         closedir(d);
                         return subdir;
                     }

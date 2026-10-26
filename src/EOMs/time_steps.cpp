@@ -9,7 +9,9 @@
 #include "math/math_sigma.hpp"
 #include "io/io_utils.hpp"
 #include <vector>
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 
 using namespace std;
 
@@ -166,7 +168,10 @@ void appendAll(const vector<double>& qK,
 
 double energyCPU()
 {
-    double qk0 = sim->host->QKv.back();
+    // [CPC-REV] C(t,0) is the FIRST entry of the last slice (theta_1 = 0); this used
+    // QKv.back(), i.e. C(t,t) = 1, so that with finite T0 the CPU energy written to
+    // correlation.txt contained -f(1)/T0 instead of -f(C(t,0))/T0.
+    double qk0 = sim->host->QKv[sim->host->QKv.size() - config.len];
     double t = sim->host->t1grid.back();
 
     std::vector<double> temp(config.len);

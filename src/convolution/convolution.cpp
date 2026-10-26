@@ -1,7 +1,9 @@
 #include "convolution/convolution.hpp"
 #include "core/globals.hpp"
 
+#if defined(_OPENMP)
 #include <omp.h>
+#endif   // [CPC-REV] serial build without OpenMP
 
 std::vector<double> ConvA(const std::vector<double>& f, const std::vector<double>& g, const double t)
 {

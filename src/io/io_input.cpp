@@ -28,6 +28,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <unordered_map>
+#include <charconv>
 
 #if defined(H5_RUNTIME_OPTIONAL)
 #include "io/h5_runtime.hpp"
@@ -52,34 +53,118 @@ extern std::mutex saveMutex;
 extern bool saveInProgress;
 extern std::condition_variable saveCondition;
 
+// ============================================================================
+// [PERF] Grid loading.
+//
+// The Grid_data/<L>/ directory holds ~9.5 million numbers in text form (192 MB
+// for L = 512, most of it in the three weights files).  They used to be read one
+// at a time with `file >> v`, i.e. through std::num_get, which costs ~150 ns per
+// number: 1.4 s of every single run, more than a third of the wall time of a
+// short benchmark, spent inside fgets/istream.  The file is now read once into
+// memory and scanned with std::from_chars (or strtod where the standard library
+// lacks the floating-point overload).
+//
+// BIT-EXACTNESS: std::from_chars and std::strtod are both required to return the
+// value nearest to the decimal text, with round-to-nearest ties-to-even -- the
+// same guarantee, and the same result, as the std::num_get conversion they
+// replace (num_get in fact defers to strtod).  The programme is not built with a
+// non-"C" global locale, so no locale-dependent decimal separator is involved.
+// The parsed doubles are therefore the same bit patterns as before.
+// ============================================================================
+#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
+#define DMFE_HAVE_FROM_CHARS_DOUBLE 1
+#include <charconv>
+#else
+#define DMFE_HAVE_FROM_CHARS_DOUBLE 0
+#endif
+
+namespace {
+
+// Read a whole file into a NUL-terminated buffer.  Returns false if it cannot be
+// opened, so that callers keep the previous "empty vector + message" behaviour.
+bool dmfe_slurp(const std::string &filename, std::vector<char> &buf)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+        return false;
+    file.seekg(0, std::ios::end);
+    const std::streamoff n = file.tellg();
+    file.seekg(0, std::ios::beg);
+    buf.resize(static_cast<size_t>(n < 0 ? 0 : n) + 1);
+    if (n > 0)
+        file.read(buf.data(), n);
+    buf[buf.size() - 1] = '\0';
+    return true;
+}
+
+inline bool dmfe_is_space(char c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v';
+}
+
+} // namespace
+
 // Basic imports
 std::vector<double> importVectorFromFile(const std::string &filename)
 {
     std::vector<double> data;
-    std::ifstream file(filename);
-    if (!file.is_open())
+    std::vector<char> buf;
+    if (!dmfe_slurp(filename, buf))
     {
         std::cerr << dmfe::console::ERR() << "Could not open file " << filename << std::endl;
         return data;
     }
-    double v;
-    while (file >> v)
+
+    const char *p = buf.data();
+    const char *end = buf.data() + buf.size() - 1;   // exclude the terminating NUL
+    // One reallocation-free pass is not worth a counting pass: reserve on the
+    // observed density of the shipped grids (~24 bytes per number) instead.
+    data.reserve(static_cast<size_t>(end - p) / 20 + 16);
+    while (p < end)
+    {
+        while (p < end && dmfe_is_space(*p)) ++p;
+        if (p >= end) break;
+        double v;
+#if DMFE_HAVE_FROM_CHARS_DOUBLE
+        auto res = std::from_chars(p, end, v);
+        if (res.ec != std::errc())
+            break;                                   // malformed: stop, as `>>` did
+        p = res.ptr;
+#else
+        char *q = nullptr;
+        v = std::strtod(p, &q);
+        if (q == p) break;                           // malformed: stop, as `>>` did
+        p = q;
+#endif
         data.push_back(v);
+    }
     return data;
 }
 
 std::vector<size_t> importIntVectorFromFile(const std::string &filename)
 {
     std::vector<size_t> data;
-    std::ifstream file(filename);
-    if (!file.is_open())
+    std::vector<char> buf;
+    if (!dmfe_slurp(filename, buf))
     {
         std::cerr << dmfe::console::ERR() << "Could not open file " << filename << std::endl;
         return data;
     }
-    size_t v;
-    while (file >> v)
-        data.push_back(v);
+
+    const char *p = buf.data();
+    const char *end = buf.data() + buf.size() - 1;
+    data.reserve(static_cast<size_t>(end - p) / 2 + 16);
+    while (p < end)
+    {
+        while (p < end && dmfe_is_space(*p)) ++p;
+        if (p >= end) break;
+        unsigned long long v = 0;
+        auto res = std::from_chars(p, end, v);
+        if (res.ec != std::errc())
+            break;
+        p = res.ptr;
+        data.push_back(static_cast<size_t>(v));
+    }
     return data;
 }
 
@@ -368,6 +453,11 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     bool have_file_tail_fit_enabled = false; // track presence
     int file_sparsify_sweeps = -1; // default: -1 (auto)
     bool have_file_sparsify_sweeps = false; // track presence to preserve backward-compat
+    // [CPC-REV] maintenance-pass interval and error norm; absent in legacy files
+    int file_sparsify_interval = 100000;
+    bool have_file_sparsify_interval = false;
+    std::string file_error_norm = "sum";
+    bool have_file_error_norm = false;
     // Capture saved grid provenance mirrored into params.txt (if present)
     std::unordered_map<std::string, std::string> saved_grid; // keys without prefix: len, Tmax, spline_order, interp_method, interp_order, fh_stencil, alpha, delta
     std::string line;
@@ -408,6 +498,14 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
         else if (name == "sparsify_sweeps") {
             iss >> file_sparsify_sweeps;
             have_file_sparsify_sweeps = true;
+        }
+        else if (name == "sparsify_interval") {
+            iss >> file_sparsify_interval;
+            have_file_sparsify_interval = true;
+        }
+        else if (name == "error_norm") {
+            iss >> file_error_norm;
+            have_file_error_norm = true;
         }
         else if (name == "log_response_interp") {
             std::string val; iss >> val;
@@ -482,6 +580,15 @@ bool checkParametersMatch(const std::string &paramFilename, int p_param, int p2_
     // Compare sparsify_sweeps when present in params.txt; skip if absent to keep legacy files loadable
     if (have_file_sparsify_sweeps && file_sparsify_sweeps != config.sparsify_sweeps) {
         mismatch("sparsify_sweeps", std::to_string(file_sparsify_sweeps), std::to_string(config.sparsify_sweeps));
+    }
+    // [CPC-REV] Compare sparsify_interval and error_norm when present (skip if absent,
+    // so that files written before these options existed stay loadable).  A different
+    // error norm changes the meaning of delta_max, so such a run must not be resumed.
+    if (have_file_sparsify_interval && file_sparsify_interval != config.sparsify_interval) {
+        mismatch("sparsify_interval", std::to_string(file_sparsify_interval), std::to_string(config.sparsify_interval));
+    }
+    if (have_file_error_norm && file_error_norm != errorNormName(config.error_norm)) {
+        mismatch("error_norm", file_error_norm, errorNormName(config.error_norm));
     }
     // Compare tail_fit_enabled when present (backward-compatible skip if absent)
     if (have_file_tail_fit_enabled && file_tail_fit_enabled != config.tail_fit_enabled) {

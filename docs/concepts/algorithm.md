@@ -1,102 +1,75 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm (from Lang–Sachdev–Diehl, Phys. Rev. Lett. **135**, 247101 (2025))
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/algorithm.svg" alt="Algorithm icon"/> Algorithm
 
-**Audience:** readers who want the high-level algorithmic picture and terminology.
+This page summarizes the method implemented in DYNAMITE. A detailed account, with benchmarks, is given in the [DYNAMITE paper](https://arxiv.org/abs/2604.06309); the method was first introduced in J. Lang, S. Sachdev, S. Diehl, Phys. Rev. Lett. **135**, 247101 (2025) [[arXiv:2504.06849](https://arxiv.org/abs/2504.06849)]. The following pages give the details: [Grid and interpolation](interpolation-grids.md), [Time integration](time-integration.md) and [Sparsification](sparsification.md).
 
-This section summarizes the numerical renormalization algorithm implemented in DYNAMITE for solving non-stationary dynamical mean-field equations (DMFT) after a quench.
+## The problem
 
-## Dynamical equations
+The equations of motion ([Equations](eoms-and-observables.md)) contain integrals over the whole past. On an equidistant time grid with $N$ steps, each step requires $\mathcal O(N^2)$ operations to evaluate these integrals for all $t'$, so the total cost grows as $N^3$, and storing $C$ and $R$ requires $\mathcal O(N^2)$ memory. In glassy systems this cannot be avoided by truncating the memory: because of aging the system never becomes stationary, and the dynamics at late times still depends on the whole history.
 
-We evolve correlation C(t,t') and response R(t,t') for t ≥ t'. The equations take the schematic form
+## Discretization
+
+Even at times $t$ much larger than any microscopic scale $\tau_{\rm micro}$, the two-time functions vary quickly in the relative time $\tau=t-t'$ for $\tau\lesssim\tau_{\rm micro}$, and after a quench also in $t'$ for $t'\lesssim\tau_{\rm micro}$. In between they vary on scales that grow with $t$. DYNAMITE therefore writes
 
 $$
-\partial_t C(t,t') = \mathcal{F}[C,R](t,t')\,,\qquad
-\partial_t R(t,t') = \mathcal{G}[C,R](t,t')\,.
+A(t,t')=\mathcal A(t,\theta)\,,\qquad \theta=t'/t\in[0,1]\,,
 $$
 
-For the spherical mixed p-spin model (representative), the functionals \(\mathcal{F},\mathcal{G}\) contain convolution-like memory integrals in both time arguments with kernels determined by the interaction orders and couplings. The renormalization scheme parses these integrals to achieve (sub)linear scaling in simulated time.
+and samples $\theta$ on a fixed grid $\theta_1=0<\theta_2<\dots<\theta_L=1$ that is dense near both ends. The precise choice of the $\theta_i$ is not important as long as the microscopic scales stay resolved,
 
-## Numerical renormalization: core idea
+$$
+\theta_{i+1}-\theta_i\ll\frac{\tau_{\rm micro}}{t}\quad\text{wherever}\quad\min(\theta_i,1-\theta_i)\lesssim\frac{\tau_{\rm micro}}{\min(t',\tau)}\,,
+$$
 
-- Represent the 2D time plane on an adaptive sparse grid.
-- Interleave time evolution with periodic sparsification to prune redundant history while preserving interpolation accuracy.
-- Maintain a compressed representation of C and R enabling fast convolution-like updates via precomputed index/weight maps.
+for all simulated times $t$. The times $t_n$ themselves are chosen by an adaptive Runge–Kutta method, with small steps during transients and large steps when the evolution is slow. The stored values thus lie on the points $(t_n,\theta_i t_n)$: dense near the diagonal and near $t'=0$, and sparser in between.
 
-This reduces the asymptotic cost from \(\mathcal{O}(T^3)\) to linear in the total simulated time (see paper for precise exponents and regimes), enabling orders-of-magnitude longer runs.
+Keeping $L$ fixed while $t$ grows means that the resolution in $t'$ becomes coarser in absolute terms as the system ages, while the resolution of the microscopic scales near the two edges is maintained. In the language of the renormalization group this is a coarse-graining step, which is why the method is called a numerical renormalization.
 
-Important: DYNAMITE uses exactly the non-equidistant grid defined in the Phys. Rev. Lett. article. The performance gains critically rely on this grid; substituting an equidistant grid drastically reduces the accessible times. See [Interpolation grids](interpolation-grids.md) for details.
+The grid could in principle be made adaptive as well, but this has not been necessary in any of our simulations: only the discretization in $t$ is adaptive.
 
-## Discrete scheme and data layout
+## Memory integrals
 
-- Store fields on a sparse set of (t, t') nodes; the diagonal t=t' is tracked separately for observables.
-- Precompute interpolation structures (positions, indices, weights) on a base grid of length L; these are used for fast 2D interpolation.
-- History is organized in layers corresponding to renormalized time scales; layers can be coarsened as t grows while keeping error below a tolerance.
+With $t'=\theta_i t$, the two types of memory integrals in the equations of motion become
 
-## Symbols in outputs
+$$
+\begin{aligned}
+\int_0^{t'}\mathrm ds\,A(t,s)\,B(t',s) &= t\,\theta_i\int_0^1\mathrm du\;\mathcal A\big(t,\theta_i u\big)\;\mathcal B\big(\theta_i t,\,u\big)\,,\\
+\int_{t'}^{t}\mathrm ds\,A(t,s)\,B(s,t') &= t\,(1-\theta_i)\int_0^1\mathrm du\;\mathcal A\big(t,\phi\big)\;\mathcal B\big(\phi\, t,\,\theta_i/\phi\big)\Big|_{\phi=\theta_i+(1-\theta_i)u}\,.
+\end{aligned}
+$$
 
-- `QKv`, `QRv`: grid samples of C and R
-- `dQKv`, `dQRv`: their time derivatives
-- `t1grid`: time nodes used by the integrator
-- `rvec`, `drvec`: reduced observables along the diagonal
+The integrals over $u$ are evaluated with the same $\theta$ grid as quadrature nodes, $u=\theta_j$, and quadrature weights $\nu_j$ from a spline (quintic by default). This needs the fields at the points
 
-## Integrator and update cycle
+$$
+\phi^{(1)}_{ij}=\theta_i\,\theta_j\,,\qquad \phi^{(2)}_{ij}=\theta_i+(1-\theta_i)\,\theta_j\,,
+$$
 
-Time stepping follows the adaptive RK54 default and automatically switches to SSPRK104 once RK54 approaches its stability limit. After each sparsification, the code may attempt SERK2 (can be disabled via CLI). One step:
+which are again dense where needed, near $\phi=0$ and $\phi=1$. They are obtained by interpolation:
 
-1. Propose \(\Delta t\) from local error control (error tolerance ε, minimum step size).
-2. Interpolate required history slices for convolution terms using precomputed indices and weights.
-3. Evaluate \(\mathcal{F},\mathcal{G}\) to obtain \(\partial_t C, \partial_t R\).
-4. Advance to t+\(\Delta t\) with the active integrator (RK54 or SSPRK104; SERK2 when trialed after sparsify); update diagonal quantities.
-5. If pruning is due, sparsify history with a criterion ensuring interpolation error below target.
+- **in $\theta$**, with local polynomial interpolation of order 9 by default. The $\phi^{(1,2)}_{ij}$ do not depend on $t$, so the interpolation weights are computed once, when the grid is generated, and stored in `Grid_data/<L>/`.
+- **in $t$**, for the factor $\mathcal B$ whose first argument is $\theta_i t$ or $\phi t$, which lies between stored times. Here DYNAMITE uses cubic Hermite interpolation, with the time derivatives that the Runge–Kutta method provides anyway. The stored times change at every step, so the interpolation intervals are searched anew; because a step is small compared with $t$, the search starts from the previous result.
 
-## Pseudocode
+For each of the $L$ values of $\theta_i$, each integral is a sum over $L$ quadrature nodes, so one evaluation of the right-hand side costs $\mathcal O(L^2)$ operations, independent of the number of stored times. The time is dominated by the interpolations, which are limited by memory access rather than by arithmetic.
 
-```mermaid
-flowchart TD
-  start([Start: set initial C, R, μ])
-  init[Initialize grids<br/>precompute interpolation/integration weights]
-  propose[Adapt time step]
-  interp[Interpolate history]
-  eoms[Evaluate EOMs<br/>compute ∂ₜ C, ∂ₜ R, ∂ₜ μ]
-  step[Update/Append history]
-  check{Check error bounds}
-  back[Roll back]
-  diag[Update observables]
-  sparsify_check{Sparsify due?}
-  sparsify[Sparsify history layers<br/>save checkpoint]
-  continue_check{Reached stop criteria?}
-  stop([Stop])
+## One time step
 
-  start --> init --> propose --> G1  
-  step --> diag --> check -->|OK| sparsify_check
-  check --> |not OK| back --> propose
-  sparsify_check -->|Yes| sparsify --> continue_check
-  sparsify_check -->|No| continue_check
-  continue_check -->|No| propose
-  continue_check -->|Yes| stop
+1. Interpolate $C$ and $R$ at the nodes $\phi^{(1,2)}_{ij}$ and evaluate the memory integrals.
+2. Evaluate the right-hand side of the equations of motion along the rays $\theta_i$.
+3. Repeat for every stage of the Runge–Kutta method, and append the new time slice to the history.
+4. Compare the Runge–Kutta error estimate with the tolerance $\epsilon$ and adapt the next step size. If the error exceeds $2\epsilon$, discard the last ten time slices and halve the step.
+5. Every `--sparsify-interval` steps (100000 by default): remove time slices that the interpolation in $t$ does not need, and write a checkpoint.
 
-subgraph G1[Runge-Kutta update]
-  direction LR
-  interp --> eoms -->step
-end
-```
+## Cost
 
-## Error control and accuracy
+Each step has a fixed cost of $\mathcal O(L^2)$. As long as the step size grows with $t$, the run time grows sublinearly with the simulated time. Once the step size reaches the stability limit of the explicit Runge–Kutta method, the cost becomes linear in $t$. Without sparsification the memory grows linearly with the number of steps; with sparsification the growth is sublinear (about $t^{1/3}$ in the benchmarks of the [DYNAMITE paper](https://arxiv.org/abs/2604.06309)).
 
-- Runge-Kutta error is controlled via a user-configured error tolerance ε.
-- Sparsification removes data points if their removal affects the reconstructed history by less than a fixed fraction of ε.
+A related, earlier approach by Kim and Latz keeps a fixed number of equidistant times and, when the grid is full, removes every second point and doubles the step. It is very efficient, but the errors are not controlled, and for the mixed spherical $p$-spin model they grow rapidly. Choosing the $\theta_i$ and the time steps as described above avoids this.
 
-For the exact runtime configuration options and defaults, see [Usage](../usage.md).
-- Convergence in L (512/1024/2048) must be checked for quantities of interest, especially near dynamical phase transitions.
+## Error control
 
-## Complexity and performance
+The following errors are controlled separately:
 
-The nested sparse representation amortizes the cost of memory integrals, leading to (sub)linear growth with simulated time. GPU kernels accelerate interpolation and convolution; CPU fallback preserves portability. Asynchronous I/O decouples storage from integration.
+- the Runge–Kutta error, through the tolerance `-e` ([Time integration](time-integration.md));
+- the interpolation and quadrature errors in $\theta$, through $L$ and the interpolation and spline orders chosen when generating the grid ([Grid and interpolation](interpolation-grids.md));
+- the error from removing time slices, which is kept below the same tolerance `-e` ([Sparsification](sparsification.md)).
 
-## References
-
-- J. Lang, S. Sachdev, M. Diehl, “Numerical renormalization of glassy dynamics,” Phys. Rev. Lett. **135**, 247101 (2025), [doi:10.1103/z64g-nqs6](https://journals.aps.org/prl/abstract/10.1103/z64g-nqs6).
-
-## See also
-
-- [EOMs and Observables](eoms-and-observables.md)
-- [Time Integration](time-integration.md)
+Because errors made early are carried along by the memory integrals, reaching late times requires small errors per step. The local criteria do not by themselves bound the error at late times, so results should be checked by repeating a run with a larger $L$ and a smaller `-e`.

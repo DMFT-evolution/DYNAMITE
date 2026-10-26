@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 r"""Plot the threshold-energy gap: E(t) - E_th on log-log axes.
 
-DYNAMITE writes `energy.txt` and `params.txt` into each output directory.
+DYNAMITE writes `correlation.txt` (columns: time, energy, C(t,0)) and
+`params.txt` into each output directory, and `energy.txt` at every checkpoint.
 This script:
-    1) reads E(t) from energy.txt (2+ columns: time, energy)
+    1) reads E(t) from energy.txt if present, otherwise from correlation.txt
     2) reads (lambda, p, q) from params.txt
     3) computes the threshold energy E_th from
 
@@ -235,11 +236,35 @@ def compute_eth(lam: float, p: int, q: int, gamma: float) -> tuple[float, float]
     return float(eth), float(q1)
 
 
+def drop_discarded_steps(t: np.ndarray, *cols: np.ndarray) -> tuple[np.ndarray, ...]:
+    """Remove lines of correlation.txt that belong to steps discarded by a rollback.
+
+    After a rejected step the solver discards the last time slices and repeats
+    them, so the time column jumps back.  A line is kept only if its time is
+    smaller than the time of every later line.
+    """
+    later_min = np.minimum.accumulate(t[::-1])[::-1]
+    keep = np.ones(t.size, dtype=bool)
+    keep[:-1] = t[:-1] < later_min[1:]
+    return (t[keep],) + tuple(c[keep] for c in cols)
+
+
+def load_energy(output_dir: Path) -> tuple[np.ndarray, np.ndarray]:
+    energy_path = output_dir / "energy.txt"
+    if energy_path.exists():
+        return load_two_column_txt(energy_path)
+    corr_path = output_dir / "correlation.txt"
+    if corr_path.exists():
+        t, e = load_two_column_txt(corr_path)
+        return drop_discarded_steps(t, e)
+    raise FileNotFoundError(f"Neither energy.txt nor correlation.txt found in {output_dir}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Log-log plot of E(t) - Eth from a DYNAMITE output directory"
     )
-    ap.add_argument("output_dir", type=Path, help="Run output directory containing energy.txt and params.txt")
+    ap.add_argument("output_dir", type=Path, help="Run output directory containing params.txt and energy.txt or correlation.txt")
     ap.add_argument("--out", type=Path, default=None, help="Write figure to this file (e.g. eth_gap.png)")
     ap.add_argument(
         "--skip-nonpositive",
@@ -260,14 +285,11 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    energy_path = args.output_dir / "energy.txt"
     params_path = args.output_dir / "params.txt"
-    if not energy_path.exists():
-        raise FileNotFoundError(f"Missing {energy_path}")
     if not params_path.exists():
         raise FileNotFoundError(f"Missing {params_path}")
 
-    t, e = load_two_column_txt(energy_path)
+    t, e = load_energy(args.output_dir)
 
     params = parse_params_txt(params_path)
     lam = get_float(params, "lambda")

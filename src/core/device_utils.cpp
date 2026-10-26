@@ -45,22 +45,42 @@ size_t getCurrentMemoryUsageMB() {
 #endif
 }
 
+// [CPC-REV] <sys/sysinfo.h> is Linux-only; the unconditional include broke the
+// advertised macOS CPU build (referee 2, point 5). Query hw.memsize on Darwin and
+// keep a portable sysconf() fallback.
+#if defined(__linux__)
 #include <sys/sysinfo.h>
-// Function to get total physical system memory in MB (Linux). Returns 0 if unavailable.
+#elif defined(__APPLE__)
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#endif
+#include <cstdint>
+
+// Function to get total physical system memory in MB. Returns 0 if unavailable.
 size_t getTotalSystemMemoryMB() {
+#if defined(__linux__)
     struct sysinfo info;
     if (sysinfo(&info) == 0) {
         // totalram is in units of mem_unit bytes
         unsigned long long bytes = static_cast<unsigned long long>(info.totalram) * info.mem_unit;
         return static_cast<size_t>(bytes / (1024ULL * 1024ULL));
     }
-    // Fallback using sysconf
+#elif defined(__APPLE__)
+    uint64_t memsize = 0;
+    size_t memsize_len = sizeof(memsize);
+    if (sysctlbyname("hw.memsize", &memsize, &memsize_len, nullptr, 0) == 0 && memsize > 0) {
+        return static_cast<size_t>(memsize / (1024ULL * 1024ULL));
+    }
+#endif
+    // Portable POSIX fallback (Linux and macOS)
+#if defined(_SC_PHYS_PAGES) && defined(_SC_PAGESIZE)
     long pages = sysconf(_SC_PHYS_PAGES);
-    long page_size = sysconf(_SC_PAGE_SIZE);
+    long page_size = sysconf(_SC_PAGESIZE);
     if (pages > 0 && page_size > 0) {
         unsigned long long bytes = static_cast<unsigned long long>(pages) * static_cast<unsigned long long>(page_size);
         return static_cast<size_t>(bytes / (1024ULL * 1024ULL));
     }
+#endif
     return 0;
 }
 

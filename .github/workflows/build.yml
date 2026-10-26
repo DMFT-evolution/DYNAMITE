@@ -25,4 +25,17 @@ jobs:
           cmake --build build -j 2
       - name: Smoke test
         run: |
-          ./RG-Evo -v || true
+          ./RG-Evo -v
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Install test dependencies
+        run: |
+          pip install mpmath
+      - name: Regression tests
+        # Pure p=2 model against its exact solution (T1), sparsification
+        # invariance (T3) and equilibrium invariants of the mixed 3+4 model (T5);
+        # see docs/dev/development.md.
+        run: |
+          python3 tests/run_regression.py --exe ./RG-Evo --workdir "$RUNNER_TEMP/regression"

@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
 
+# [CPC-REV] Must be set before any add_library()/add_executable() so that the
+# generated compile_commands.json covers the whole program and not only the
+# targets declared after it (referee 2, point 5: tooling/reproducibility).
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Optional CUDA support with tri-state behavior (AUTO/ON/OFF)
 option(DMFE_WITH_CUDA "Enable CUDA support" ON)
 
@@ -41,7 +46,41 @@ else()
     project(DYNAMITE LANGUAGES C CXX)
 endif()
 
-find_package(OpenMP REQUIRED)
+# [CPC-REV] macOS/Apple-Clang portability (referee 2, point 5).
+# Apple Clang ships without libomp, so CMake's FindOpenMP fails unless it is told
+# where a Homebrew/MacPorts libomp lives. Probe the usual prefixes and set
+# OpenMP_ROOT before find_package(); FindOpenMP then discovers "-Xclang -fopenmp"
+# together with the matching include/lib directories automatically.
+if(APPLE AND NOT DEFINED OpenMP_ROOT AND NOT DEFINED ENV{OpenMP_ROOT})
+    set(_dmfe_omp_hints /opt/homebrew/opt/libomp /usr/local/opt/libomp /opt/local)
+    find_program(DMFE_BREW_EXECUTABLE brew)
+    if(DMFE_BREW_EXECUTABLE)
+        execute_process(COMMAND "${DMFE_BREW_EXECUTABLE}" --prefix libomp
+                        OUTPUT_VARIABLE _dmfe_brew_libomp
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        ERROR_QUIET)
+        if(_dmfe_brew_libomp)
+            list(APPEND _dmfe_omp_hints "${_dmfe_brew_libomp}")
+        endif()
+    endif()
+    foreach(_dmfe_hint IN LISTS _dmfe_omp_hints)
+        if(EXISTS "${_dmfe_hint}/include/omp.h")
+            set(OpenMP_ROOT "${_dmfe_hint}" CACHE PATH "libomp installation prefix")
+            message(STATUS "OpenMP: using libomp from ${OpenMP_ROOT}")
+            break()
+        endif()
+    endforeach()
+endif()
+
+# [CPC-REV] Not REQUIRED any more: a missing OpenMP must degrade to a serial
+# build, not abort the configuration. All omp.h includes are now _OPENMP-guarded.
+find_package(OpenMP)
+if(NOT OpenMP_CXX_FOUND)
+    message(WARNING
+        "OpenMP not found; building single-threaded. "
+        "On macOS install it with 'brew install libomp' (and, if needed, re-run "
+        "cmake with -DOpenMP_ROOT=$(brew --prefix libomp)).")
+endif()
 
 option(USE_HDF5 "Enable HDF5 support (compile-time link)" OFF)
 # Optional Boost.Multiprecision (headers-only). If not found, we fall back to long double.
@@ -118,15 +157,17 @@ endif()
 
 # Toolchain-specific host flags
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        # Silence benign Clang note about overriding -ffp-contract from aggregate flags
-        list(APPEND common_host_flags -Wno-overriding-t-option)
-    endif()
     if(OpenMP_CXX_FOUND)
-        list(APPEND common_host_flags ${OpenMP_CXX_FLAGS})
+        # [CPC-REV] OpenMP_CXX_FLAGS may contain several shell words (AppleClang:
+        # "-Xclang -fopenmp"). Without separate_arguments() CMake passes the whole
+        # string as ONE argv entry and the compiler aborts with
+        #   clang++: error: unknown argument: '-Xclang -fopenmp'
+        separate_arguments(DMFE_OPENMP_CXX_FLAGS NATIVE_COMMAND "${OpenMP_CXX_FLAGS}")
+        list(APPEND common_host_flags ${DMFE_OPENMP_CXX_FLAGS})
         # Add OpenMP flags to CUDA compilation for host code in .cu files
         if(DMFE_WITH_CUDA)
-            list(APPEND common_cuda_flags -Xcompiler=${OpenMP_CXX_FLAGS})
+            string(REPLACE ";" "," DMFE_OPENMP_CUDA_FLAGS "${DMFE_OPENMP_CXX_FLAGS}")
+            list(APPEND common_cuda_flags -Xcompiler=${DMFE_OPENMP_CUDA_FLAGS})
         endif()
         if(DMFE_STATIC_OPENMP)
             if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
@@ -134,13 +175,23 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
                 if(DMFE_WITH_CUDA)
                     list(APPEND common_cuda_flags -Xcompiler=-static-libgomp)
                 endif()
-            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
                 # For LLVM libomp, attempt static linking
                 list(APPEND common_host_flags -lomp)
                 if(DMFE_WITH_CUDA)
                     list(APPEND common_cuda_flags -Xcompiler=-lomp)
                 endif()
                 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
+            elseif(APPLE)
+                # [CPC-REV] Darwin provides neither crt0.o nor a static libSystem,
+                # so '-static' cannot link. Link libomp statically instead when the
+                # archive is available; otherwise fall back to the shared library.
+                if(OpenMP_ROOT AND EXISTS "${OpenMP_ROOT}/lib/libomp.a")
+                    message(STATUS "Static OpenMP on macOS: ${OpenMP_ROOT}/lib/libomp.a")
+                    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_ROOT}/lib/libomp.a")
+                else()
+                    message(WARNING "DMFE_STATIC_OPENMP requested but libomp.a not found; linking libomp dynamically.")
+                endif()
             endif()
         endif()
     endif()
@@ -150,9 +201,22 @@ elseif(MSVC)
     list(APPEND common_host_flags /O2)
 endif()
 
-# -march=native only when allowed
+# [CPC-REV] -march=native only when allowed AND actually accepted by the compiler.
+# Some Apple/ARM toolchains reject -march=native and only understand -mcpu=native.
 if(DMFE_NATIVE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
-    list(APPEND common_host_flags -march=native)
+    include(CheckCXXCompilerFlag)
+    check_cxx_compiler_flag("-march=native" DMFE_HAS_MARCH_NATIVE)
+    if(DMFE_HAS_MARCH_NATIVE)
+        list(APPEND common_host_flags -march=native)
+    else()
+        check_cxx_compiler_flag("-mcpu=native" DMFE_HAS_MCPU_NATIVE)
+        if(DMFE_HAS_MCPU_NATIVE)
+            message(STATUS "-march=native not supported; using -mcpu=native")
+            list(APPEND common_host_flags -mcpu=native)
+        else()
+            message(STATUS "Neither -march=native nor -mcpu=native supported; skipping")
+        endif()
+    endif()
 endif()
 
 # Debug mode adjusts flags
@@ -165,6 +229,14 @@ if(DMFE_DEBUG)
     endif()
     # Host debug
     set(common_host_flags -O0 -g)
+endif()
+
+# [CPC-REV][PERF] Stamp the CUDA toolkit version at configure time.  VersionInfo
+# used to determine it by running `nvcc --version` through popen() at *runtime*,
+# which (a) reported "No CUDA" in params.txt on any compute node without nvcc in
+# PATH, even for a CUDA build, and (b) forked a shell on every single run.
+if(DMFE_WITH_CUDA AND CMAKE_CUDA_COMPILER_VERSION)
+    add_compile_definitions(DMFE_CUDA_TOOLKIT_VERSION="${CMAKE_CUDA_COMPILER_VERSION}")
 endif()
 
 if(DMFE_WITH_CUDA)
@@ -206,6 +278,7 @@ endif()
 
 # CPU-only sources (.cpp files) - always included
 set(CPU_SOURCES
+    src/sparsify/sparsify_utils.cpp   # [CPC-REV] single host sparsification sweep
     src/core/config.cpp
     src/core/initialization.cpp
     src/core/program_start_time.cpp
@@ -214,7 +287,14 @@ set(CPU_SOURCES
     src/search/search_utils.cpp
     src/core/host_utils.cpp
     src/core/device_utils.cpp
-    src/core/backend_dispatch.cpp
+    # [CPC-REV] backend_dispatch.cpp defines update(), energy(),
+    # initializeGPUBackend() and synchronizeCompressedData() -- the same four
+    # symbols as src/core/backend_dispatch.cu, and without any preprocessor
+    # guard.  In a CUDA build both objects therefore ended up in the same static
+    # library and which definition got linked was left to the linker (an ODR
+    # violation).  If the CPU one had won, initializeGPUBackend() would have
+    # reported "program was built without CUDA support" on a machine with a
+    # perfectly good GPU.  It is now compiled only in CPU-only builds.
     src/convolution/convolution.cpp
     src/interpolation/index_vec.cpp
     src/interpolation/index_mat.cpp
@@ -225,6 +305,7 @@ set(CPU_SOURCES
     src/io/io_save_hdf5.cpp
     src/io/io_save_compressed.cpp
     src/io/io_save_driver.cpp
+    src/io/io_save_history.cpp   # [CPC-REV] history files, all builds
     src/io/io_snapshot_host.cpp
     src/io/io_utils.cpp
     src/math/math_ops.cpp
@@ -248,11 +329,10 @@ set(CPU_SOURCES
 
 # Build the high-precision theta grid generator with strict FP (no fast-math, no contraction)
 # Use per-source COMPILE_OPTIONS so these appear at the end of the compile line.
-# Guard Clang-specific flags with a compiler check and quiet the override warning.
-set_source_files_properties(src/grid/theta_grid.cpp PROPERTIES COMPILE_OPTIONS
+# Guard Clang-specific flags with a compiler check.
+set_property(SOURCE src/grid/theta_grid.cpp APPEND PROPERTY COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:Clang>:-fno-fast-math>"
     "$<$<CXX_COMPILER_ID:Clang>:-ffp-contract=off>"
-    "$<$<CXX_COMPILER_ID:Clang>:-Wno-overriding-t-option>"
 )
 
 # Re-apply fast-math to all other CPU sources explicitly so we don't pass both
@@ -263,11 +343,14 @@ set_source_files_properties(${FASTMATH_CPU_SOURCES} PROPERTIES COMPILE_OPTIONS
     "$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-ffast-math>"
 )
 
-# Additional CPU-only sources when CUDA is disabled
+# [CPC-REV] src/sparsify/sparsify_utils.cpp used to be compiled ONLY in CPU-only
+# builds, while a second, non-equivalent copy of sparsifyNscale() lived in
+# sparsify_utils.cu and was used by CUDA builds.  There is now a single host
+# implementation, compiled in both configurations.
+
+# [CPC-REV] CPU-only backend dispatch (see the note in CPU_SOURCES above).
 if(NOT DMFE_WITH_CUDA)
-    list(APPEND CPU_SOURCES
-        src/sparsify/sparsify_utils.cpp
-    )
+    list(APPEND CPU_SOURCES src/core/backend_dispatch.cpp)
 endif()
 
 # Be explicit about source file languages to avoid CMake misclassifying some .cpp
@@ -287,6 +370,10 @@ if(DMFE_WITH_CUDA)
         # matches the definitions in .cu files when using NVHPC toolchains.
         src/io/io_save_params.cpp
         src/io/io_output.cpp
+        # [CPC-REV] the single host sparsification sweep now lives here; its header
+        # pulls <cuda_runtime.h> when CUDA is enabled, so compile it with the CUDA
+        # toolchain in that configuration (it contains no device code).
+        src/sparsify/sparsify_utils.cpp
         PROPERTIES LANGUAGE CUDA)
     # Explicitly force the UI implementation as C++ (not CUDA) even when CUDA is enabled
     set_source_files_properties(src/ui/simulation_text_ui.cpp PROPERTIES LANGUAGE CXX)
@@ -298,6 +385,28 @@ target_include_directories(DFME-core
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# [CPC-REV] Version and Git state are stamped at build time (they used to be read
+# by running git when the program starts, i.e. from whatever directory it was
+# started in).  DMFE_FALLBACK_VERSION is used for builds outside a Git checkout.
+set(DMFE_HOME_OUTPUT_DIR "" CACHE STRING
+    "Output root used when the executable lies inside the home directory, e.g. /nobackups/{USER}/Results/ ({USER} is replaced by the user name). Empty: Results/ below the working directory.")
+if(DMFE_HOME_OUTPUT_DIR)
+    target_compile_definitions(DFME-core PUBLIC DMFE_HOME_OUTPUT_DIR="${DMFE_HOME_OUTPUT_DIR}")
+endif()
+set(DMFE_FALLBACK_VERSION "1.4.0.0" CACHE STRING "Version reported when building outside a Git checkout")
+set(DMFE_VERSION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/dmfe_version_stamp.hpp")
+add_custom_target(dmfe_version_stamp ALL
+    COMMAND ${CMAKE_COMMAND}
+            -DSRC=${CMAKE_CURRENT_SOURCE_DIR}
+            -DOUT=${DMFE_VERSION_HEADER}
+            -DFALLBACK=${DMFE_FALLBACK_VERSION}
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/dmfe_version.cmake
+    BYPRODUCTS ${DMFE_VERSION_HEADER}
+    COMMENT "Stamping version information"
+    VERBATIM)
+add_dependencies(DFME-core dmfe_version_stamp)
+target_include_directories(DFME-core PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated)
 
 if(DMFE_WITH_CUDA)
     target_include_directories(DFME-core PUBLIC ${CUDAToolkit_INCLUDE_DIRS})
@@ -393,6 +502,8 @@ foreach(tgt IN ITEMS DFME-core RG-Evo)
     endif()
 endforeach()
 
+# [CPC-REV] moved to the top of the file (before project()); kept here as a no-op
+# so that an out-of-date build directory still gets the variable set.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Simple test for barycentric interpolation weights (standalone, no DFME-core linkage)

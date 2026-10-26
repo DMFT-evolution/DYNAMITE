@@ -18,6 +18,17 @@ dmfe::device_vector<double> bsearchPosSortedGPU(
     const dmfe::device_vector<double>& elem,
     cudaStream_t stream = 0);
 
+// [PERF] Batched form of the two calls interpolateGPU makes per stage (theta and
+// phi2 against the same t1grid).  See bsearch_interp_pair_kernel in
+// search_utils.cu: same arithmetic, one launch instead of two.
+void bsearchPosSortedPairGPU(
+    const dmfe::device_vector<double>& list,
+    const dmfe::device_vector<double>& elemA,
+    dmfe::device_vector<double>& resultA,
+    const dmfe::device_vector<double>& elemB,
+    dmfe::device_vector<double>& resultB,
+    cudaStream_t stream = 0);
+
 void bsearchPosSortedGPU(
     const dmfe::device_vector<double>& list,
     const dmfe::device_vector<double>& elem,

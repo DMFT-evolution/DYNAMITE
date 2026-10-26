@@ -8,7 +8,7 @@
 // using natural cubic spline interpolation to invert theta with machine precision.
 // This implementation matches the Mathematica construction:
 //   func = Interpolation[Transpose[{theta[ygrid], ygrid}], Method->"Spline", InterpolationOrder->5]
-//   posA1y = func[phi1]; posA2y = func[phi2]; posB2y = func[theta[j] / (phi2 - 10^-200)]
+//   posA1y = func[phi1]; posA2y = func[phi2]; posB2y = func[theta[i] / (phi2 - 10^-200)]   // [CPC-REV] was theta[j]
 //
 // Algorithm:
 //   1. Use theta_of_index(i, len, Tmax) to compute exact analytical theta values
@@ -29,6 +29,15 @@ void generate_pos_grids(std::size_t len,
 						std::vector<double>& posA2y,
 						std::vector<double>& posB2y,
 						double alpha = 0.0, double delta = 0.0);
+
+// [CPC-REV] Variant for a user-supplied theta grid (grid --theta-file): the inverse
+// map is built from the L nodes themselves, since the analytic theta(y) does not apply.
+void generate_pos_grids_from_nodes(const std::vector<long double>& theta,
+						const std::vector<long double>& phi1,
+						const std::vector<long double>& phi2,
+						std::vector<double>& posA1y,
+						std::vector<double>& posA2y,
+						std::vector<double>& posB2y);
 
 // Legacy wrapper: accepts double inputs and promotes to long double internally,
 // preserving on-disk double outputs for compatibility.

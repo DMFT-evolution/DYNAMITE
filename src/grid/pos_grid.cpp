@@ -191,7 +191,7 @@ void generate_pos_grids(std::size_t len,
 			posA1y[i * N + j] = static_cast<double>(safe_eval(v1));
 			posA2y[i * N + j] = static_cast<double>(safe_eval(v2));
 			
-			// posB2y = inv_theta[theta[j] / (phi2 - 10^-200)]
+			// posB2y = inv_theta[theta[i] / (phi2 - 10^-200)]   // [CPC-REV] comment said theta[j]
 			const long double denom = v2 - tiny;
 			long double argB2;
 			if (std::fabs(denom) < 1e-300L) {
@@ -200,6 +200,60 @@ void generate_pos_grids(std::size_t len,
 			} else {
 				argB2 = ti / denom;
 			}
+			posB2y[i * N + j] = static_cast<double>(safe_eval(argB2));
+		}
+	}
+}
+
+// [CPC-REV] Variant used when the theta nodes are supplied by the user
+// (grid --theta-file, referee 1).  The analytic map theta(y) is then unavailable,
+// so the inverse interpolant is built directly from the L pairs (theta_i, i+1).
+// The stencil is the same local barycentric interpolant; accuracy is limited by
+// the node density rather than by the 20x oversampling of the analytic branch,
+// which is the price of admitting an arbitrary grid.
+void generate_pos_grids_from_nodes(const std::vector<long double>& theta,
+						const std::vector<long double>& phi1,
+						const std::vector<long double>& phi2,
+						std::vector<double>& posA1y,
+						std::vector<double>& posA2y,
+						std::vector<double>& posB2y) {
+	const std::size_t N = theta.size();
+	if (phi1.size() != N*N || phi2.size() != N*N) throw std::invalid_argument("generate_pos_grids_from_nodes: phi sizes must be N*N");
+
+	std::vector<long double> inv_x(theta), inv_y(N);
+	for (std::size_t k = 0; k < N; ++k) inv_y[k] = 1.0L + static_cast<long double>(k);
+	for (std::size_t k = 1; k < N; ++k) {
+		if (inv_x[k] <= inv_x[k-1]) {
+			inv_x[k] = std::nextafter(inv_x[k-1], std::numeric_limits<long double>::infinity());
+		}
+	}
+
+	LocalBarycentric inv_interp;
+	inv_interp.build(inv_x, inv_y, 12);
+
+	posA1y.assign(N * N, 0.0);
+	posA2y.assign(N * N, 0.0);
+	posB2y.assign(N * N, 0.0);
+	const long double tiny = 1e-200L;
+	const long double theta_min = inv_x.front();
+	const long double theta_max = inv_x.back();
+	auto safe_eval = [&](long double val) -> long double {
+		if (val <= theta_min) return inv_y.front();
+		if (val >= theta_max) return inv_y.back();
+		return inv_interp.eval(val);
+	};
+
+	for (std::size_t i = 0; i < N; ++i) {
+		const long double ti = theta[i];
+		for (std::size_t j = 0; j < N; ++j) {
+			const long double v1 = phi1[i * N + j];
+			const long double v2 = phi2[i * N + j];
+			posA1y[i * N + j] = static_cast<double>(safe_eval(v1));
+			posA2y[i * N + j] = static_cast<double>(safe_eval(v2));
+			const long double denom = v2 - tiny;
+			long double argB2 = (std::fabs(denom) < 1e-300L)
+				? ((ti > 0) ? theta_max : theta_min)
+				: ti / denom;
 			posB2y[i * N + j] = static_cast<double>(safe_eval(argB2));
 		}
 	}

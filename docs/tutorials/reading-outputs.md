@@ -1,206 +1,82 @@
-# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="File icon"/> Tutorial: Reading outputs (and trusting them)
+# <img class="icon icon-lg icon-primary" src="/DYNAMITE/assets/icons/file.svg" alt="File icon"/> Tutorial: Reading outputs
 
-**Audience:** new users who want to sanity-check results and locate key outputs.
+Each run writes into its own directory (see [Usage](../usage.md#output)). This page shows how to look at the results; the complete list of files and their formats is in [Code structure and file formats](../concepts/architecture.md).
 
-DYNAMITE writes a **self-contained output directory** for each run. This directory is designed to be both:
+## What a run directory contains
 
-- easy to inspect quickly (text summaries), and
-- reproducible / restartable (versioned params + full state in HDF5 or binary).
+| File | Content |
+|---|---|
+| `correlation.txt` | one line per time step: $t$, energy $E(t)$, $C(t,0)$ |
+| `params.txt` | all parameters, program version, grid, run time |
+| `data.h5` or `data.bin` | checkpoint with the full history, used to continue the run |
+| `QK_compressed`, `QR_compressed`, `t1_compressed.txt` | $C$ and $R$ at the last checkpoint on an $L\times L$ grid |
+| `energy.txt`, `rvec.txt`, `qk0.txt` | $E(t)$, $\mu(t)$, $C(t,0)$ at the stored times |
+| `step_metrics.txt` | run time and memory per step (with `-D true`) |
 
-## What you’ll typically see (high level)
+All files except `correlation.txt` are written at checkpoints, i.e. every `--sparsify-interval` steps and at the end of the run.
 
-At minimum, each output directory contains:
+## Energy and $C(t,0)$
 
-- a full-state file (`data.h5` when HDF5 is available, otherwise `data.bin`), and
-- `params.txt` (the provenance record: parameters, CLI, build/version info),
+`correlation.txt` is the simplest starting point. After a step is rejected, the last ten steps are repeated (see [Time integration](../concepts/time-integration.md)), and the file then contains the discarded steps as well: the time in the first column jumps back. Remove them before plotting, e.g. in Python:
 
-plus a few small text summaries intended for quick plotting.
+```python
+import numpy as np
+import matplotlib.pyplot as plt
 
-For the full, canonical list of outputs and on-disk formats (including the compressed snapshot files), see
-[Concepts → Architecture](../concepts/architecture.md).
+t, E, C0 = np.loadtxt("Results/<run>/correlation.txt", unpack=True)
 
-## Quick inspection (HDF5)
+# keep only lines whose time is smaller than that of every later line
+later_min = np.minimum.accumulate(t[::-1])[::-1]
+keep = np.append(t[:-1] < later_min[1:], True)
+t, E, C0 = t[keep], E[keep], C0[keep]
 
-If `data.h5` exists, you can inspect structure with common tools:
-
-```bash
-h5ls -r data.h5
-h5dump -n data.h5
+plt.loglog(t, C0)
+plt.xlabel("t"); plt.ylabel("C(t,0)")
+plt.show()
 ```
 
-If you want dataset names/semantics, see
-[Concepts → EOMs and observables](../concepts/eoms-and-observables.md).
-
-Tip: `params.txt` is the fastest way to see **exactly** what the run did (grid size, tolerances, CPU/GPU mode, etc.).
-
-## Text summaries (fast plotting)
-
-For most physics-facing diagnostics you don’t need to parse the full 2D state immediately. Start with the text files:
-
-- `energy.txt`: time series of the energy (used for stability checks and aging analysis)
-- `correlation.txt`: commonly used slices/diagnostics of $C$ (format documented in-file; see file header)
-- `rvec.txt`: reduced/diagonal observables (format documented in-file)
-
-These are intended for quick plotting and sanity checks.
-
-## Binary fallback (`data.bin`) is fully supported
-
-`data.bin` is not a “degraded mode”: it’s the supported non-HDF5 carrier for the full simulation state.
-
-- Save path: when HDF5 is unavailable (or fails), the program writes `data.bin` instead.
-- Load/resume path: binaries can be loaded to resume trajectories if compatible with the current build/version policy.
-
-If you’re extending the I/O layer, see the I/O module overview in
-[Concepts → Architecture](../concepts/architecture.md).
-
-## Reproducibility & provenance (how to trust a run)
-
-Each output directory includes the information needed to reproduce a run:
-
-1) **Exact code identity**
-
-Open `params.txt` and record:
-- `code_version`, `git_hash`, `git_branch`, `git_tag`, `git_dirty`  
-- compiler/CUDA versions and build timestamp
-
-2) **Exact runtime configuration**
-
-In `params.txt` you’ll also find:
-- the full stored command line  
-- physical parameters ($p$, $p2$, $\lambda$, $T_0$, $\Gamma$)  
-- numerical parameters (grid `len`, tolerances, sparsification settings, integrator toggles)
-
-3) **Grid provenance**
-
-The run uses precomputed grid packages under `Grid_data/<L>/`. The grid generator writes metadata to:
-
-- `Grid_data/<L>/grid_params.txt`
-
-and DYNAMITE mirrors key entries into `params.txt` (prefixed with `grid_...`). This makes it easy to confirm that a run used the intended grid package even after you move/copy the output directory.
-
-Practical recommendation: keep `params.txt` alongside `data.h5`/`data.bin` when archiving or sharing results.
-
-## Sanity checks before trusting long runs
-
-These checks are fast and catch most common issues:
-
-- **CPU vs GPU short-time agreement**: run a short trajectory with `--gpu false` and compare key summaries (e.g. `energy.txt`).
-- **Grid convergence**: compare L=512 vs 1024 (and 2048 if needed) at fixed parameters.
-- **Tolerance sensitivity**: tighten the integrator tolerance `-e` and confirm observables don’t shift materially.
-- **Sparsification sensitivity (spot check)**: run briefly with `--sparsify-sweeps 0` and confirm agreement in your observables of interest.
-- **Resume discipline**: when resuming, confirm `params.txt` compatibility and keep the original directory intact.
-
-## Next: plotting scripts
-
-We provide small Python helpers under `scripts/` to quickly plot standard summaries (energy vs time, etc.). See:
-
-- `scripts/plot_energy_threshold_gap.py` (log-log plot of $E(t) - E_{\mathrm{th}}$)
-- `scripts/plot_correlation.py`
-
-These are intentionally lightweight and can be adapted to create publication figures (e.g. $C(t_w+\tau, t_w)$ at multiple waiting times, and response-vs-correlation parametric plots).
-
-Dependencies: these scripts use `numpy` and `matplotlib`.
-
-### Threshold-energy gap plot ($E(t) - E_{\mathrm{th}}$)
-
-If your output directory contains `energy.txt` and `params.txt`, you can generate the standard log-log plot of the *gap to threshold energy*:
-
-$$
-E(t) - E_{\mathrm{th}}
-$$
-
-where $E(t)$ is read from `energy.txt`, and $E_{\mathrm{th}}$ is computed from the parameters `lambda`, `p`, and `q` (with `q` usually stored as `p2` in `params.txt`).
-
-The script handles both $\Gamma=0$ and $\Gamma>0$ cases internally. If you want the full definition of $E_{\mathrm{th}}$ and the equations used, see the accompanying paper and the relevant background sections in the Concepts pages.
-
-Typical usage:
+For the approach of the energy to the threshold energy $E_{\rm th}$ (quench to $T=0$), the script `scripts/plot_energy_threshold_gap.py` reads the energy and the parameters of a run directory and plots $E(t)-E_{\rm th}$ on logarithmic axes. It uses `energy.txt` if present and `correlation.txt` otherwise:
 
 ```bash
-python3 scripts/plot_energy_threshold_gap.py /path/to/output/dir --out eth_gap.png
+python3 scripts/plot_energy_threshold_gap.py Results/<run>/ --skip-nonpositive --out energy.png
 ```
 
-Notes:
+`--skip-nonpositive` drops the early times at which $E(t)-E_{\rm th}\le0$. The script needs `numpy` and `matplotlib`.
 
-- The plot is log-log, so it requires $t>0$ and $E(t)-E_{\mathrm{th}}>0$. If early times lead to non-positive values, you can drop those points with:
+![E(t) - E_th for a mixed model](../assets/energy.png)
+
+## Two-time functions
+
+The compressed snapshot contains $C(t_i,\theta_j t_i)$ and $R(t_i,\theta_j t_i)$ for $t_i=\theta_i\,t_{\rm last}$, where $t_{\rm last}$ is the time of the last checkpoint. From it, `scripts/plot_correlation.py` plots $C(t_w+\tau,t_w)$ as a function of $\tau$ for several waiting times $t_w$:
 
 ```bash
-python3 scripts/plot_energy_threshold_gap.py /path/to/output/dir --skip-nonpositive --out eth_gap.png
+python3 scripts/plot_correlation.py Results/<run>/ --out Cwaiting.png
+python3 scripts/plot_correlation.py Results/<run>/ --which QR --out Rwaiting.png   # response
+python3 scripts/plot_correlation.py Results/<run>/ --tw "1,10,100,1000"            # chosen waiting times
 ```
 
-Example (commands + output figure):
+Further options: `--tau-min`, `--tau-max` and `--n-tau` for the range of $\tau$, `--linear-x` for a linear axis, `--usetex` for LaTeX labels. Curves stop at $t_w+\tau=t_{\rm last}$. The script interpolates with SciPy, which it needs in addition to `numpy` and `matplotlib`.
 
-![Threshold-energy gap plot](../assets/energy.png)
+![Waiting-time slices of C](../assets/Cwaiting.png)
+
+## The full history
+
+The checkpoint contains $C$ and $R$ at all stored times. With HDF5:
 
 ```bash
-# 1) Run a simulation (example parameters)
-./RG-Evo -m 1e8 -D true -q 3 -l 0.5 -G 0.5 -L 512
-
-# 2) Plot E(t) - Eth from the run output directory
-python3 scripts/plot_energy_threshold_gap.py /path/to/output/dir --out energy.png
+h5ls Results/<run>/data.h5
 ```
 
-### Correlation slice plot ($C(t_w+\tau, t_w)$) from compressed outputs
+lists the datasets `QKv`, `QRv`, `dQKv`, `dQRv`, `t1grid`, `rvec`, `drvec`. In Python (with `h5py`), `QKv` reshaped to `(len(t1grid), L)` gives $C(t_n,\theta_i t_n)$, with the $\theta_i$ from `Grid_data/<L>/theta.dat`. `scripts/ImportDMFE.wl` reads the file into Mathematica.
 
-If your output directory contains the compressed snapshot files
+## Checking results
 
-- `QK_compressed`
-- `QR_compressed`
-- `t1_compressed.txt`
+Before relying on a result:
 
-you can quickly generate waiting-time slices of the correlation (or response)
-without reading the full history files. Here, we demonstrate this using a 
-*2D spline interpolation* of the compressed matrix.
+- **Tolerance:** repeat the run with `-e` ten times smaller. The observables you use should not change appreciably.
+- **Grid:** repeat with $L=1024$ (see [Generate grids](generate-grids.md)).
+- **Sparsification:** repeat (the first part of) the run with `-w 0`.
+- **Long runs:** make sure the grid was generated with $t_{\max}$ at least equal to the final time; `params.txt` lists it as `grid_Tmax`.
+- **Known limits:** for the pure $p$-spin model the exact results listed in [Equations](../concepts/eoms-and-observables.md#useful-exact-results) are a quick check.
 
-#### Coordinates (important)
-
-The compressed snapshot uses the variables $(t_1,\theta)$.
-For the on-disk file formats and the precise meaning of these coordinates, see
-[Architecture → Compressed snapshots](../concepts/architecture.md#compressed-snapshots-file-formats-qk_compressed-qr_compressed-t1_compressedtxt).
-
-To evaluate a physical waiting-time slice, the script queries an interpolant at
-
-$$
-t_1 = t_w+\tau,\qquad \theta = \frac{t_w}{t_w+\tau},
-$$
-
-#### Typical usage
-
-Below is an example waiting-time slice plot produced from a simulation run (saved as `docs/assets/Cwaiting.png`):
-
-![Waiting-time correlation slices from compressed outputs](../assets/Cwaiting.png)
-
-An end-to-end workflow looks like:
-
-```bash
-# 1) Run DYNAMITE (example parameters)
-./RG-Evo -m <max_steps> -D <true|false> -p <p> -q <q> -l <lambda> -L <L>
-
-# 2) Plot C(t_w+τ, t_w) using the compressed snapshot written into the output directory
-python3 scripts/plot_correlation.py /path/to/output/dir --out Cwaiting.png
-```
-
-Plot of the response function from `QR_compressed` instead:
-
-```bash
-python3 scripts/plot_correlation.py /path/to/output/dir --which QR --out Rwaiting.png
-```
-
-Change the waiting times (comma-separated list or a compact power-range like `100^0..3`):
-
-```bash
-python3 scripts/plot_correlation.py /path/to/output/dir --tw "0,1,10,100" --out corr.png
-```
-
-Notes:
-
-- The script uses a spline interpolator (SciPy), however linear interpolations are often good enough.
-- The x-axis is logarithmic by default. Use `--linear-x` to switch to a linear x-axis.
-- Axis labels use robust Unicode text by default (no LaTeX dependency). If you want full LaTeX rendering and have a working LaTeX install, pass `--usetex`.
-- Curves are automatically truncated for $t_w+\tau > t_{\mathrm{last}}$ (no extrapolation beyond the simulated time window).
-- Use `--tau-min/--tau-max` and `--n-tau` to control the plotted interval and resolution.
-
-## See also
-
-- [Tutorial → First run](first-run.md)
-- [Tutorial → Parameter sweep](parameter-sweep.md)
-- [Concepts → Version compatibility](../concepts/version-compatibility.md)
+`params.txt` records what a run did: the command line, all parameters, the program version and Git commit, and the grid. Keep it together with the results.
