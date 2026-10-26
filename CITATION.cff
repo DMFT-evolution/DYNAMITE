@@ -12,6 +12,14 @@ abstract: >-
 type: software
 repository-code: "https://github.com/DMFT-evolution/DYNAMITE"
 url: "https://dmft-evolution.github.io/DYNAMITE/"
+doi: "10.5281/zenodo.23679051"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23679051"
+    description: "Concept DOI: all versions, resolves to the latest release"
+  - type: doi
+    value: "10.5281/zenodo.23679052"
+    description: "Version 1.4.0.0"
 version: 1.4.0.0
 date-released: 2026-10-26
 license: Apache-2.0

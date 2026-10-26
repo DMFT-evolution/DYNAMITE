@@ -1,6 +1,6 @@
 # DYNAMITE
 
-[![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-website-blue)](https://dmft-evolution.github.io/DYNAMITE/) [![License](https://img.shields.io/badge/license-Apache--2.0-orange)](LICENSE) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23679051.svg)](https://doi.org/10.5281/zenodo.23679051)
 
 DYNAMITE (DYNAmical Mean-fIeld Time Evolution solver) integrates two-time dynamical mean-field equations for the correlation and response functions $C(t,t')$ and $R(t,t')$ to long times. The released program solves the equations of the mixed spherical $p$-spin model after a quench and reaches times of order $10^7$.
 

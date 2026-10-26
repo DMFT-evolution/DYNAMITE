@@ -10,4 +10,10 @@ Where you refer specifically to the original idea of the method, you may in addi
 
 That paper was written for a much older version of the code; for the algorithm as implemented here, refer to the first one.
 
+To cite the software itself, use its archived record on Zenodo:
+
+- J. Lang, V. Citro, L. Leuzzi, F. Ricci-Tersenghi, “DYNAMITE: DYNAmical Mean-fIeld Time Evolution solver,” Zenodo, [doi:10.5281/zenodo.23679051](https://doi.org/10.5281/zenodo.23679051).
+
+This DOI always points to the latest release; each release also has its own DOI, listed on the Zenodo page.
+
 For reproducibility, also state the version of the program you used. `./RG-Evo -v` prints it, and every run records it, together with the Git commit, in its `params.txt`. Machine-readable citation data are in [`CITATION.cff`](https://github.com/DMFT-evolution/DYNAMITE/blob/main/CITATION.cff) in the repository; GitHub and reference managers such as Zotero can read this file.
