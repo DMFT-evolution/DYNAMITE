@@ -15,6 +15,7 @@ jobs:
           args: >
             --verbose
             --no-progress
+            --root-dir ${{ github.workspace }}
             --exclude '^https://dmft-evolution\.github\.io/'
             --exclude '^https://(doi\.org/10\.1103|journals\.aps\.org)/'
             --accept 200,429
