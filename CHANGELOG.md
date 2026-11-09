@@ -8,6 +8,25 @@ Commit hashes are given for every tag so that any published result can be tied t
 an exact revision.  Tags up to `v1.1.0.3` are annotated tags; the hash quoted is
 the *commit* the tag points at, not the tag object.
 
+## [1.4.0.1] - 2026-11-09
+Build fixes only; no source changes to the solver.
+
+### Fixed
+- **Link failure with glibc < 2.34 (e.g. conda compiler toolchains).**
+  `h5_runtime.cpp` uses `dlopen`/`dlclose`, but `-ldl` was passed as a link
+  option and therefore appeared before `libDFME-core.a` on the link line.  With
+  sysroots where `libdl` is separate from libc this failed with
+  `undefined reference to symbol 'dlclose'` (seen for `RG-Evo-shared`).
+  `libdl` is now a link dependency of `DFME-core`. (`CMakeLists.txt`)
+- **nvcc host compiler.**  `clang++-14` was forced as the CUDA host compiler
+  whenever it was installed, ignoring `DMFE_PREFER_CLANG_HOST` (default `OFF`).
+  Together with conda's `NVCC_PREPEND_FLAGS=-ccbin=...` this produced
+  `incompatible redefinition for option 'compiler-bindir'` warnings and compiled
+  CUDA and C++ translation units with different host compilers.  `clang++-14` is
+  now selected only when `DMFE_PREFER_CLANG_HOST=ON`. (`CMakeLists.txt`)
+- Removed an ineffective `using ::log;` that triggered nvcc warning `#737`.
+  (`src/sparsify/sparsify_utils.cpp`)
+
 ## [1.4.0.0] - first release
 Release accompanying the revised version of the manuscript
 "DYNAMITE: A high-performance framework for solving Dynamical Mean-Field Equations"

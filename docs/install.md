@@ -53,7 +53,7 @@ A CUDA build also runs on machines without a GPU: it then uses the CPU backend.
 | `USE_HDF5` | `OFF` | Link HDF5 at build time instead (requires the HDF5 development files). |
 | `DMFE_DEBUG` | `OFF` | Debug build with device-side checks. Slow. |
 | `DMFE_HOME_OUTPUT_DIR` | empty | Output directory used when the executable lies inside your home directory and no `-o` is given, e.g. `/nobackups/{USER}/Results/` (`{USER}` is replaced by the user name). Empty: `Results/` below the working directory, as always. |
-| `DMFE_FALLBACK_VERSION` | `1.4.0.0` | Version reported by a build from a source tree that is not a Git checkout. |
+| `DMFE_FALLBACK_VERSION` | `1.4.0.1` | Version reported by a build from a source tree that is not a Git checkout. |
 
 With `USE_HDF5=OFF` and `USE_HDF5_RUNTIME=OFF` the checkpoint is always written as `data.bin`. Both formats contain the same data and both can be used to continue a run.
 

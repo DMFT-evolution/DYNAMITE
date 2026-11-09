@@ -3,8 +3,6 @@
 #include "core/config.hpp"
 #include <vector>
 #include <cmath>
-// Prefer C math overloads to avoid namespace issues
-using ::log;
 
 extern SimulationConfig config;
 extern SimulationData* sim;

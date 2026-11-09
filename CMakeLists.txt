@@ -24,8 +24,11 @@ if(DMFE_WITH_CUDA)
     # nvcc 11.x + GCC >= 12 requires this flag even during compiler-id checks
     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -allow-unsupported-compiler" CACHE STRING "" FORCE)
         message(STATUS "CUDA compiler found: enabling CUDA support")
-        # Prefer clang++-14 as nvcc host if available (reduces GCC12 interactions)
-        if(NOT DEFINED CMAKE_CUDA_HOST_COMPILER)
+        # Use clang++-14 as nvcc host only when explicitly requested. By default
+        # nvcc uses its own host compiler (e.g. conda's NVCC_PREPEND_FLAGS=-ccbin=...);
+        # forcing a second -ccbin here caused "incompatible redefinition for option
+        # 'compiler-bindir'" warnings and mixed host compilers between CUDA and C++ TUs.
+        if(DMFE_PREFER_CLANG_HOST AND NOT DEFINED CMAKE_CUDA_HOST_COMPILER)
             find_program(CLANGPP_14 NAMES clang++-14)
             if(CLANGPP_14)
                 set(CMAKE_CUDA_HOST_COMPILER ${CLANGPP_14})
@@ -394,7 +397,7 @@ set(DMFE_HOME_OUTPUT_DIR "" CACHE STRING
 if(DMFE_HOME_OUTPUT_DIR)
     target_compile_definitions(DFME-core PUBLIC DMFE_HOME_OUTPUT_DIR="${DMFE_HOME_OUTPUT_DIR}")
 endif()
-set(DMFE_FALLBACK_VERSION "1.4.0.0" CACHE STRING "Version reported when building outside a Git checkout")
+set(DMFE_FALLBACK_VERSION "1.4.0.1" CACHE STRING "Version reported when building outside a Git checkout")
 set(DMFE_VERSION_HEADER "${CMAKE_CURRENT_BINARY_DIR}/generated/dmfe_version_stamp.hpp")
 add_custom_target(dmfe_version_stamp ALL
     COMMAND ${CMAKE_COMMAND}
@@ -438,6 +441,10 @@ endif()
 if(USE_HDF5_RUNTIME)
     target_sources(DFME-core PRIVATE src/io/h5_runtime.cpp)
     target_compile_definitions(DFME-core PUBLIC H5_RUNTIME_OPTIONAL=1)
+    # h5_runtime.cpp uses dlopen/dlclose. Link libdl as a library dependency of
+    # DFME-core so it appears *after* libDFME-core.a on the link line (needed with
+    # glibc < 2.34 sysroots, e.g. conda toolchains, where libdl is separate).
+    target_link_libraries(DFME-core PRIVATE ${CMAKE_DL_LIBS})
 endif()
 
 # CPU source files are already in CPU_SOURCES list above
@@ -445,7 +452,6 @@ endif()
 add_executable(RG-Evo main.cpp)
 
 target_link_libraries(RG-Evo PRIVATE DFME-core)
-target_link_options(RG-Evo PRIVATE $<HOST_LINK:-ldl>)
 
 # Ensure device linking stage unifies __constant__ definitions across TUs (CUDA only)
 if(DMFE_WITH_CUDA)
@@ -472,7 +478,6 @@ endif()
 if(DMFE_WITH_CUDA AND DMFE_BUILD_SHARED_VARIANT)
     add_executable(RG-Evo-shared main.cpp)
     target_link_libraries(RG-Evo-shared PRIVATE DFME-core)
-    target_link_options(RG-Evo-shared PRIVATE $<HOST_LINK:-ldl>)
     set_target_properties(RG-Evo-shared PROPERTIES
         LINKER_LANGUAGE CXX
         CUDA_SEPARABLE_COMPILATION ON
